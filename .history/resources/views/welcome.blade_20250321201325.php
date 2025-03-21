@@ -20,7 +20,7 @@
     
     <style>
         :root {
-            --primary-color: #3498db;
+            --primary-color: #63499E;
             --secondary-color: #2c3e50;
             --light-color: #ecf0f1;
             --dark-color: #34495e;
@@ -39,8 +39,8 @@
         }
         
         .btn-primary:hover {
-            background-color: #2980b9;
-            border-color: #2980b9;
+            background-color: #533c85;
+            border-color: #533c85;
         }
         
         .btn-outline-primary {
@@ -114,8 +114,7 @@
             left: 0;
             width: 100%;
             height: 100%;
-            background: url('https://images.unsplash.com/photo-1578575437130-527eed3abbec?auto=format&fit=crop&q=80') center/cover no-repeat;
-            filter: brightness(0.6);
+            background: linear-gradient(135deg, #63499E 0%, #9370DB 100%);
             z-index: -1;
         }
         
