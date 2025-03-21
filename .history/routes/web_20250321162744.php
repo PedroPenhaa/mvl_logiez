@@ -30,9 +30,7 @@ Route::post('/register', [HomeController::class, 'storeUser'])->name('register.s
 // Rotas protegidas por autenticação (temporariamente sem verificação)
 Route::middleware([])->group(function () {
     Route::get('/dashboard', function() {
-        return view('dashboard', [
-            'dashboardContent' => view('sections.dashboard')->render()
-        ]);
+        return view('dashboard');
     })->name('dashboard');
 });
 

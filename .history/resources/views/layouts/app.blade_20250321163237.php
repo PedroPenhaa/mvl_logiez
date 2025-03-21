@@ -511,24 +511,31 @@
     <script>
         // Este script deve estar no final do arquivo, antes do fechamento </body>
         document.addEventListener('DOMContentLoaded', function() {
-            console.log("Verificando se estamos na página dashboard:", window.location.pathname);
+            console.log("Verificando necessidade de carregar dashboard:", window.location.pathname);
             
-            // Se estamos na rota do dashboard, garantir que o menu está ativo
+            // Forçar carregamento do dashboard nas rotas principais
             if (window.location.pathname === '/dashboard' || 
                 window.location.pathname === '/home' || 
                 window.location.pathname === '/') {
                 
-                console.log("Estamos na página do dashboard, garantindo que o menu está ativo");
+                // Forçar carregamento do dashboard sempre na rota /dashboard
+                if (window.location.pathname === '/dashboard') {
+                    console.log("Forçando carregamento do dashboard na rota /dashboard");
+                    $('.menu-item').removeClass('active');
+                    $('.menu-item[data-section="dashboard"]').addClass('active');
+                    loadSection('dashboard');
+                    return;
+                }
                 
-                // Garantir que o item de menu dashboard está ativo
-                $('.menu-item').removeClass('active');
-                $('.menu-item[data-section="dashboard"]').addClass('active');
-                
-                // Remover loader caso esteja visível
-                $('#content-loader').hide();
-                
-                // Garantir que o conteúdo está visível
-                $('#content-container').show();
+                // Verificar se o conteúdo está vazio e carregar o dashboard
+                if (!$('#content-container').html().trim()) {
+                    console.log("Carregando dashboard automaticamente...");
+                    loadSection('dashboard');
+                    
+                    // Atualizar menu ativo
+                    $('.menu-item').removeClass('active');
+                    $('.menu-item[data-section="dashboard"]').addClass('active');
+                }
             }
         });
     </script>

@@ -30,9 +30,7 @@ Route::post('/register', [HomeController::class, 'storeUser'])->name('register.s
 // Rotas protegidas por autenticação (temporariamente sem verificação)
 Route::middleware([])->group(function () {
     Route::get('/dashboard', function() {
-        return view('dashboard', [
-            'dashboardContent' => view('sections.dashboard')->render()
-        ]);
+        return view('dashboard');
     })->name('dashboard');
 });
 
@@ -45,8 +43,8 @@ Route::get('/', function () {
 Route::get('/about', [HomeController::class, 'about'])->name('about');
 Route::get('/help', [HomeController::class, 'help'])->name('help');
 
-// Rotas da API para carregamento de seções (AJAX) - sem verificação de autenticação
-Route::prefix('api')->name('api.')->group(function () {
+// Rotas da API para carregamento de seções (AJAX)
+Route::prefix('api')->name('api.')->middleware(CheckAuthenticated::class)->group(function () {
     // Seções
     Route::get('/sections/dashboard', [SectionController::class, 'dashboard'])->name('sections.dashboard');
     Route::get('/sections/cotacao', [SectionController::class, 'cotacao'])->name('sections.cotacao');
