@@ -6,7 +6,18 @@ $vendorDir = dirname(__DIR__);
 $baseDir = dirname($vendorDir);
 
 return array(
+    'App\\Http\\Controllers\\AuthController' => $baseDir . '/app/Http/Controllers/AuthController.php',
     'App\\Http\\Controllers\\Controller' => $baseDir . '/app/Http/Controllers/Controller.php',
+    'App\\Http\\Controllers\\CotacaoController' => $baseDir . '/app/Http/Controllers/CotacaoController.php',
+    'App\\Http\\Controllers\\DashboardController' => $baseDir . '/app/Http/Controllers/DashboardController.php',
+    'App\\Http\\Controllers\\EnvioController' => $baseDir . '/app/Http/Controllers/EnvioController.php',
+    'App\\Http\\Controllers\\EtiquetaController' => $baseDir . '/app/Http/Controllers/EtiquetaController.php',
+    'App\\Http\\Controllers\\HomeController' => $baseDir . '/app/Http/Controllers/HomeController.php',
+    'App\\Http\\Controllers\\PagamentoController' => $baseDir . '/app/Http/Controllers/PagamentoController.php',
+    'App\\Http\\Controllers\\PerfilController' => $baseDir . '/app/Http/Controllers/PerfilController.php',
+    'App\\Http\\Controllers\\RastreamentoController' => $baseDir . '/app/Http/Controllers/RastreamentoController.php',
+    'App\\Http\\Controllers\\SectionController' => $baseDir . '/app/Http/Controllers/SectionController.php',
+    'App\\Http\\Middleware\\CheckAuthenticated' => $baseDir . '/app/Http/Middleware/CheckAuthenticated.php',
     'App\\Models\\User' => $baseDir . '/app/Models/User.php',
     'App\\Providers\\AppServiceProvider' => $baseDir . '/app/Providers/AppServiceProvider.php',
     'Attribute' => $vendorDir . '/symfony/polyfill-php80/Resources/stubs/Attribute.php',
