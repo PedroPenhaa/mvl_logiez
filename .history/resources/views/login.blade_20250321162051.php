@@ -192,12 +192,15 @@
                     
                     <div class="form-group">
                         <label for="email" class="form-label">Email</label>
-                        <input type="email" class="form-control" id="email" name="email" value="{{ old('email') }}" placeholder="Seu email">
+                        <input type="email" class="form-control" id="email" name="email" value="{{ old('email') }}" placeholder="Seu email" required>
                     </div>
                     
                     <div class="form-group">
                         <label for="password" class="form-label">Senha</label>
-                        <input type="password" class="form-control" id="password" name="password" placeholder="Sua senha">
+                        <input type="password" class="form-control" id="password" name="password" placeholder="Sua senha" required>
+                        <div class="d-flex justify-content-end mt-1">
+                            <a href="#" class="small">Recuperar senha?</a>
+                        </div>
                     </div>
                     
                     <div class="form-check mb-3">
@@ -207,8 +210,9 @@
                         </label>
                     </div>
                     
-                    <!-- Botão que redireciona diretamente para o dashboard sem validação -->
-                    <a href="{{ route('dashboard') }}" class="btn btn-primary w-100">Entrar</a>
+                    <button type="submit" class="btn btn-primary">
+                        Entrar
+                    </button>
                 </form>
                 
                 <div class="login-footer">

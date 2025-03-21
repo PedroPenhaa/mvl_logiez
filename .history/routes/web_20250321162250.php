@@ -27,24 +27,36 @@ Route::post('/logout', [LoginController::class, 'logout'])->name('logout');
 Route::get('/register', [HomeController::class, 'register'])->name('register.form');
 Route::post('/register', [HomeController::class, 'storeUser'])->name('register.store');
 
-// Rotas protegidas por autenticação (temporariamente sem verificação)
-Route::middleware([])->group(function () {
+// Rotas protegidas por autenticação
+Route::middleware(['auth'])->group(function () {
     Route::get('/dashboard', function() {
-        return view('dashboard', [
-            'dashboardContent' => view('sections.dashboard')->render()
-        ]);
+        return view('dashboard');
     })->name('dashboard');
+    
+    // Rotas das seções
+    Route::prefix('api/sections')->group(function () {
+        Route::get('/dashboard', [App\Http\Controllers\SectionController::class, 'dashboard']);
+        Route::get('/cotacao', [App\Http\Controllers\SectionController::class, 'cotacao']);
+        Route::get('/envio', [App\Http\Controllers\SectionController::class, 'envio']);
+        Route::get('/rastreamento', [App\Http\Controllers\SectionController::class, 'rastreamento']);
+        // Outras seções
+    });
 });
 
-// Rota padrão - redireciona para a página welcome
-Route::get('/', [HomeController::class, 'welcome'])->name('welcome');
+// Rota padrão
+Route::get('/', function () {
+    if (Auth::check()) {
+        return redirect()->route('dashboard');
+    }
+    return redirect()->route('login');
+});
 
 // Páginas informativas
 Route::get('/about', [HomeController::class, 'about'])->name('about');
 Route::get('/help', [HomeController::class, 'help'])->name('help');
 
-// Rotas da API para carregamento de seções (AJAX) - sem verificação de autenticação
-Route::prefix('api')->name('api.')->group(function () {
+// Rotas da API para carregamento de seções (AJAX)
+Route::prefix('api')->name('api.')->middleware(CheckAuthenticated::class)->group(function () {
     // Seções
     Route::get('/sections/dashboard', [SectionController::class, 'dashboard'])->name('sections.dashboard');
     Route::get('/sections/cotacao', [SectionController::class, 'cotacao'])->name('sections.cotacao');

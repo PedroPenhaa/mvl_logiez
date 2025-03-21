@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="csrf-token" content="{{ csrf_token() }}">
-    <title>Login - Logiez</title>
+    <title>Registro - Logiez</title>
     
     <!-- Bootstrap CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
@@ -31,7 +31,7 @@
             padding: 1rem;
         }
         
-        .login-container {
+        .register-container {
             background-color: white;
             border-radius: 10px;
             box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
@@ -42,12 +42,12 @@
             flex-direction: row;
         }
         
-        .login-form-container {
+        .register-form-container {
             padding: 2.5rem;
             width: 50%;
         }
         
-        .login-banner {
+        .register-banner {
             background: linear-gradient(135deg, var(--primary-color), var(--highlight-color));
             padding: 2.5rem;
             color: white;
@@ -91,57 +91,57 @@
             border-color: var(--highlight-color);
         }
         
-        .login-footer {
+        .register-footer {
             margin-top: 2rem;
             text-align: center;
         }
         
-        .login-footer a {
+        .register-footer a {
             color: var(--primary-color);
             text-decoration: none;
         }
         
-        .login-footer a:hover {
+        .register-footer a:hover {
             color: var(--highlight-color);
             text-decoration: underline;
         }
         
         /* Media Queries para Responsividade */
         @media (max-width: 768px) {
-            .login-container {
+            .register-container {
                 flex-direction: column;
                 max-width: 480px;
             }
             
-            .login-form-container, 
-            .login-banner {
+            .register-form-container, 
+            .register-banner {
                 width: 100%;
             }
             
-            .login-banner {
+            .register-banner {
                 padding: 2rem;
                 order: -1;
             }
             
-            .login-form-container {
+            .register-form-container {
                 padding: 2rem;
             }
         }
         
         @media (max-width: 480px) {
-            .login-container {
+            .register-container {
                 box-shadow: none;
                 background-color: transparent;
             }
             
-            .login-form-container {
+            .register-form-container {
                 background-color: white;
                 border-radius: 10px;
                 box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
                 padding: 1.5rem;
             }
             
-            .login-banner {
+            .register-banner {
                 border-radius: 10px;
                 margin-bottom: 1rem;
                 padding: 1.5rem;
@@ -159,8 +159,8 @@
     </style>
 </head>
 <body>
-    <div class="login-container">
-        <div class="login-banner d-none d-md-flex">
+    <div class="register-container">
+        <div class="register-banner d-none d-md-flex">
             <div class="text-center">
                 <h1 class="display-4 mb-4"><span class="text-dark">Logi</span><span style="color: var(--primary-color)">ez</span></h1>
                 <img src="https://via.placeholder.com/400x300?text=Logiez" alt="Logiez" class="img-fluid rounded mb-4">
@@ -169,12 +169,12 @@
             </div>
         </div>
         
-        <div class="login-form-container">
-            <div class="login-form">
-                <div class="login-header">
+        <div class="register-form-container">
+            <div class="register-form">
+                <div class="register-header">
                     <i class="fas fa-shipping-fast brand-logo"></i>
-                    <h3>Bem-vindo!</h3>
-                    <p class="text-muted">Entre na sua conta e inicie nossa jornada.</p>
+                    <h3>Criar uma Conta</h3>
+                    <p class="text-muted">Preencha os dados abaixo para se cadastrar na Logiez</p>
                 </div>
                 
                 @if ($errors->any())
@@ -187,39 +187,50 @@
                     </div>
                 @endif
                 
-                <form action="{{ route('login') }}" method="POST">
+                <form action="{{ route('register.store') }}" method="POST">
                     @csrf
                     
                     <div class="form-group">
+                        <label for="name" class="form-label">Nome Completo</label>
+                        <input type="text" class="form-control" id="name" name="name" value="{{ old('name') }}" placeholder="Seu nome completo" required>
+                    </div>
+                    
+                    <div class="form-group">
                         <label for="email" class="form-label">Email</label>
-                        <input type="email" class="form-control" id="email" name="email" value="{{ old('email') }}" placeholder="Seu email">
+                        <input type="email" class="form-control" id="email" name="email" value="{{ old('email') }}" placeholder="Seu email" required>
                     </div>
                     
                     <div class="form-group">
                         <label for="password" class="form-label">Senha</label>
-                        <input type="password" class="form-control" id="password" name="password" placeholder="Sua senha">
+                        <input type="password" class="form-control" id="password" name="password" placeholder="Crie uma senha" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="password_confirmation" class="form-label">Confirme a Senha</label>
+                        <input type="password" class="form-control" id="password_confirmation" name="password_confirmation" placeholder="Confirme sua senha" required>
                     </div>
                     
                     <div class="form-check mb-3">
-                        <input class="form-check-input" type="checkbox" id="remember" name="remember">
-                        <label class="form-check-label" for="remember">
-                            Lembrar-me
+                        <input class="form-check-input" type="checkbox" id="terms" name="terms" required>
+                        <label class="form-check-label" for="terms">
+                            Concordo com os <a href="#" class="text-decoration-none">Termos de Uso</a> e <a href="#" class="text-decoration-none">Política de Privacidade</a>
                         </label>
                     </div>
                     
-                    <!-- Botão que redireciona diretamente para o dashboard sem validação -->
-                    <a href="{{ route('dashboard') }}" class="btn btn-primary w-100">Entrar</a>
+                    <button type="submit" class="btn btn-primary">
+                        Criar Conta
+                    </button>
                 </form>
                 
-                <div class="login-footer">
-                    <p>Novo na plataforma? <a href="{{ route('register.form') }}">Criar uma conta</a></p>
+                <div class="register-footer">
+                    <p>Já tem uma conta? <a href="{{ route('login') }}">Faça login</a></p>
                 </div>
                 
                 <div class="separator">
                     <span>ou</span>
                 </div>
                 
-                <div class="social-login">
+                <div class="social-register">
                     <a href="#" class="social-btn google-btn">
                         <i class="fab fa-google"></i>
                     </a>
@@ -234,4 +245,4 @@
     <!-- Bootstrap JS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
-</html>
+</html> 

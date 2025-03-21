@@ -279,8 +279,7 @@
         <div class="loader" id="content-loader"></div>
         
         <div id="content-container">
-            <!-- O conteúdo será carregado dinamicamente via AJAX ou diretamente pelo yield content -->
-            @yield('content')
+            <!-- O conteúdo será carregado dinamicamente via AJAX -->
         </div>
     </main>
     
@@ -504,31 +503,6 @@
                 loadSection('dashboard');
                 $('.menu-item').removeClass('active');
                 $('.menu-item[data-section="dashboard"]').addClass('active');
-            }
-        });
-    </script>
-    
-    <script>
-        // Este script deve estar no final do arquivo, antes do fechamento </body>
-        document.addEventListener('DOMContentLoaded', function() {
-            console.log("Verificando se estamos na página dashboard:", window.location.pathname);
-            
-            // Se estamos na rota do dashboard, garantir que o menu está ativo
-            if (window.location.pathname === '/dashboard' || 
-                window.location.pathname === '/home' || 
-                window.location.pathname === '/') {
-                
-                console.log("Estamos na página do dashboard, garantindo que o menu está ativo");
-                
-                // Garantir que o item de menu dashboard está ativo
-                $('.menu-item').removeClass('active');
-                $('.menu-item[data-section="dashboard"]').addClass('active');
-                
-                // Remover loader caso esteja visível
-                $('#content-loader').hide();
-                
-                // Garantir que o conteúdo está visível
-                $('#content-container').show();
             }
         });
     </script>

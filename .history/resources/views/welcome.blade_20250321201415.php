@@ -20,7 +20,7 @@
     
     <style>
         :root {
-            --primary-color: #3498db;
+            --primary-color: #63499E;
             --secondary-color: #2c3e50;
             --light-color: #ecf0f1;
             --dark-color: #34495e;
@@ -39,8 +39,8 @@
         }
         
         .btn-primary:hover {
-            background-color: #2980b9;
-            border-color: #2980b9;
+            background-color: #533c85;
+            border-color: #533c85;
         }
         
         .btn-outline-primary {
@@ -77,7 +77,7 @@
         
         .navbar.scrolled {
             background-color: #fff;
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            box-shadow: 0 2px 10px rgba(99, 73, 158, 0.2);
             padding: 0.5rem 0;
         }
         
@@ -114,8 +114,7 @@
             left: 0;
             width: 100%;
             height: 100%;
-            background: url('https://images.unsplash.com/photo-1578575437130-527eed3abbec?auto=format&fit=crop&q=80') center/cover no-repeat;
-            filter: brightness(0.6);
+            background: linear-gradient(135deg, #63499E 0%, #9370DB 100%);
             z-index: -1;
         }
         
@@ -147,11 +146,13 @@
             transition: all 0.3s ease;
             border-radius: 10px;
             height: 100%;
+            border: 1px solid rgba(99, 73, 158, 0.1);
         }
         
         .feature-box:hover {
             transform: translateY(-10px);
-            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+            box-shadow: 0 10px 25px rgba(99, 73, 158, 0.15);
+            border-color: rgba(99, 73, 158, 0.3);
         }
         
         .section-title {
@@ -200,14 +201,22 @@
             font-size: 1.5rem;
             font-weight: 700;
             margin: 0 auto 1.5rem;
+            box-shadow: 0 5px 15px rgba(99, 73, 158, 0.3);
         }
         
         .testimonial-card {
             background-color: white;
             border-radius: 10px;
             padding: 2rem;
-            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
+            box-shadow: 0 5px 15px rgba(99, 73, 158, 0.1);
             height: 100%;
+            border: 1px solid rgba(99, 73, 158, 0.05);
+            transition: all 0.3s ease;
+        }
+        
+        .testimonial-card:hover {
+            box-shadow: 0 8px 25px rgba(99, 73, 158, 0.2);
+            transform: translateY(-5px);
         }
         
         .testimonial-card .quote {
@@ -230,7 +239,7 @@
         }
         
         .footer {
-            background-color: var(--secondary-color);
+            background-color: #533c85;
             color: white;
             padding: 4rem 0 2rem;
         }

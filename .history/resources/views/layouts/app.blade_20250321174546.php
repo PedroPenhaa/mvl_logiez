@@ -9,13 +9,29 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <!-- Font Awesome para ícones -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <style>
+        :root {
+            --primary-color: #63499E;
+            --primary-light: #8A70C2;
+            --primary-dark: #483178;
+            --secondary-color: #f8f9fa;
+            --accent-color: #FF9B42;
+            --text-color: #333333;
+            --light-gray: #f5f8fa;
+            --gray: #6c757d;
+            --success: #28a745;
+            --warning: #ffc107;
+            --danger: #dc3545;
+        }
+        
         /* Estilos Globais */
         body {
             margin: 0;
             padding: 0;
             font-family: 'Poppins', sans-serif;
-            background-color: #f5f8fa;
+            background-color: var(--light-gray);
             overflow-x: hidden;
             min-height: 100vh;
             display: flex;
@@ -44,7 +60,7 @@
         .sidebar-header h3 {
             margin: 0;
             font-weight: 700;
-            color: #3498db;
+            color: var(--primary-color);
         }
         
         .menu-item {
@@ -64,12 +80,12 @@
         
         .menu-item:hover {
             background: rgba(255,255,255,0.1);
-            border-left-color: #3498db;
+            border-left-color: var(--primary-color);
         }
         
         .menu-item.active {
-            background: rgba(52, 152, 219, 0.2);
-            border-left-color: #3498db;
+            background: rgba(99, 73, 158, 0.2);
+            border-left-color: var(--primary-color);
         }
         
         .menu-item .menu-text {
@@ -111,7 +127,7 @@
             top: 15px;
             left: 15px;
             z-index: 999;
-            background: #3498db;
+            background: var(--primary-color);
             color: white;
             border: none;
             width: 40px;
@@ -133,7 +149,7 @@
         
         .loader {
             border: 5px solid #f3f3f3;
-            border-top: 5px solid #3498db;
+            border-top: 5px solid var(--primary-color);
             border-radius: 50%;
             width: 50px;
             height: 50px;
@@ -144,6 +160,46 @@
         @keyframes spin {
             0% { transform: rotate(0deg); }
             100% { transform: rotate(360deg); }
+        }
+        
+        /* Elementos UI */
+        .btn-primary {
+            background-color: var(--primary-color);
+            border-color: var(--primary-color);
+        }
+        
+        .btn-primary:hover {
+            background-color: var(--primary-dark);
+            border-color: var(--primary-dark);
+        }
+        
+        .text-primary {
+            color: var(--primary-color) !important;
+        }
+        
+        .bg-primary {
+            background-color: var(--primary-color) !important;
+        }
+        
+        /* Cards */
+        .card {
+            border: none;
+            border-radius: 10px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 6px 15px rgba(0,0,0,0.1);
+        }
+        
+        .card-header {
+            border-bottom: 1px solid rgba(0,0,0,0.08);
+            font-weight: 600;
+            background-color: white;
+            padding: 15px 20px;
+            border-radius: 10px 10px 0 0 !important;
         }
         
         /* Media Queries para Responsividade */
@@ -261,10 +317,14 @@
                 <span class="menu-text">Meu Perfil</span>
             </div>
             
-            <a href="{{ route('logout') }}" class="menu-item">
+            <!-- Substituir link por formulário para o logout -->
+            <form id="logout-form" action="{{ route('logout') }}" method="POST" style="display: none;">
+                @csrf
+            </form>
+            <div class="menu-item" onclick="event.preventDefault(); document.getElementById('logout-form').submit();">
                 <i class="fas fa-sign-out-alt"></i>
                 <span class="menu-text">Sair</span>
-            </a>
+            </div>
         </nav>
     </div>
     

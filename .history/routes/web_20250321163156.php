@@ -36,8 +36,10 @@ Route::middleware([])->group(function () {
     })->name('dashboard');
 });
 
-// Rota padrão - redireciona para a página welcome
-Route::get('/', [HomeController::class, 'welcome'])->name('welcome');
+// Rota padrão - redireciona diretamente para o dashboard
+Route::get('/', function () {
+    return redirect()->route('dashboard');
+});
 
 // Páginas informativas
 Route::get('/about', [HomeController::class, 'about'])->name('about');

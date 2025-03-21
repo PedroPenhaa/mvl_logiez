@@ -3,23 +3,17 @@
 @section('title', 'Dashboard')
 
 @section('content')
-    <!-- Inserindo conteúdo do dashboard diretamente -->
-    {!! $dashboardContent ?? view('sections.dashboard')->render() !!}
+    @include('sections.dashboard')
 @endsection
 
 @section('scripts')
 <script>
     $(document).ready(function() {
-        console.log("Dashboard inicializado diretamente!");
-        
-        // Forçar marcar dashboard como ativo no menu
+        // Marcar menu como ativo
         $('.menu-item').removeClass('active');
         $('.menu-item[data-section="dashboard"]').addClass('active');
         
-        // Mostrar conteúdo diretamente
-        $('#content-container').show();
-        
-        // Inicializar eventos para botões de navegação
+        // Adiciona evento aos botões de link de seção
         $('.nav-section').on('click', function() {
             const section = $(this).data('section');
             $('.menu-item').removeClass('active');

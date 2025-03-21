@@ -261,10 +261,14 @@
                 <span class="menu-text">Meu Perfil</span>
             </div>
             
-            <a href="{{ route('logout') }}" class="menu-item">
+            <!-- Substituir link por formulário para o logout -->
+            <form id="logout-form" action="{{ route('logout') }}" method="POST" style="display: none;">
+                @csrf
+            </form>
+            <div class="menu-item" onclick="event.preventDefault(); document.getElementById('logout-form').submit();">
                 <i class="fas fa-sign-out-alt"></i>
                 <span class="menu-text">Sair</span>
-            </a>
+            </div>
         </nav>
     </div>
     

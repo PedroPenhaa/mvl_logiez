@@ -30,14 +30,14 @@ Route::post('/register', [HomeController::class, 'storeUser'])->name('register.s
 // Rotas protegidas por autenticação (temporariamente sem verificação)
 Route::middleware([])->group(function () {
     Route::get('/dashboard', function() {
-        return view('dashboard', [
-            'dashboardContent' => view('sections.dashboard')->render()
-        ]);
+        return view('dashboard');
     })->name('dashboard');
 });
 
-// Rota padrão - redireciona para a página welcome
-Route::get('/', [HomeController::class, 'welcome'])->name('welcome');
+// Rota padrão - redireciona diretamente para o dashboard
+Route::get('/', function () {
+    return redirect()->route('dashboard');
+});
 
 // Páginas informativas
 Route::get('/about', [HomeController::class, 'about'])->name('about');

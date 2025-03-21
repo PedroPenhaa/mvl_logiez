@@ -20,7 +20,7 @@
     
     <style>
         :root {
-            --primary-color: #3498db;
+            --primary-color: #63499E;
             --secondary-color: #2c3e50;
             --light-color: #ecf0f1;
             --dark-color: #34495e;
@@ -39,8 +39,8 @@
         }
         
         .btn-primary:hover {
-            background-color: #2980b9;
-            border-color: #2980b9;
+            background-color: #533c85;
+            border-color: #533c85;
         }
         
         .btn-outline-primary {

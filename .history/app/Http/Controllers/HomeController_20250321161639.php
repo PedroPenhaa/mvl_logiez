@@ -93,9 +93,7 @@ class HomeController extends Controller
      */
     public function index()
     {
-        // Em vez de apenas retornar a view, vamos buscar a seção dashboard
-        // e retornar essa view com o conteúdo
-        return view('sections.dashboard');
+        return view('dashboard');
     }
 
     /**
