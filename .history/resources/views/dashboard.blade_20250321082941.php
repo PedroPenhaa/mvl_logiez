@@ -13,7 +13,7 @@
                 <i class="fas fa-calculator fa-4x mb-3 text-primary"></i>
                 <h5 class="card-title">Calcule o Envio</h5>
                 <p class="card-text">Calcule o valor e prazo de entrega para seus envios internacionais.</p>
-                <button class="btn btn-primary section-link" data-section="cotacao">Fazer Cotação</button>
+                <a href="{{ route('cotacao.index') }}" class="btn btn-primary">Fazer Cotação</a>
             </div>
         </div>
     </div>
@@ -27,7 +27,7 @@
                 <i class="fas fa-shipping-fast fa-4x mb-3 text-primary"></i>
                 <h5 class="card-title">Envie Produtos</h5>
                 <p class="card-text">Envie seus produtos para qualquer lugar do mundo de forma rápida e segura.</p>
-                <button class="btn btn-primary section-link" data-section="envio">Fazer Envio</button>
+                <a href="{{ route('envio.index') }}" class="btn btn-primary">Fazer Envio</a>
             </div>
         </div>
     </div>
@@ -41,7 +41,7 @@
                 <i class="fas fa-map-marker-alt fa-4x mb-3 text-primary"></i>
                 <h5 class="card-title">Acompanhe seu Envio</h5>
                 <p class="card-text">Acompanhe o status de seus envios em tempo real.</p>
-                <button class="btn btn-primary section-link" data-section="rastreamento">Rastrear Envio</button>
+                <a href="{{ route('rastreamento.index') }}" class="btn btn-primary">Rastrear Envio</a>
             </div>
         </div>
     </div>
@@ -75,21 +75,4 @@
         </div>
     </div>
 </div>
-@endsection
-
-@section('scripts')
-<script>
-    $(document).ready(function() {
-        // Adiciona evento aos botões de link de seção
-        $('.section-link').on('click', function() {
-            const section = $(this).data('section');
-            // Remover classe ativa de todos os itens do menu
-            $('.menu-item').removeClass('active');
-            // Adicionar classe ativa ao item do menu correspondente
-            $('.menu-item[data-section="' + section + '"]').addClass('active');
-            // Carregar a seção
-            loadSection(section);
-        });
-    });
-</script>
 @endsection

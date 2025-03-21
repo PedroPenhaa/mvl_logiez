@@ -4,8 +4,6 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\SectionController;
 use App\Http\Controllers\AuthController;
-use Illuminate\Http\Request;
-use App\Http\Middleware\CheckAuthenticated;
 
 /*
 |--------------------------------------------------------------------------
@@ -25,20 +23,16 @@ Route::get('/', [HomeController::class, 'welcome'])->name('welcome');
 Route::get('/login', [HomeController::class, 'login'])->name('login.form');
 Route::post('/login', [HomeController::class, 'authenticate'])->name('login.authenticate');
 Route::get('/logout', [HomeController::class, 'logout'])->name('logout');
-Route::get('/register', [HomeController::class, 'register'])->name('register.form');
-Route::post('/register', [HomeController::class, 'storeUser'])->name('register.store');
+
+// Rota principal (dashboard)
+Route::get('/dashboard', [HomeController::class, 'index'])->name('dashboard');
 
 // Páginas informativas
 Route::get('/about', [HomeController::class, 'about'])->name('about');
 Route::get('/help', [HomeController::class, 'help'])->name('help');
 
-// Definição simples da proteção de autenticação temporária
-Route::get('/dashboard', [HomeController::class, 'index'])
-    ->middleware(CheckAuthenticated::class)
-    ->name('dashboard');
-
 // Rotas da API para carregamento de seções (AJAX)
-Route::prefix('api')->name('api.')->middleware(CheckAuthenticated::class)->group(function () {
+Route::prefix('api')->name('api.')->group(function () {
     // Seções
     Route::get('/sections/dashboard', [SectionController::class, 'dashboard'])->name('sections.dashboard');
     Route::get('/sections/cotacao', [SectionController::class, 'cotacao'])->name('sections.cotacao');

@@ -1,8 +1,3 @@
-@extends('layouts.app')
-
-@section('title', 'Dashboard')
-
-@section('content')
 <div class="row">
     <div class="col-lg-4 col-md-6 mb-4">
         <div class="card">
@@ -75,21 +70,11 @@
         </div>
     </div>
 </div>
-@endsection
 
-@section('scripts')
 <script>
-    $(document).ready(function() {
-        // Adiciona evento aos botões de link de seção
-        $('.section-link').on('click', function() {
-            const section = $(this).data('section');
-            // Remover classe ativa de todos os itens do menu
-            $('.menu-item').removeClass('active');
-            // Adicionar classe ativa ao item do menu correspondente
-            $('.menu-item[data-section="' + section + '"]').addClass('active');
-            // Carregar a seção
-            loadSection(section);
-        });
+    // Adiciona evento aos botões de link de seção
+    $('.section-link').on('click', function() {
+        const section = $(this).data('section');
+        $('.menu-item[data-section="' + section + '"]').click();
     });
-</script>
-@endsection
+</script> 

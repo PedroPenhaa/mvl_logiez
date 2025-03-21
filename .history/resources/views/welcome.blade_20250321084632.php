@@ -280,7 +280,7 @@
                         <a class="nav-link" href="#contact">Contato</a>
                     </li>
                     <li class="nav-item ms-lg-3">
-                        <a class="btn btn-outline-primary" href="{{ route('login.form') }}">
+                        <a class="btn btn-outline-primary" href="{{ route('dashboard') }}">
                             <i class="fas fa-sign-in-alt me-2"></i> Acessar
                         </a>
                     </li>
@@ -297,7 +297,7 @@
                     <h1 class="hero-title">Simplifique seus Envios Internacionais</h1>
                     <p class="hero-subtitle">Cotação, envio e rastreamento em uma única plataforma, conectada com a DHL.</p>
                     <div class="d-flex flex-wrap gap-2">
-                        <a href="{{ route('login.form') }}" class="btn btn-primary btn-lg">
+                        <a href="{{ route('dashboard') }}" class="btn btn-primary btn-lg">
                             <i class="fas fa-paper-plane me-2"></i> Começar Agora
                         </a>
                         <a href="#how-it-works" class="btn btn-outline-light btn-lg">
@@ -396,7 +396,7 @@
                 </div>
             </div>
             <div class="text-center mt-5">
-                <a href="{{ route('login.form') }}" class="btn btn-primary btn-lg">
+                <a href="{{ route('dashboard') }}" class="btn btn-primary btn-lg">
                     <i class="fas fa-rocket me-2"></i> Comece a Usar Agora
                 </a>
             </div>
@@ -462,7 +462,7 @@
                                 <li class="list-group-item">Certidões</li>
                                 <li class="list-group-item">Pequenos itens</li>
                             </ul>
-                            <a href="{{ route('login.form') }}" class="btn btn-outline-primary">Cotar Agora</a>
+                            <a href="{{ route('dashboard') }}" class="btn btn-outline-primary">Cotar Agora</a>
                         </div>
                     </div>
                 </div>
@@ -479,7 +479,7 @@
                                 <li class="list-group-item">Produtos</li>
                                 <li class="list-group-item">Amostras</li>
                             </ul>
-                            <a href="{{ route('login.form') }}" class="btn btn-primary">Cotar Agora</a>
+                            <a href="{{ route('dashboard') }}" class="btn btn-primary">Cotar Agora</a>
                         </div>
                     </div>
                 </div>
@@ -495,7 +495,7 @@
                                 <li class="list-group-item">Frete empresarial</li>
                                 <li class="list-group-item">Seguro premium</li>
                             </ul>
-                            <a href="{{ route('login.form') }}" class="btn btn-outline-primary">Cotar Agora</a>
+                            <a href="{{ route('dashboard') }}" class="btn btn-outline-primary">Cotar Agora</a>
                         </div>
                     </div>
                 </div>

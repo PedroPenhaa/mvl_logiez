@@ -14,10 +14,9 @@
     
     <style>
         :root {
-            --primary-color: #3498db;
+            --primary-color: #6a0dad;
             --secondary-color: #f8f9fa;
-            --highlight-color: #2980b9;
-            --dark-color: #34495e;
+            --highlight-color: #8a2be2;
         }
         
         body {
@@ -67,7 +66,7 @@
         
         .login-header h3 {
             font-weight: 600;
-            color: var(--dark-color);
+            color: var(--primary-color);
             margin-top: 15px;
         }
         
@@ -82,7 +81,7 @@
         
         .form-control:focus {
             border-color: var(--highlight-color);
-            box-shadow: 0 0 0 0.25rem rgba(52, 152, 219, 0.25);
+            box-shadow: 0 0 0 0.25rem rgba(138, 43, 226, 0.25);
         }
         
         .btn-primary {
@@ -187,7 +186,7 @@
     <div class="login-container">
         <div class="login-banner d-none d-md-flex">
             <div class="text-center">
-                <h1 class="display-4 mb-4"><span class="text-dark">Logi</span><span style="color: var(--primary-color)">ez</span></h1>
+                <h1 class="display-4 mb-4"><span class="text-secondary">Logi</span><span style="color: var(--primary-color)">ez</span></h1>
                 <img src="https://via.placeholder.com/400x300?text=Logiez" alt="Logiez" class="img-fluid rounded mb-4">
                 <h2 class="h4 mb-3">Plataforma de Envios Internacionais</h2>
                 <p class="mb-0">Simplifique suas remessas internacionais com a Logiez. Cotação, envio e rastreamento em uma única plataforma.</p>
@@ -241,7 +240,7 @@
                 </form>
                 
                 <div class="login-footer">
-                    <p>Novo na plataforma? <a href="{{ route('register.form') }}">Criar uma conta</a></p>
+                    <p>Novo na plataforma? <a href="#">Criar uma conta</a></p>
                 </div>
                 
                 <div class="separator">

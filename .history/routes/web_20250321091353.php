@@ -5,7 +5,6 @@ use App\Http\Controllers\HomeController;
 use App\Http\Controllers\SectionController;
 use App\Http\Controllers\AuthController;
 use Illuminate\Http\Request;
-use App\Http\Middleware\CheckAuthenticated;
 
 /*
 |--------------------------------------------------------------------------
@@ -34,11 +33,11 @@ Route::get('/help', [HomeController::class, 'help'])->name('help');
 
 // Definição simples da proteção de autenticação temporária
 Route::get('/dashboard', [HomeController::class, 'index'])
-    ->middleware(CheckAuthenticated::class)
+    ->middleware('web')
     ->name('dashboard');
 
 // Rotas da API para carregamento de seções (AJAX)
-Route::prefix('api')->name('api.')->middleware(CheckAuthenticated::class)->group(function () {
+Route::prefix('api')->name('api.')->middleware('web')->group(function () {
     // Seções
     Route::get('/sections/dashboard', [SectionController::class, 'dashboard'])->name('sections.dashboard');
     Route::get('/sections/cotacao', [SectionController::class, 'cotacao'])->name('sections.cotacao');
