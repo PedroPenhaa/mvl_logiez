@@ -269,11 +269,11 @@
     </div>
     
     <!-- Conteúdo Principal -->
-    <main class="main-content">
+    <main>
         <div id="alert-container"></div>
         
         <div class="content-header">
-            <h1 id="section-title" class="section-title">Dashboard</h1>
+            <h1 id="section-title">Dashboard</h1>
         </div>
         
         <div class="loader" id="content-loader"></div>

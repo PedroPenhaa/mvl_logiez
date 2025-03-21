@@ -269,11 +269,11 @@
     </div>
     
     <!-- Conteúdo Principal -->
-    <main class="main-content">
+    <main>
         <div id="alert-container"></div>
         
         <div class="content-header">
-            <h1 id="section-title" class="section-title">Dashboard</h1>
+            <h1 id="section-title">Dashboard</h1>
         </div>
         
         <div class="loader" id="content-loader"></div>
@@ -385,121 +385,159 @@
             
             // Função para inicializar eventos específicos após carregar uma seção
             function initSectionEvents() {
-                // Eventos para a seção de cotação
-                if ($('#cotacao-form').length) {
-                    $('#cotacao-form').on('submit', function(e) {
-                        e.preventDefault();
-                        
-                        // Mostrar loader
-                        $('#form-loader').show();
-                        $('#cotacao-results').hide();
-                        
-                        // Enviar formulário via AJAX
-                        $.ajax({
-                            url: $(this).attr('action'),
-                            method: 'POST',
-                            data: $(this).serialize(),
-                            success: function(response) {
-                                // Mostrar resultados
-                                $('#cotacao-results').html(response).show();
-                            },
-                            error: function(xhr) {
-                                // Mostrar erro
-                                showAlert('Erro ao processar cotação. Por favor, tente novamente.', 'danger');
-                            },
-                            complete: function() {
-                                $('#form-loader').hide();
-                            }
-                        });
-                    });
-                }
-                
-                // Eventos para a seção de rastreamento
-                if ($('#rastreamento-form').length) {
-                    $('#rastreamento-form').on('submit', function(e) {
-                        e.preventDefault();
-                        
-                        // Mostrar loader
-                        $('#rastreamento-loader').show();
-                        $('#rastreamento-results').hide();
-                        
-                        // Enviar formulário via AJAX
-                        $.ajax({
-                            url: $(this).attr('action'),
-                            method: 'POST',
-                            data: $(this).serialize(),
-                            success: function(response) {
-                                // Mostrar resultados
-                                $('#rastreamento-results').html(response).show();
-                            },
-                            error: function(xhr) {
-                                // Mostrar erro
-                                showAlert('Erro ao rastrear envio. Por favor, tente novamente.', 'danger');
-                            },
-                            complete: function() {
-                                $('#rastreamento-loader').hide();
-                            }
-                        });
-                    });
-                }
-                
-                // Eventos para a seção de perfil
-                if ($('#perfil-form').length) {
-                    $('#perfil-form').on('submit', function(e) {
-                        e.preventDefault();
-                        
-                        // Enviar formulário via AJAX
-                        $.ajax({
-                            url: $(this).attr('action'),
-                            method: 'POST',
-                            data: $(this).serialize(),
-                            success: function(response) {
-                                showAlert('Perfil atualizado com sucesso!', 'success');
-                            },
-                            error: function(xhr) {
-                                showAlert('Erro ao atualizar perfil. Por favor, tente novamente.', 'danger');
-                            }
-                        });
-                    });
-                }
-                
-                // Evento para navegação entre seções
-                $('.menu-item').off('click').on('click', function() {
-                    var section = $(this).data('section');
-                    if (section) {
-                        // Atualizar menu ativo
-                        $('.menu-item').removeClass('active');
-                        $(this).addClass('active');
-                        
-                        // Em dispositivos móveis, fechar o menu lateral após a seleção
-                        if ($(window).width() <= 992) {
-                            $('#sidebar').removeClass('expanded');
-                        }
-                        
-                        // Carregar a seção
-                        loadSection(section);
-                    }
+                // Delegação de eventos para botões de navegação
+                $(document).off('click', '.section-link, .nav-section').on('click', '.section-link, .nav-section', function() {
+                    const section = $(this).data('section');
+                    
+                    // Atualizar menu
+                    $('.menu-item').removeClass('active');
+                    $('.menu-item[data-section="' + section + '"]').addClass('active');
+                    
+                    // Carregar a nova seção
+                    loadSection(section);
                 });
                 
-                // Evento para botões de navegação dentro das seções
-                $('.nav-section').off('click').on('click', function() {
-                    var section = $(this).data('section');
-                    if (section) {
-                        // Atualizar menu ativo
-                        $('.menu-item').removeClass('active');
-                        $('.menu-item[data-section="' + section + '"]').addClass('active');
-                        
-                        // Carregar a seção
-                        loadSection(section);
-                    }
+                // Inicialização para formulários específicos
+                if ($('#cotacao-form').length) {
+                    initCotacaoSection();
+                }
+                
+                if ($('#rastreamento-form').length) {
+                    initRastreamentoSection();
+                }
+                
+                if ($('#perfil-form').length) {
+                    initPerfilSection();
+                }
+            }
+            
+            // Evento para itens do menu
+            $('.menu-item[data-section]').on('click', function(e) {
+                e.preventDefault();
+                
+                // Remover classe ativa de todos os itens
+                $('.menu-item').removeClass('active');
+                
+                // Adicionar classe ativa ao item clicado
+                $(this).addClass('active');
+                
+                // Obter a seção a ser carregada
+                const section = $(this).data('section');
+                
+                // Carregar a seção
+                loadSection(section);
+                
+                // Em dispositivos móveis, fechar o menu após clicar
+                if ($(window).width() <= 992) {
+                    $('#sidebar').removeClass('expanded');
+                }
+            });
+            
+            // Inicialização para seção de cotação
+            function initCotacaoSection() {
+                $('#cotacao-form').off('submit').on('submit', function(e) {
+                    e.preventDefault();
+                    
+                    $('#cotacao-loader').show();
+                    $('#cotacao-resultado').hide();
+                    
+                    $.ajax({
+                        url: $(this).attr('action'),
+                        method: 'POST',
+                        data: $(this).serialize(),
+                        success: function(response) {
+                            // Preencher dados do resultado
+                            $('#peso-cubado').text(response.pesoCubico || '0');
+                            $('#peso-real').text(response.pesoReal || '0');
+                            $('#peso-utilizado').text(response.pesoUtilizado || '0');
+                            $('#preco').text((response.valorTotal || '0') + ' ' + (response.moeda || 'BRL'));
+                            $('#prazo').text(response.tempoEntrega || '0');
+                            
+                            // Mostrar resultado
+                            $('#cotacao-resultado').show();
+                        },
+                        error: function() {
+                            showAlert('Erro ao processar a cotação. Verifique os dados e tente novamente.', 'danger');
+                        },
+                        complete: function() {
+                            $('#cotacao-loader').hide();
+                        }
+                    });
+                });
+            }
+            
+            // Inicialização para seção de rastreamento
+            function initRastreamentoSection() {
+                $('#rastreamento-form').off('submit').on('submit', function(e) {
+                    e.preventDefault();
+                    
+                    $('#rastreamento-loader').show();
+                    $('#rastreamento-resultado').hide();
+                    
+                    $.ajax({
+                        url: $(this).attr('action'),
+                        method: 'POST',
+                        data: $(this).serialize(),
+                        success: function(response) {
+                            $('#rastreamento-timeline').html(response);
+                            $('#rastreamento-resultado').show();
+                        },
+                        error: function() {
+                            showAlert('Erro ao rastrear o envio. Verifique o código e tente novamente.', 'danger');
+                        },
+                        complete: function() {
+                            $('#rastreamento-loader').hide();
+                        }
+                    });
+                });
+            }
+            
+            // Inicialização para seção de perfil
+            function initPerfilSection() {
+                $('#editar-perfil-btn').off('click').on('click', function() {
+                    $('#perfil-visualizacao').hide();
+                    $('#perfil-edicao').show();
+                });
+                
+                $('#cancelar-edicao-btn').off('click').on('click', function() {
+                    $('#perfil-edicao').hide();
+                    $('#perfil-visualizacao').show();
+                });
+                
+                $('#perfil-form').off('submit').on('submit', function(e) {
+                    e.preventDefault();
+                    
+                    $.ajax({
+                        url: $(this).attr('action'),
+                        method: 'POST',
+                        data: $(this).serialize(),
+                        success: function(response) {
+                            showAlert('Perfil atualizado com sucesso!', 'success');
+                            $('#perfil-edicao').hide();
+                            $('#perfil-visualizacao').show();
+                            
+                            // Atualizar informações exibidas
+                            for (const [key, value] of Object.entries(response.usuario)) {
+                                $(`.perfil-${key}`).text(value);
+                            }
+                        },
+                        error: function() {
+                            showAlert('Erro ao atualizar o perfil. Verifique os dados e tente novamente.', 'danger');
+                        }
+                    });
                 });
             }
             
             // Inicializar os eventos para a primeira carga da página
             initSectionEvents();
             
-            // Verificar se o conteúdo está vazio e carregar o dashboard
+            // Carregar o dashboard como seção inicial (caso não esteja já carregado)
             if ($('#content-container').is(':empty')) {
+                // Marcar dashboard como ativo no menu
+                $('.menu-item').removeClass('active');
+                $('.menu-item[data-section="dashboard"]').addClass('active');
+                
+                // Carregar o dashboard
                 loadSection('dashboard');
             }
         });

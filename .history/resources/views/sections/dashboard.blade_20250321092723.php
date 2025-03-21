@@ -8,7 +8,7 @@
                 <i class="fas fa-calculator fa-4x mb-3 text-primary"></i>
                 <h5 class="card-title">Calcule o Envio</h5>
                 <p class="card-text">Calcule o valor e prazo de entrega para seus envios internacionais.</p>
-                <button class="btn btn-primary nav-section" data-section="cotacao">Fazer Cotação</button>
+                <button class="btn btn-primary section-link" data-section="cotacao">Fazer Cotação</button>
             </div>
         </div>
     </div>
@@ -22,7 +22,7 @@
                 <i class="fas fa-shipping-fast fa-4x mb-3 text-primary"></i>
                 <h5 class="card-title">Envie Produtos</h5>
                 <p class="card-text">Envie seus produtos para qualquer lugar do mundo de forma rápida e segura.</p>
-                <button class="btn btn-primary nav-section" data-section="envio">Fazer Envio</button>
+                <button class="btn btn-primary section-link" data-section="envio">Fazer Envio</button>
             </div>
         </div>
     </div>
@@ -36,7 +36,7 @@
                 <i class="fas fa-map-marker-alt fa-4x mb-3 text-primary"></i>
                 <h5 class="card-title">Acompanhe seu Envio</h5>
                 <p class="card-text">Acompanhe o status de seus envios em tempo real.</p>
-                <button class="btn btn-primary nav-section" data-section="rastreamento">Rastrear Envio</button>
+                <button class="btn btn-primary section-link" data-section="rastreamento">Rastrear Envio</button>
             </div>
         </div>
     </div>
