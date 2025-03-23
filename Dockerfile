@@ -31,15 +31,20 @@ RUN chmod -R 775 /var/www/storage /var/www/bootstrap/cache
 COPY nginx/default.conf /etc/nginx/conf.d/default.conf
 COPY supervisord.conf /etc/supervisord.conf
 
-# Comando para rodar migrations e cache automático
-RUN php artisan cache:clear
-RUN php artisan config:clear
-RUN php artisan route:clear
-RUN php artisan view:clear
-RUN php artisan migrate --force
+# Criar script de inicialização
+RUN echo '#!/bin/bash\n\
+echo "Aguardando o banco de dados..."\n\
+sleep 10\n\
+php artisan cache:clear\n\
+php artisan config:clear\n\
+php artisan route:clear\n\
+php artisan view:clear\n\
+php artisan migrate --force\n\
+exec supervisord -c /etc/supervisord.conf\n'\
+> /start.sh && chmod +x /start.sh
 
 # Exposição de portas
 EXPOSE 80 9000
 
-# Comando que inicia o supervisor, nginx e php-fpm
-CMD ["supervisord", "-c", "/etc/supervisord.conf"]
+# Comando para iniciar o container com o script de inicialização
+CMD ["/start.sh"]
