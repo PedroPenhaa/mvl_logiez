@@ -73,37 +73,199 @@ class SectionController extends Controller
             'peso' => 'required|numeric|min:0',
         ]);
         
-        // Simulação de cálculo de cotação
-        // Em produção, aqui seria feita integração com a API da DHL
-        
         // Cálculo do peso cúbico (dimensional)
         $pesoCubico = ($request->altura * $request->largura * $request->comprimento) / 5000;
         
         // Usar o maior entre peso real e peso cúbico
         $pesoUtilizado = max($pesoCubico, $request->peso);
         
-        // Simular cálculo de frete
-        $valorFrete = $pesoUtilizado * 50; // Exemplo: R$ 50 por kg
+        // Autenticação na API FedEx
+        $clientId = 'l7d8933648fbcf4414b354f41cf050530a';
+        $clientSecret = '7b28b7ae75254bc681b3e899cf16607a'; // Substitua pelo valor correto da sua chave secreta
+        $authUrl = 'https://apis-sandbox.fedex.com/oauth/token';
         
-        // Adicionar taxa de serviço
-        $taxaServico = $valorFrete * 0.15; // 15% de taxa
+        // Criar dados para autenticação
+        $authData = [
+            'grant_type' => 'client_credentials',
+            'client_id' => $clientId,
+            'client_secret' => $clientSecret
+        ];
         
-        // Valor total
-        $valorTotal = $valorFrete + $taxaServico;
+        // Inicializar cURL para autenticação
+        $curl = curl_init();
+        curl_setopt_array($curl, [
+            CURLOPT_URL => $authUrl,
+            CURLOPT_RETURNTRANSFER => true,
+            CURLOPT_POST => true,
+            CURLOPT_POSTFIELDS => http_build_query($authData),
+            CURLOPT_HTTPHEADER => [
+                'Content-Type: application/x-www-form-urlencoded'
+            ],
+            CURLOPT_SSL_VERIFYPEER => false, // Apenas para ambiente de desenvolvimento
+        ]);
         
-        // Tempo estimado (simulação)
-        $tempoEntrega = rand(3, 10); // Entre 3 e 10 dias
+        $authResponse = curl_exec($curl);
+        $httpCode = curl_getinfo($curl, CURLINFO_HTTP_CODE);
+        $err = curl_error($curl);
         
+        curl_close($curl);
+
+        dd([
+            'Resposta de autenticação FedEx', [
+            'httpCode' => $httpCode,
+            'erro' => $err,
+            'resposta' => json_decode($authResponse, true)
+        ]]);
+        
+        
+        // Registro detalhado da resposta de autenticação
+        \Log::info('Resposta de autenticação FedEx', [
+            'httpCode' => $httpCode,
+            'erro' => $err,
+            'resposta' => json_decode($authResponse, true)
+        ]);
+        
+        // Verificar erros de cURL ou código de resposta inválido
+        if ($err || $httpCode != 200) {
+            return response()->json([
+                'success' => false,
+                'message' => $err ? 'Erro na requisição: ' . $err : 'Erro de autenticação: Código HTTP ' . $httpCode,
+                'responseData' => json_decode($authResponse, true)
+            ], 500);
+        }
+        
+        // Processar resposta de autenticação
+        $authResponseData = json_decode($authResponse, true);
+        $accessToken = $authResponseData['access_token'] ?? null;
+        
+        if (!$accessToken) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Token de acesso não encontrado na resposta',
+                'responseData' => $authResponseData
+            ], 500);
+        }
+        
+        // Configuração para requisição de cotação
+        $rateUrl = 'https://apis-sandbox.fedex.com/rate/v1/rates/quotes';
+        $shipperAccount = '510087020'; // Conta de teste Shipper fornecida
+        
+        // Montar payload para cotação
+        $ratePayload = [
+            'accountNumber' => [
+                'value' => $shipperAccount
+            ],
+            'requestedShipment' => [
+                'shipper' => [
+                    'address' => [
+                        'postalCode' => substr($request->origem, 0, 10),
+                        'countryCode' => 'BR',
+                        'residential' => false
+                    ]
+                ],
+                'recipient' => [
+                    'address' => [
+                        'postalCode' => substr($request->destino, 0, 10),
+                        'countryCode' => 'US',
+                        'residential' => false
+                    ]
+                ],
+                'pickupType' => 'DROPOFF_AT_FEDEX_LOCATION',
+                'packagingType' => 'YOUR_PACKAGING',
+                'rateRequestType' => ['ACCOUNT', 'LIST'],
+                'requestedPackageLineItems' => [
+                    [
+                        'weight' => [
+                            'units' => 'KG',
+                            'value' => $request->peso
+                        ],
+                        'dimensions' => [
+                            'length' => $request->comprimento,
+                            'width' => $request->largura,
+                            'height' => $request->altura,
+                            'units' => 'CM'
+                        ],
+                        'groupPackageCount' => 1
+                    ]
+                ]
+            ]
+        ];
+        
+        // Inicializar cURL para requisição de cotação
+        $rateCurl = curl_init();
+        curl_setopt_array($rateCurl, [
+            CURLOPT_URL => $rateUrl,
+            CURLOPT_RETURNTRANSFER => true,
+            CURLOPT_POST => true,
+            CURLOPT_POSTFIELDS => json_encode($ratePayload),
+            CURLOPT_HTTPHEADER => [
+                'Content-Type: application/json',
+                'Authorization: Bearer ' . $accessToken,
+                'X-locale: pt_BR'
+            ],
+            CURLOPT_SSL_VERIFYPEER => false, // Apenas para ambiente de desenvolvimento
+        ]);
+        
+        $rateResponse = curl_exec($rateCurl);
+        $rateHttpCode = curl_getinfo($rateCurl, CURLINFO_HTTP_CODE);
+        $rateErr = curl_error($rateCurl);
+        
+        curl_close($rateCurl);
+        
+        // Registro detalhado da resposta de cotação
+        \Log::info('Resposta de cotação FedEx', [
+            'httpCode' => $rateHttpCode,
+            'erro' => $rateErr,
+            'resposta' => json_decode($rateResponse, true)
+        ]);
+        
+        // Verificar erros de cURL ou código de resposta inválido
+        if ($rateErr || $rateHttpCode != 200) {
+            return response()->json([
+                'success' => false,
+                'message' => $rateErr ? 'Erro na requisição de cotação: ' . $rateErr : 'Erro na cotação FedEx: Código HTTP ' . $rateHttpCode,
+                'resposta' => json_decode($rateResponse, true)
+            ], 500);
+        }
+        
+        // Processar resposta da cotação
+        $rateData = json_decode($rateResponse, true);
+        
+        // Extrair cotações da resposta
+        $cotacoes = [];
+        if (isset($rateData['output']['rateReplyDetails'])) {
+            foreach ($rateData['output']['rateReplyDetails'] as $rateDetail) {
+                $serviceName = $rateDetail['serviceName'] ?? 'Serviço Desconhecido';
+                $amount = 0;
+                $currency = 'USD';
+                
+                if (isset($rateDetail['ratedShipmentDetails'][0]['totalNetCharge'])) {
+                    $amount = $rateDetail['ratedShipmentDetails'][0]['totalNetCharge']['amount'];
+                    $currency = $rateDetail['ratedShipmentDetails'][0]['totalNetCharge']['currency'];
+                }
+                
+                $tempoEntrega = null;
+                if (isset($rateDetail['commit']['dateDetail']['dayFormat'])) {
+                    $tempoEntrega = $rateDetail['commit']['dateDetail']['dayFormat'];
+                }
+                
+                $cotacoes[] = [
+                    'servico' => $serviceName,
+                    'valorTotal' => $amount,
+                    'moeda' => $currency,
+                    'tempoEntrega' => $tempoEntrega
+                ];
+            }
+        }
+        
+        // Retornar resultado final
         return response()->json([
             'success' => true,
             'pesoCubico' => round($pesoCubico, 2),
             'pesoReal' => $request->peso,
             'pesoUtilizado' => round($pesoUtilizado, 2),
-            'valorFrete' => round($valorFrete, 2),
-            'taxaServico' => round($taxaServico, 2),
-            'valorTotal' => round($valorTotal, 2),
-            'tempoEntrega' => $tempoEntrega,
-            'moeda' => 'BRL'
+            'cotacoesFedEx' => $cotacoes,
+            'responseOriginal' => $rateData
         ]);
     }
     
@@ -340,5 +502,25 @@ class SectionController extends Controller
             'message' => 'Perfil atualizado com sucesso',
             'usuario' => $request->all()
         ]);
+    }
+
+    public function getSection($section)
+    {
+        // Verificamos quais seções são válidas
+        $validSections = ['dashboard', 'cotacao', 'envio', 'rastreamento', 'usuario'];
+        
+        if (!in_array($section, $validSections)) {
+            return response()->json(['error' => 'Seção inválida'], 404);
+        }
+        
+        // Tratamento especial para a seção de cotação
+        if ($section === 'cotacao') {
+            // Renderizar a view sem usar o helper route() no template
+            $cotacaoView = view('sections.cotacao_alt')->render();
+            return $cotacaoView;
+        }
+        
+        // Retorna a view da seção solicitada para outras seções
+        return view('sections.' . $section);
     }
 } 

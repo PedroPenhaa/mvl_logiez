@@ -8,6 +8,7 @@ use Illuminate\Http\Request;
 use App\Http\Middleware\CheckAuthenticated;
 use Illuminate\Support\Facades\Auth;
 use App\Http\Controllers\Auth\LoginController;
+use App\Http\Controllers\CotacaoController;
 
 /*
 |--------------------------------------------------------------------------
@@ -60,4 +61,18 @@ Route::prefix('api')->name('api.')->group(function () {
     Route::post('/pagamento/processar', [SectionController::class, 'processarPagamento'])->name('pagamento.processar');
     Route::post('/rastreamento/buscar', [SectionController::class, 'buscarRastreamento'])->name('rastreamento.buscar');
     Route::post('/perfil/atualizar', [SectionController::class, 'atualizarPerfil'])->name('perfil.atualizar');
+    Route::post('/calcular-cotacao', [App\Http\Controllers\SectionController::class, 'calcularCotacao'])->name('cotacao.calcular');
 });
+
+// Esta rota deve estar definida em algum lugar do seu código
+Route::get('/api/sections/{section}', [App\Http\Controllers\SectionController::class, 'getSection'])->name('section.get');
+
+// Adicione a rota para cálculo de cotação
+Route::post('/calcular-cotacao', [App\Http\Controllers\SectionController::class, 'calcularCotacao'])->name('cotacao.calcular');
+
+// Rota para testar a autenticação FedEx
+Route::get('/testar-fedex-auth', function () {
+    $fedexService = new \App\Services\FedexService();
+    $resultado = $fedexService->testarAutenticacao();
+    return response()->json($resultado);
+})->middleware(['auth']); // Use middleware de autenticação para proteger esta rota

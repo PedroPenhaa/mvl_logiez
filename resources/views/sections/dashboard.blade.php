@@ -77,4 +77,12 @@
         const section = $(this).data('section');
         $('.menu-item[data-section="' + section + '"]').click();
     });
+
+    $(document).ready(function() {
+        // When clicking on "Cotação" from the dashboard
+        $('.cotacao-link').on('click', function() {
+            loadSection('cotacao');
+            // Make sure we're not showing the loader here
+        });
+    });
 </script> 

@@ -64,7 +64,7 @@ $(document).ready(function() {
         
         // Enviar para o endpoint usando URL direta em vez da função route()
         $.ajax({
-            url: '/calcular-cotacao', // URL direta em vez de route()
+            url: '/calcular-cotacao',
             type: 'POST',
             data: formData,
             headers: {

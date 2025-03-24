@@ -35,4 +35,13 @@ return [
         ],
     ],
 
+    'fedex' => [
+        'client_id' => env('FEDEX_CLIENT_ID'),
+        'client_secret' => env('FEDEX_CLIENT_SECRET'),
+        'api_url' => env('FEDEX_API_URL', 'https://apis-sandbox.fedex.com'),
+        'shipper_account' => env('FEDEX_SHIPPER_ACCOUNT'),
+        'auth_endpoint' => '/oauth/token',
+        'rate_endpoint' => '/rate/v1/rates/quotes',
+    ],
+
 ];
