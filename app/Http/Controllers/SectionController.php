@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 
 class SectionController extends Controller
 {
@@ -109,17 +110,9 @@ class SectionController extends Controller
         $err = curl_error($curl);
         
         curl_close($curl);
-
-        dd([
-            'Resposta de autenticação FedEx', [
-            'httpCode' => $httpCode,
-            'erro' => $err,
-            'resposta' => json_decode($authResponse, true)
-        ]]);
-        
         
         // Registro detalhado da resposta de autenticação
-        \Log::info('Resposta de autenticação FedEx', [
+        Log::info('Resposta de autenticação FedEx', [
             'httpCode' => $httpCode,
             'erro' => $err,
             'resposta' => json_decode($authResponse, true)
@@ -146,49 +139,95 @@ class SectionController extends Controller
             ], 500);
         }
         
-        // Configuração para requisição de cotação
+        // Para testes, vamos retornar sucesso simulado para garantir que a parte de autenticação está funcionando
+        // Depois implementaremos a cotação real
+        return response()->json([
+            'success' => true,
+            'pesoCubico' => round($pesoCubico, 2),
+            'pesoReal' => $request->peso,
+            'pesoUtilizado' => round($pesoUtilizado, 2),
+            'cotacoesFedEx' => [
+                [
+                    'servico' => 'FedEx International Priority',
+                    'servicoTipo' => 'INTERNATIONAL_PRIORITY',
+                    'valorTotal' => 156.75,
+                    'moeda' => 'USD',
+                    'tempoEntrega' => '3-5 dias úteis',
+                    'dataEntrega' => date('Y-m-d', strtotime('+4 days'))
+                ],
+                [
+                    'servico' => 'FedEx International Economy',
+                    'servicoTipo' => 'INTERNATIONAL_ECONOMY',
+                    'valorTotal' => 132.50,
+                    'moeda' => 'USD',
+                    'tempoEntrega' => '5-7 dias úteis',
+                    'dataEntrega' => date('Y-m-d', strtotime('+6 days'))
+                ]
+            ],
+            'dataConsulta' => date('Y-m-d H:i:s'),
+            'mensagem' => 'Cotação simulada devido a problemas com a API FedEx (403 Forbidden)',
+            'tokenGerado' => true
+        ]);
+        
+        // Configuração para requisição de cotação - Implementação real (temporariamente comentada)
+        /*
         $rateUrl = 'https://apis-sandbox.fedex.com/rate/v1/rates/quotes';
         $shipperAccount = '510087020'; // Conta de teste Shipper fornecida
         
-        // Montar payload para cotação
+        // Obter a data atual para a cotação (formato YYYY-MM-DD)
+        $shipDate = date('Y-m-d');
+        
+        // Montar payload para cotação conforme a documentação
         $ratePayload = [
-            'accountNumber' => [
-                'value' => $shipperAccount
+            "accountNumber" => [
+                "value" => $shipperAccount
             ],
-            'requestedShipment' => [
-                'shipper' => [
-                    'address' => [
-                        'postalCode' => substr($request->origem, 0, 10),
-                        'countryCode' => 'BR',
-                        'residential' => false
+            "rateRequestControlParameters" => [
+                "returnTransitTimes" => true, // Para obter tempos de trânsito
+                "servicesNeededOnRateFailure" => true,
+                "variableOptions" => "FREIGHT_GUARANTEE",
+                "rateSortOrder" => "SERVICENAMETRADITIONAL"
+            ],
+            "requestedShipment" => [
+                "shipper" => [
+                    "address" => [
+                        "postalCode" => substr($request->origem, 0, 10),
+                        "countryCode" => "BR",
+                        "residential" => false
                     ]
                 ],
-                'recipient' => [
-                    'address' => [
-                        'postalCode' => substr($request->destino, 0, 10),
-                        'countryCode' => 'US',
-                        'residential' => false
+                "recipient" => [
+                    "address" => [
+                        "postalCode" => substr($request->destino, 0, 10),
+                        "countryCode" => "US",
+                        "residential" => false
                     ]
                 ],
-                'pickupType' => 'DROPOFF_AT_FEDEX_LOCATION',
-                'packagingType' => 'YOUR_PACKAGING',
-                'rateRequestType' => ['ACCOUNT', 'LIST'],
-                'requestedPackageLineItems' => [
+                "preferredCurrency" => "USD",
+                "rateRequestType" => ["LIST", "ACCOUNT"],
+                "shipDateStamp" => $shipDate,
+                "pickupType" => "DROPOFF_AT_FEDEX_LOCATION",
+                "packagingType" => "YOUR_PACKAGING",
+                "requestedPackageLineItems" => [
                     [
-                        'weight' => [
-                            'units' => 'KG',
-                            'value' => $request->peso
+                        "weight" => [
+                            "units" => "KG",
+                            "value" => $request->peso
                         ],
-                        'dimensions' => [
-                            'length' => $request->comprimento,
-                            'width' => $request->largura,
-                            'height' => $request->altura,
-                            'units' => 'CM'
+                        "dimensions" => [
+                            "length" => $request->comprimento,
+                            "width" => $request->largura,
+                            "height" => $request->altura,
+                            "units" => "CM"
                         ],
-                        'groupPackageCount' => 1
+                        "groupPackageCount" => 1
                     ]
-                ]
-            ]
+                ],
+                "totalPackageCount" => 1,
+                "totalWeight" => $request->peso,
+                "documentShipment" => false
+            ],
+            "carrierCodes" => ["FDXE", "FDXG"] // FedEx Express e FedEx Ground
         ];
         
         // Inicializar cURL para requisição de cotação
@@ -201,6 +240,7 @@ class SectionController extends Controller
             CURLOPT_HTTPHEADER => [
                 'Content-Type: application/json',
                 'Authorization: Bearer ' . $accessToken,
+                'x-customer-transaction-id' => uniqid('logiez_'),
                 'X-locale: pt_BR'
             ],
             CURLOPT_SSL_VERIFYPEER => false, // Apenas para ambiente de desenvolvimento
@@ -213,7 +253,7 @@ class SectionController extends Controller
         curl_close($rateCurl);
         
         // Registro detalhado da resposta de cotação
-        \Log::info('Resposta de cotação FedEx', [
+        Log::info('Resposta de cotação FedEx', [
             'httpCode' => $rateHttpCode,
             'erro' => $rateErr,
             'resposta' => json_decode($rateResponse, true)
@@ -236,6 +276,7 @@ class SectionController extends Controller
         if (isset($rateData['output']['rateReplyDetails'])) {
             foreach ($rateData['output']['rateReplyDetails'] as $rateDetail) {
                 $serviceName = $rateDetail['serviceName'] ?? 'Serviço Desconhecido';
+                $serviceType = $rateDetail['serviceType'] ?? 'TIPO_DESCONHECIDO';
                 $amount = 0;
                 $currency = 'USD';
                 
@@ -245,15 +286,24 @@ class SectionController extends Controller
                 }
                 
                 $tempoEntrega = null;
-                if (isset($rateDetail['commit']['dateDetail']['dayFormat'])) {
-                    $tempoEntrega = $rateDetail['commit']['dateDetail']['dayFormat'];
+                $dataEntrega = null;
+                
+                if (isset($rateDetail['commit']['dateDetail'])) {
+                    if (isset($rateDetail['commit']['dateDetail']['dayFormat'])) {
+                        $tempoEntrega = $rateDetail['commit']['dateDetail']['dayFormat'];
+                    }
+                    if (isset($rateDetail['commit']['dateDetail']['day'])) {
+                        $dataEntrega = $rateDetail['commit']['dateDetail']['day'];
+                    }
                 }
                 
                 $cotacoes[] = [
                     'servico' => $serviceName,
+                    'servicoTipo' => $serviceType,
                     'valorTotal' => $amount,
                     'moeda' => $currency,
-                    'tempoEntrega' => $tempoEntrega
+                    'tempoEntrega' => $tempoEntrega,
+                    'dataEntrega' => $dataEntrega
                 ];
             }
         }
@@ -265,8 +315,10 @@ class SectionController extends Controller
             'pesoReal' => $request->peso,
             'pesoUtilizado' => round($pesoUtilizado, 2),
             'cotacoesFedEx' => $cotacoes,
+            'dataConsulta' => date('Y-m-d H:i:s'),
             'responseOriginal' => $rateData
         ]);
+        */
     }
     
     /**
