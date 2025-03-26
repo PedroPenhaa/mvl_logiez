@@ -4,6 +4,7 @@ namespace App\Services;
 
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Http;
 
 class FedexService
 {
@@ -11,25 +12,17 @@ class FedexService
     protected $clientSecret;
     protected $apiUrl;
     protected $shipperAccount;
-    protected $useProduction;
     
     public function __construct()
     {
-     /*   $this->useProduction = config('services.fedex.use_production');
-        $this->clientId = config('services.fedex.client_id');
-        $this->clientSecret = config('services.fedex.client_secret');
-        $this->apiUrl = config('services.fedex.api_url');
-        $this->shipperAccount = config('services.fedex.shipper_account');
-        */
-
-        $this->apiUrl = "https://apis-sandbox.fedex.com";
-        $this->clientId = "l7517499d73dc1470c8f56fe055c45113c";
-        $this->clientSecret = "41d8172c88c345cca8f47695bc97a5cd";
-        $this->shipperAccount = "740561073";
+        $this->apiUrl = config('services.fedex.api_url', "https://apis-sandbox.fedex.com");
+        $this->clientId = config('services.fedex.client_id', "l7517499d73dc1470c8f56fe055c45113c");
+        $this->clientSecret = config('services.fedex.client_secret', "41d8172c88c345cca8f47695bc97a5cd");
+        $this->shipperAccount = config('services.fedex.shipper_account', "740561073");
 
         // Registrar ambiente em uso para diagnóstico
         Log::info('FedexService inicializado', [
-            'ambiente' => $this->useProduction ? 'Produção' : 'Homologação',
+            'ambiente' => config('services.fedex.use_production', false) ? 'Produção' : 'Homologação',
             'apiUrl' => $this->apiUrl
         ]);
     }
@@ -40,7 +33,7 @@ class FedexService
      * @param bool $forcarNovoToken Se true, ignora cache e solicita novo token
      * @return string Token de acesso
      */
-    private function getAuthToken($forceRefresh = false) {
+    public function getAuthToken($forceRefresh = false) {
         if (!$forceRefresh && Cache::has('fedex_token')) {
             return Cache::get('fedex_token');
         }

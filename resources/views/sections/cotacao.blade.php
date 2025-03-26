@@ -136,18 +136,6 @@ $(document).ready(function() {
                 // Exibir logs detalhados no console para depuração
                 console.log('Resposta completa da API:', response);
                 
-                if (response.debug) {
-                    console.log('Informações de depuração:', response.debug);
-                    
-                    if (response.debug.payload) {
-                        console.log('Payload enviado para FedEx:', response.debug.payload);
-                    }
-                    
-                    if (response.debug.resposta) {
-                        console.log('Resposta recebida da FedEx:', response.debug.resposta);
-                    }
-                }
-                
                 if (response.success) {
                     // Montar HTML para exibir os resultados
                     var html = '<div class="card shadow">';
@@ -224,21 +212,12 @@ $(document).ready(function() {
                     html += '<button onclick="window.print();" class="btn btn-outline-secondary">';
                     html += '<i class="fas fa-print me-2"></i>Imprimir</button>';
                     
-                    html += '<a href="/exportar-cotacao-pdf?hash=' + response.hash + '" ';
-                    html += 'class="btn btn-danger" target="_blank">';
-                    html += '<i class="fas fa-file-pdf me-2"></i>Baixar PDF</a>';
-                    html += '</div></div>';
-                    
-                    // Seção de debug para desenvolvedores (escondida por padrão)
-                    if (response.debug) {
-                        html += '<div class="mt-4">';
-                        html += '<button class="btn btn-sm btn-outline-secondary" type="button" data-bs-toggle="collapse" data-bs-target="#debugInfo">Mostrar detalhes técnicos</button>';
-                        html += '<div class="collapse mt-2" id="debugInfo">';
-                        html += '<div class="card card-body bg-light">';
-                        html += '<h6>Informações de Debug</h6>';
-                        html += '<pre class="small" style="max-height: 300px; overflow-y: auto;">' + JSON.stringify(response.debug, null, 2) + '</pre>';
-                        html += '</div></div></div>';
+                    if (response.hash) {
+                        html += '<a href="/exportar-cotacao-pdf?hash=' + response.hash + '" ';
+                        html += 'class="btn btn-danger" target="_blank">';
+                        html += '<i class="fas fa-file-pdf me-2"></i>Baixar PDF</a>';
                     }
+                    html += '</div></div>';
                     
                     html += '</div></div>';
                     
@@ -249,51 +228,38 @@ $(document).ready(function() {
                     $('html, body').animate({
                         scrollTop: $('#cotacao-resultado').offset().top - 100
                     }, 500);
-                    
                 } else {
                     // Exibir mensagem de erro
                     var html = '<div class="alert alert-danger">';
                     html += '<h4>Erro ao calcular cotação</h4>';
-                    html += '<p>' + (response.message || 'Ocorreu um erro ao processar sua solicitação.') + '</p>';
-                    if (response.resposta || response.debug) {
-                        html += '<details>';
-                        html += '<summary>Detalhes técnicos</summary>';
-                        html += '<pre class="small">' + JSON.stringify(response.resposta || response.debug, null, 2) + '</pre>';
-                        html += '</details>';
-                    }
+                    html += '<p>' + (response.message || 'Ocorreu um erro ao processar sua cotação. Tente novamente.') + '</p>';
                     html += '</div>';
                     
-                    $('#cotacao-resultado').html(html).show();
+                    $('#cotacao-resultado').html(html).fadeIn();
                 }
             },
-            error: function(xhr) {
+            error: function(xhr, status, error) {
                 // Esconder o loader
                 $('#cotacao-loader').hide();
                 
+                // Log do erro
+                console.error('Erro na requisição AJAX:', error);
+                console.error('Resposta:', xhr.responseText);
+                
                 // Exibir mensagem de erro
                 var html = '<div class="alert alert-danger">';
-                html += '<h4>Erro ao processar requisição</h4>';
-                html += '<p>Ocorreu um erro ao comunicar com o servidor. Por favor, tente novamente mais tarde.</p>';
+                html += '<h4>Erro ao calcular cotação</h4>';
                 
-                if (xhr.responseJSON) {
-                    html += '<details>';
-                    html += '<summary>Detalhes técnicos</summary>';
-                    html += '<p>' + (xhr.responseJSON.message || 'Erro desconhecido') + '</p>';
-                    if (xhr.responseJSON.errors) {
-                        html += '<ul>';
-                        Object.keys(xhr.responseJSON.errors).forEach(function(key) {
-                            xhr.responseJSON.errors[key].forEach(function(error) {
-                                html += '<li>' + error + '</li>';
-                            });
-                        });
-                        html += '</ul>';
-                    }
-                    html += '</details>';
+                try {
+                    var response = JSON.parse(xhr.responseText);
+                    html += '<p>' + (response.message || 'Ocorreu um erro ao processar sua cotação. Tente novamente.') + '</p>';
+                } catch (e) {
+                    html += '<p>Ocorreu um erro ao processar sua cotação. Tente novamente.</p>';
                 }
                 
                 html += '</div>';
                 
-                $('#cotacao-resultado').html(html).show();
+                $('#cotacao-resultado').html(html).fadeIn();
             }
         });
     });

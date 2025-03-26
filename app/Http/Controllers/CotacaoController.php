@@ -3,9 +3,17 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
+use App\Services\FedexService;
 
 class CotacaoController extends Controller
 {
+    protected $fedexService;
+    
+    public function __construct(FedexService $fedexService)
+    {
+        $this->fedexService = $fedexService;
+    }
+    
     public function index()
     {
         return view('cotacao.index');
@@ -23,45 +31,27 @@ class CotacaoController extends Controller
             'altura' => 'required|numeric',
         ]);
         
-        // Seu código de requisição à API FedEx
-        $clientId = 'l7d8933648fbcf4414b354f41cf050530a';
-        $clientSecret = '7b28b7ae75254bc681b3e899cf16607a';
-        $url = 'https://apis-sandbox.fedex.com/oauth/token';
-
-        $headers = [
-            "Content-Type: application/x-www-form-urlencoded",
-            "Accept: application/json"
-        ];
-
-        $data = http_build_query([
-            'grant_type' => 'client_credentials'
-        ]);
-
-        $curl = curl_init();
-
-        curl_setopt_array($curl, [
-            CURLOPT_URL => $url,
-            CURLOPT_RETURNTRANSFER => true,
-            CURLOPT_USERPWD => "$clientId:$clientSecret",
-            CURLOPT_POST => true,
-            CURLOPT_POSTFIELDS => $data,
-            CURLOPT_HTTPHEADER => $headers,
-        ]);
-
-        $response = curl_exec($curl);
-        $httpCode = curl_getinfo($curl, CURLINFO_HTTP_CODE);
-        
-        curl_close($curl);
-        
-        // Processar resposta e obter token
-        $responseData = json_decode($response, true);
-        
-        // Aqui você usaria o token para fazer a requisição de cotação
-        // e retornaria os resultados
-        
-        return response()->json([
-            'status' => 'success',
-            'data' => $responseData
-        ]);
+        try {
+            // Usar o serviço FedEx para calcular a cotação
+            $resultado = $this->fedexService->calcularCotacao(
+                $request->origem,
+                $request->destino,
+                $request->altura,
+                $request->largura,
+                $request->comprimento,
+                $request->peso,
+                $request->forcarSimulacao ?? false
+            );
+            
+            return response()->json([
+                'status' => 'success',
+                'data' => $resultado
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'status' => 'error',
+                'message' => $e->getMessage()
+            ], 500);
+        }
     }
 } 

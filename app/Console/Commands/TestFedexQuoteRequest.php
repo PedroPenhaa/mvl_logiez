@@ -260,6 +260,11 @@ class TestFedexQuoteRequest extends Command
             //dump('-------------------------- TO AQUI --------------------------');
             //dd($rateResponse);
 
+            Log::info('', [
+
+                $rateData
+            ]);
+
             // Registrar resposta para análise
             if ($salvarLog) {
                 Log::info('Resposta completa da API FedEx', [
@@ -270,62 +275,56 @@ class TestFedexQuoteRequest extends Command
 
             // Extrair cotações da resposta
             $cotacoes = [];
-if (isset($rateData['output']['rateReplyDetails'])) {
-    foreach ($rateData['output']['rateReplyDetails'] as $rateDetail) {
-        $serviceName = $rateDetail['serviceName'] ?? 'Serviço Desconhecido';
-        $serviceType = $rateDetail['serviceType'] ?? '';
-        
-        // Pegar o primeiro ratedShipmentDetails (ACCOUNT)
-        $ratedShipment = $rateDetail['ratedShipmentDetails'][0] ?? null;
-        
-        if ($ratedShipment) {
-            $amount = $ratedShipment['totalNetCharge'] ?? 0;
-            $currency = $ratedShipment['currency'] ?? 'USD';
+            if (isset($rateData['output']['rateReplyDetails'])) {
+                foreach ($rateData['output']['rateReplyDetails'] as $rateDetail) {
+                    $serviceName = $rateDetail['serviceName'] ?? 'Serviço Desconhecido';
+                    $serviceType = $rateDetail['serviceType'] ?? '';
             
-            // Formatar o valor com 2 casas decimais
-            $valorFormatado = number_format($amount, 2, '.', '');
+                    // Pegar o primeiro ratedShipmentDetails (ACCOUNT)
+                    $ratedShipment = $rateDetail['ratedShipmentDetails'][0] ?? null;
             
-            // Extrair informações de entrega corretamente
-            $deliveryInfo = '';
-            $deliveryDate = 'N/A';
+                    if ($ratedShipment) {
+                        $amount = $ratedShipment['totalNetCharge'] ?? 0;
+                        $currency = $ratedShipment['currency'] ?? 'USD';
             
-            if (isset($rateDetail['commit'])) {
-                // Tratar mensagens de entrega
-                if (isset($rateDetail['commit']['commitMessageDetails'])) {
-                    $deliveryInfo = $rateDetail['commit']['commitMessageDetails'];
-                } elseif (isset($rateDetail['commit']['deliveryMessages'][0])) {
-                    $deliveryInfo = $rateDetail['commit']['deliveryMessages'][0];
-                }
-                
-                // Tratar data de entrega
-                if (isset($rateDetail['commit']['dateDetail']['dayFormat'])) {
-                    $deliveryDate = $rateDetail['commit']['dateDetail']['dayFormat'];
-                } elseif (isset($rateDetail['commit']['dateDetail']['date'])) {
-                    $deliveryDate = $rateDetail['commit']['dateDetail']['date'];
-                }
-                
-                // Se não houver data específica, usar o padrão da API
-                if ($deliveryDate === 'N/A' && isset($rateDetail['commit']['derivedDeliveryDate'])) {
-                    $deliveryDate = $rateDetail['commit']['derivedDeliveryDate'];
+                        // Formatar o valor com 2 casas decimais
+                        $valorFormatado = number_format($amount, 2, '.', '');
+            
+                        // Extrair informações de entrega
+                        $deliveryInfo = 'N/A';
+                        $deliveryDate = 'N/A';
+            
+                        if (isset($rateDetail['commit'])) {
+                            // Tempo de entrega - pegar a primeira mensagem de deliveryMessages
+                            if (!empty($rateDetail['commit']['deliveryMessages'])) {
+                                $deliveryInfo = $rateDetail['commit']['deliveryMessages'][0];
+                            } elseif (isset($rateDetail['commit']['commitMessageDetails'])) {
+                                $deliveryInfo = $rateDetail['commit']['commitMessageDetails'];
+                            }
+            
+                            // Data de entrega - no JSON fornecido, não há data específica, apenas mensagens
+                            // Se houver derivedDeliveryDate no futuro, você pode usá-lo
+                            if (isset($rateDetail['commit']['derivedDeliveryDate'])) {
+                                $deliveryDate = $rateDetail['commit']['derivedDeliveryDate'];
+                            }
+                        }
+            
+                        // Limpar mensagem de entrega se for muito longa
+                        if (strlen($deliveryInfo) > 50) {
+                            $deliveryInfo = substr($deliveryInfo, 0, 47) . '...';
+                        }
+            
+                        $cotacoes[] = [
+                            'servico' => $serviceName,
+                            'servicoTipo' => $serviceType,
+                            'valorTotal' => $valorFormatado,
+                            'moeda' => $currency,
+                            'tempoEntrega' => trim($deliveryInfo),
+                            'dataEntrega' => $deliveryDate
+                        ];
+                    }
                 }
             }
-            
-            // Limpar mensagem de entrega se for muito longa
-            if (strlen($deliveryInfo) > 30) {
-                $deliveryInfo = substr($deliveryInfo, 0, 27) . '...';
-            }
-            
-            $cotacoes[] = [
-                'servico' => $serviceName,
-                'servicoTipo' => $serviceType,
-                'valorTotal' => $valorFormatado,
-                'moeda' => $currency,
-                'tempoEntrega' => $deliveryInfo,
-                'dataEntrega' => $deliveryDate
-            ];
-        }
-    }
-}
 
 
             $resultado = [
