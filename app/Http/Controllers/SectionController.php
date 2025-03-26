@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Cache;
 
 class SectionController extends Controller
 {
@@ -14,7 +15,11 @@ class SectionController extends Controller
     
     public function cotacao()
     {
-        return view('sections.cotacao');
+        // Verificar se há dados da última cotação FedEx na sessão
+        $dados = session('dados_fedex', null);
+        $resultado = session('resultado_fedex', null);
+        
+        return view('sections.cotacao', compact('dados', 'resultado'));
     }
     
     public function envio()
@@ -251,7 +256,7 @@ class SectionController extends Controller
             // Verificar erros de cURL ou código de resposta inválido
             if ($rateErr || $rateHttpCode != 200) {
                 // Se houver falha na API, usar dados simulados temporariamente com aviso
-                return response()->json([
+                $simulatedResponse = [
                     'success' => true, // Mantemos como true para mostrar resultado ao usuário
                     'pesoCubico' => round($pesoCubico, 2),
                     'pesoReal' => $request->peso,
@@ -284,7 +289,27 @@ class SectionController extends Controller
                         'accessToken' => $accessToken,
                         'requestBody' => json_encode($ratePayload)
                     ]
-                ]);
+                ];
+                
+                // Gerar hash para o PDF
+                $hash = md5(json_encode($simulatedResponse));
+                $simulatedResponse['hash'] = $hash;
+                
+                // Guardar a cotação simulada em cache para uso na exportação PDF
+                Cache::put('cotacao_' . $hash, [
+                    'dados' => $request->all(),
+                    'resultado' => [
+                        'pesoCubico' => round($pesoCubico, 2),
+                        'pesoReal' => $request->peso,
+                        'pesoUtilizado' => round($pesoUtilizado, 2),
+                        'cotacoesFedEx' => $simulatedResponse['cotacoesFedEx'],
+                        'dataConsulta' => date('Y-m-d H:i:s'),
+                        'simulado' => true,
+                        'mensagem' => 'Cotação simulada devido a problemas com a API FedEx.'
+                    ]
+                ], now()->addMinutes(30));
+                
+                return response()->json($simulatedResponse);
             }
             
             // Processar resposta da cotação real
@@ -328,7 +353,7 @@ class SectionController extends Controller
             }
             
             // Retornar resultado final
-            return response()->json([
+            $responseData = [
                 'success' => true,
                 'pesoCubico' => round($pesoCubico, 2),
                 'pesoReal' => $request->peso,
@@ -340,7 +365,26 @@ class SectionController extends Controller
                     'payload' => $ratePayload,
                     'resposta' => $rateResponseData
                 ]
-            ]);
+            ];
+            
+            // Gerar hash para o PDF
+            $hash = md5(json_encode($responseData));
+            $responseData['hash'] = $hash;
+            
+            // Guardar a cotação em cache para uso na exportação PDF
+            Cache::put('cotacao_' . $hash, [
+                'dados' => $request->all(),
+                'resultado' => [
+                    'pesoCubico' => round($pesoCubico, 2),
+                    'pesoReal' => $request->peso,
+                    'pesoUtilizado' => round($pesoUtilizado, 2),
+                    'cotacoesFedEx' => $cotacoes,
+                    'dataConsulta' => date('Y-m-d H:i:s'),
+                    'simulado' => false
+                ]
+            ], now()->addMinutes(30));
+            
+            return response()->json($responseData);
         } catch (\Exception $e) {
             // Log do erro para depuração
             Log::error('Erro ao processar cotação FedEx', [

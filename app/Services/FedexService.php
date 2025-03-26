@@ -11,13 +11,27 @@ class FedexService
     protected $clientSecret;
     protected $apiUrl;
     protected $shipperAccount;
+    protected $useProduction;
     
     public function __construct()
     {
+     /*   $this->useProduction = config('services.fedex.use_production');
         $this->clientId = config('services.fedex.client_id');
         $this->clientSecret = config('services.fedex.client_secret');
         $this->apiUrl = config('services.fedex.api_url');
         $this->shipperAccount = config('services.fedex.shipper_account');
+        */
+
+        $this->apiUrl = "https://apis-sandbox.fedex.com";
+        $this->clientId = "l7517499d73dc1470c8f56fe055c45113c";
+        $this->clientSecret = "41d8172c88c345cca8f47695bc97a5cd";
+        $this->shipperAccount = "740561073";
+
+        // Registrar ambiente em uso para diagnóstico
+        Log::info('FedexService inicializado', [
+            'ambiente' => $this->useProduction ? 'Produção' : 'Homologação',
+            'apiUrl' => $this->apiUrl
+        ]);
     }
     
     /**
@@ -26,66 +40,33 @@ class FedexService
      * @param bool $forcarNovoToken Se true, ignora cache e solicita novo token
      * @return string Token de acesso
      */
-    public function getAuthToken($forcarNovoToken = false)
-    {
-        // Verificar se já temos um token em cache
-        if (!$forcarNovoToken && Cache::has('fedex_token')) {
+    private function getAuthToken($forceRefresh = false) {
+        if (!$forceRefresh && Cache::has('fedex_token')) {
             return Cache::get('fedex_token');
         }
-        
+    
         $authUrl = $this->apiUrl . '/oauth/token';
         
-        $curl = curl_init();
-        curl_setopt_array($curl, [
-            CURLOPT_URL => $authUrl,
-            CURLOPT_RETURNTRANSFER => true,
-            CURLOPT_ENCODING => "",
-            CURLOPT_MAXREDIRS => 10,
-            CURLOPT_TIMEOUT => 30,
-            CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
-            CURLOPT_CUSTOMREQUEST => "POST",
-            CURLOPT_POSTFIELDS => "grant_type=client_credentials&client_id=" . $this->clientId . "&client_secret=" . $this->clientSecret,
-            CURLOPT_HTTPHEADER => [
-                "Content-Type: application/x-www-form-urlencoded",
-                "Accept: application/json"
-            ],
+        $response = Http::asForm()->post($authUrl, [
+            'grant_type' => 'client_credentials',
+            'client_id' => $this->clientId,
+            'client_secret' => $this->clientSecret
         ]);
-        
-        $response = curl_exec($curl);
-        $httpCode = curl_getinfo($curl, CURLINFO_HTTP_CODE);
-        $err = curl_error($curl);
-        
-        curl_close($curl);
-        
-        if ($err) {
-            Log::error('Erro na autenticação FedEx', ['erro' => $err]);
-            throw new \Exception('Erro na requisição de autenticação: ' . $err);
+    
+        if ($response->failed()) {
+            throw new \Exception('Falha na autenticação: ' . $response->body());
         }
-        
-        if ($httpCode != 200) {
-            Log::error('Erro na autenticação FedEx', [
-                'httpCode' => $httpCode,
-                'resposta' => $response
-            ]);
-            throw new \Exception('Falha na autenticação. Código HTTP: ' . $httpCode);
+    
+        $data = $response->json();
+        $token = $data['access_token'] ?? null;
+    
+        if (!$token) {
+            throw new \Exception('Token não recebido');
         }
-        
-        $authData = json_decode($response, true);
-        $accessToken = $authData['access_token'] ?? null;
-        
-        if (!$accessToken) {
-            throw new \Exception('Token de acesso não encontrado na resposta');
-        }
-        
-        // Guardar token em cache (expira 1 hora antes do tempo real de expiração)
-        $expiresIn = ($authData['expires_in'] ?? 3600) - 3600;
-        if ($expiresIn < 0) {
-            $expiresIn = 1800; // Se o tempo for negativo, define para 30 minutos
-        }
-        
-        Cache::put('fedex_token', $accessToken, now()->addSeconds($expiresIn));
-        
-        return $accessToken;
+    
+        Cache::put('fedex_token', $token, now()->addSeconds($data['expires_in'] - 60));
+    
+        return $token;
     }
     
     /**
@@ -102,192 +83,225 @@ class FedexService
      */
     public function calcularCotacao($origem, $destino, $altura, $largura, $comprimento, $peso, $forcarSimulacao = false)
     {
-        // Se forçar simulação, pula a chamada da API
+        // Se forçar simulação, usa o método de simulação
         if ($forcarSimulacao) {
-            $resultado = $this->simularCotacao($origem, $destino, $altura, $largura, $comprimento, $peso);
-            $resultado['mensagem'] = 'Cotação simulada solicitada pelo sistema';
-            return $resultado;
+            return $this->simularCotacao($origem, $destino, $altura, $largura, $comprimento, $peso);
         }
-
-        // Obter token de autenticação
+    
         try {
-            $accessToken = $this->getAuthToken();
-        } catch (\Exception $e) {
-            Log::warning('Falha na autenticação FedEx, usando simulação', ['erro' => $e->getMessage()]);
-            $resultado = $this->simularCotacao($origem, $destino, $altura, $largura, $comprimento, $peso);
-            $resultado['mensagem'] = 'Cotação simulada devido a falha na autenticação: ' . $e->getMessage();
-            return $resultado;
-        }
-
-        // Cálculo do peso cúbico (dimensional)
-        $pesoCubico = ($altura * $largura * $comprimento) / 5000;
-        $pesoUtilizado = max($pesoCubico, $peso);
-        
-        // Extrair códigos postais e códigos de país
-        $postalCodeOrigem = $origem;
-        $countryCodeOrigem = 'BR';
-        $postalCodeDestino = $destino;
-        $countryCodeDestino = 'US';
-        
-        if (is_array($origem)) {
-            $postalCodeOrigem = $origem['postalCode'] ?? $origem[0] ?? '';
-            $countryCodeOrigem = $origem['countryCode'] ?? $origem[1] ?? 'BR';
-        }
-        
-        if (is_array($destino)) {
-            $postalCodeDestino = $destino['postalCode'] ?? $destino[0] ?? '';
-            $countryCodeDestino = $destino['countryCode'] ?? $destino[1] ?? 'US';
-        }
-        
-        // Preparar requisição de cotação
-        $rateUrl = $this->apiUrl . '/rate/v1/rates/quotes';
-        
-        $rateRequest = [
-            'accountNumber' => [
-                'value' => $this->shipperAccount
-            ],
-            'requestedShipment' => [
-                'shipper' => [
-                    'address' => [
-                        'postalCode' => substr($postalCodeOrigem, 0, 10),
-                        'countryCode' => $countryCodeOrigem,
-                        'residential' => false
+            // Obter token de autenticação
+            $accessToken = $this->getAuthToken(true); // Forçar novo token
+    
+            // Cálculo do peso cúbico
+            $pesoCubico = ($altura * $largura * $comprimento) / 5000;
+            $pesoUtilizado = max($pesoCubico, $peso);
+    
+            // Preparar requisição de cotação
+            $rateUrl = $this->apiUrl . '/rate/v1/rates/quotes';
+            $transactionId = uniqid('logiez_rate_');
+            $shipDate = date('Y-m-d');
+    
+            // Extrair códigos postais
+            $postalCodeOrigem = is_array($origem) ? ($origem['postalCode'] ?? $origem[0] ?? '') : $origem;
+            $postalCodeDestino = is_array($destino) ? ($destino['postalCode'] ?? $destino[0] ?? '') : $destino;
+            $countryCodeOrigem = is_array($origem) ? ($origem['countryCode'] ?? 'BR') : 'BR';
+            
+            $countryCodeDestino = is_array($destino) ? ($destino['countryCode'] ?? 'US') : 'US';
+    
+            $rateRequest = [
+                'accountNumber' => [
+                    'value' => $this->shipperAccount
+                ],
+                'rateRequestControlParameters' => [
+                    'returnTransitTimes' => true,
+                    'servicesNeededOnRateFailure' => true,
+                    'variableOptions' => 'FREIGHT_GUARANTEE',
+                    'rateSortOrder' => 'SERVICENAMETRADITIONAL'
+                ],
+                'requestedShipment' => [
+                    'shipper' => [
+                        'address' => [
+                            'postalCode' => substr($postalCodeOrigem, 0, 10),
+                            'countryCode' => $countryCodeOrigem,
+                            'residential' => false
+                        ]
+                    ],
+                    'recipient' => [
+                        'address' => [
+                            'postalCode' => substr($postalCodeDestino, 0, 10),
+                            'countryCode' => $countryCodeDestino,
+                            'residential' => false
+                        ]
+                    ],
+                    'preferredCurrency' => 'USD',
+                    'rateRequestType' => ['LIST', 'ACCOUNT'],
+                    'shipDateStamp' => $shipDate,
+                    'pickupType' => 'DROPOFF_AT_FEDEX_LOCATION',
+                    'packagingType' => 'YOUR_PACKAGING',
+                    'requestedPackageLineItems' => [
+                        [
+                            'weight' => [
+                                'units' => 'KG',
+                                'value' => $peso
+                            ],
+                            'dimensions' => [
+                                'length' => $comprimento,
+                                'width' => $largura,
+                                'height' => $altura,
+                                'units' => 'CM'
+                            ],
+                            'groupPackageCount' => 1
+                        ]
+                    ],
+                    'totalPackageCount' => 1,
+                    'documentShipment' => false,
+                    'customsClearanceDetail' => [
+                        'dutiesPayment' => [
+                            'paymentType' => 'SENDER',
+                            'payor' => [
+                                'responsibleParty' => [
+                                    'accountNumber' => [
+                                        'value' => $this->shipperAccount
+                                    ]
+                                ]
+                            ]
+                        ],
+                        'commodities' => [
+                            [
+                                'description' => 'Test Product',
+                                'weight' => [
+                                    'units' => 'KG',
+                                    'value' => $peso
+                                ],
+                                'quantity' => 1,
+                                'quantityUnits' => 'PCS',
+                                'unitPrice' => [
+                                    'amount' => 100,
+                                    'currency' => 'USD'
+                                ],
+                                'customsValue' => [
+                                    'amount' => 100,
+                                    'currency' => 'USD'
+                                ],
+                                'countryOfManufacture' => $countryCodeOrigem,
+                                'harmonizedCode' => '123456'
+                            ]
+                        ],
+                        'commercialInvoice' => [
+                            'purpose' => 'SAMPLE'
+                        ]
                     ]
                 ],
-                'recipient' => [
-                    'address' => [
-                        'postalCode' => substr($postalCodeDestino, 0, 10),
-                        'countryCode' => $countryCodeDestino,
-                        'residential' => false
-                    ]
-                ],
-                'pickupType' => 'DROPOFF_AT_FEDEX_LOCATION',
-                'rateRequestType' => ['ACCOUNT', 'LIST'],
-                'requestedPackageLineItems' => [
-                    [
-                        'weight' => [
-                            'units' => 'KG',
-                            'value' => $peso
-                        ],
-                        'dimensions' => [
-                            'length' => $comprimento,
-                            'width' => $largura,
-                            'height' => $altura,
-                            'units' => 'CM'
-                        ],
-                        'groupPackageCount' => 1
-                    ]
-                ]
-            ]
-        ];
-        
-        // Enviar requisição de cotação
-        $rateCurl = curl_init();
-        curl_setopt_array($rateCurl, [
-            CURLOPT_URL => $rateUrl,
-            CURLOPT_RETURNTRANSFER => true,
-            CURLOPT_ENCODING => "",
-            CURLOPT_MAXREDIRS => 10,
-            CURLOPT_TIMEOUT => 30,
-            CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
-            CURLOPT_CUSTOMREQUEST => "POST",
-            CURLOPT_POSTFIELDS => json_encode($rateRequest),
-            CURLOPT_HTTPHEADER => [
-                "Content-Type: application/json",
-                "Accept: application/json",
-                "Authorization: Bearer " . $accessToken,
-                "X-locale: en_US"
-            ],
-        ]);
-        
-        $rateResponse = curl_exec($rateCurl);
-        $rateHttpCode = curl_getinfo($rateCurl, CURLINFO_HTTP_CODE);
-        $rateErr = curl_error($rateCurl);
-        
-        curl_close($rateCurl);
-        
-        // Log para debug
-        Log::info('Resposta de cotação FedEx', [
-            'httpCode' => $rateHttpCode,
-            'erro' => $rateErr,
-            'resposta' => json_decode($rateResponse, true)
-        ]);
-        
-        // Verificar erros - Se der erro 403 ou qualquer outro, usamos simulação
-        if ($rateErr || $rateHttpCode != 200) {
-            Log::warning('Erro na API FedEx, usando simulação', [
-                'httpCode' => $rateHttpCode,
-                'erro' => $rateErr
-            ]);
-            
-            $resultado = $this->simularCotacao($origem, $destino, $altura, $largura, $comprimento, $peso);
-            
-            if ($rateErr) {
-                $resultado['mensagem'] = 'Cotação simulada devido a erro na requisição: ' . $rateErr;
-            } else {
-                $resultado['mensagem'] = 'Cotação simulada devido ao código HTTP: ' . $rateHttpCode;
-            }
-            
-            $resultado['apiAttempt'] = [
-                'httpCode' => $rateHttpCode,
-                'erro' => $rateErr
+                'carrierCodes' => ['FDXE']
             ];
+    
+            // Fazer a requisição
+            $rateCurl = curl_init();
+            curl_setopt_array($rateCurl, [
+                CURLOPT_URL => $rateUrl,
+                CURLOPT_RETURNTRANSFER => true,
+                CURLOPT_ENCODING => "",
+                CURLOPT_MAXREDIRS => 10,
+                CURLOPT_TIMEOUT => 30,
+                CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
+                CURLOPT_CUSTOMREQUEST => "POST",
+                CURLOPT_POSTFIELDS => json_encode($rateRequest),
+                CURLOPT_HTTPHEADER => [
+                    "Content-Type: application/json",
+                    "Accept: application/json",
+                    "Authorization: Bearer " . $accessToken,
+                    "X-locale: en_US",
+                    "x-customer-transaction-id: " . $transactionId
+                ],
+                CURLOPT_SSL_VERIFYPEER => false,
+            ]);
+    
+            $rateResponse = curl_exec($rateCurl);
+            $rateHttpCode = curl_getinfo($rateCurl, CURLINFO_HTTP_CODE);
+            $rateErr = curl_error($rateCurl);
             
+            curl_close($rateCurl);
+    
+            if ($rateErr) {
+                throw new \Exception('Erro na requisição de cotação: ' . $rateErr);
+            }
+    
+            if ($rateHttpCode != 200) {
+                throw new \Exception('Falha na cotação. Código HTTP: ' . $rateHttpCode);
+            }
+    
+            $rateData = json_decode($rateResponse, true);
+    
+            // Extrair cotações da resposta - mesma lógica do command
+            $cotacoes = [];
+            if (isset($rateData['output']['rateReplyDetails'])) {
+                foreach ($rateData['output']['rateReplyDetails'] as $rateDetail) {
+                    $serviceName = $rateDetail['serviceName'] ?? 'Serviço Desconhecido';
+                    $serviceType = $rateDetail['serviceType'] ?? '';
+                    
+                    // Pegar o primeiro ratedShipmentDetails (ACCOUNT)
+                    $ratedShipment = $rateDetail['ratedShipmentDetails'][0] ?? null;
+                    
+                    if ($ratedShipment) {
+                        $amount = $ratedShipment['totalNetCharge'] ?? 0;
+                        $currency = $ratedShipment['currency'] ?? 'USD';
+                        
+                        // Extrair informações de entrega
+                        $deliveryInfo = '';
+                        $deliveryDate = 'N/A';
+                        
+                        if (isset($rateDetail['commit'])) {
+                            if (isset($rateDetail['commit']['commitMessageDetails'])) {
+                                $deliveryInfo = $rateDetail['commit']['commitMessageDetails'];
+                            } elseif (isset($rateDetail['commit']['deliveryMessages'][0])) {
+                                $deliveryInfo = $rateDetail['commit']['deliveryMessages'][0];
+                            }
+                            
+                            if (isset($rateDetail['commit']['dateDetail']['dayFormat'])) {
+                                $deliveryDate = $rateDetail['commit']['dateDetail']['dayFormat'];
+                            } elseif (isset($rateDetail['commit']['dateDetail']['date'])) {
+                                $deliveryDate = $rateDetail['commit']['dateDetail']['date'];
+                            }
+                            
+                            if ($deliveryDate === 'N/A' && isset($rateDetail['commit']['derivedDeliveryDate'])) {
+                                $deliveryDate = $rateDetail['commit']['derivedDeliveryDate'];
+                            }
+                        }
+                        
+                        $cotacoes[] = [
+                            'servico' => $serviceName,
+                            'servicoTipo' => $serviceType,
+                            'valorTotal' => number_format($amount, 2, '.', ''),
+                            'moeda' => $currency,
+                            'tempoEntrega' => $deliveryInfo,
+                            'dataEntrega' => $deliveryDate
+                        ];
+                    }
+                }
+            }
+    
+            return [
+                'success' => true,
+                'pesoCubico' => round($pesoCubico, 2),
+                'pesoReal' => $peso,
+                'pesoUtilizado' => round($pesoUtilizado, 2),
+                'cotacoesFedEx' => $cotacoes,
+                'simulado' => false,
+                'dataConsulta' => date('Y-m-d H:i:s'),
+                'respostaOriginal' => $rateData // Opcional - para debug
+            ];
+    
+        } catch (\Exception $e) {
+            Log::error('Erro ao calcular cotação FedEx', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+    
+            // Em caso de erro, retorna simulação
+            $resultado = $this->simularCotacao($origem, $destino, $altura, $largura, $comprimento, $peso);
+            $resultado['mensagem'] = 'Cotação simulada devido a erro na API: ' . $e->getMessage();
             return $resultado;
         }
-        
-        // Processar resposta
-        $rateData = json_decode($rateResponse, true);
-        
-        // Extrair cotações da resposta
-        $cotacoes = [];
-        if (isset($rateData['output']['rateReplyDetails'])) {
-            foreach ($rateData['output']['rateReplyDetails'] as $rateDetail) {
-                $serviceName = $rateDetail['serviceName'] ?? 'Serviço Desconhecido';
-                $serviceType = $rateDetail['serviceType'] ?? '';
-                $amount = 0;
-                $currency = 'USD';
-                
-                if (isset($rateDetail['ratedShipmentDetails'][0]['totalNetCharge'])) {
-                    $amount = $rateDetail['ratedShipmentDetails'][0]['totalNetCharge']['amount'];
-                    $currency = $rateDetail['ratedShipmentDetails'][0]['totalNetCharge']['currency'];
-                }
-                
-                $deliveryDate = null;
-                $deliveryTime = null;
-                
-                if (isset($rateDetail['commit']['dateDetail'])) {
-                    if (isset($rateDetail['commit']['dateDetail']['dayFormat'])) {
-                        $deliveryTime = $rateDetail['commit']['dateDetail']['dayFormat'];
-                    }
-                    
-                    // Tentar obter data estimada se disponível
-                    if (isset($rateDetail['commit']['dateDetail']['date'])) {
-                        $deliveryDate = $rateDetail['commit']['dateDetail']['date'];
-                    }
-                }
-                
-                $cotacoes[] = [
-                    'servico' => $serviceName,
-                    'servicoTipo' => $serviceType,
-                    'valorTotal' => $amount,
-                    'moeda' => $currency,
-                    'tempoEntrega' => $deliveryTime,
-                    'dataEntrega' => $deliveryDate
-                ];
-            }
-        }
-        
-        // Retornar resultado
-        return [
-            'success' => true,
-            'pesoCubico' => round($pesoCubico, 2),
-            'pesoReal' => $peso,
-            'pesoUtilizado' => round($pesoUtilizado, 2),
-            'cotacoesFedEx' => $cotacoes,
-            'simulado' => false,
-            'dataConsulta' => date('Y-m-d H:i:s')
-        ];
     }
 
     /**

@@ -214,9 +214,9 @@ Route::get('/test-fedex-auth', function() {
     return response()->json(['token' => $fedexService->getAuthToken()]);
 })->name('api.fedex.auth');
 
-// Rota para exibir formulário de cotação FedEx
+// Rota para exibir formulário de cotação FedEx - Agora redireciona para a aba correta
 Route::get('/cotacao-fedex', function () {
-    return view('cotacao-fedex');
+    return redirect('/api/sections/cotacao#fedex');
 });
 
 // Rota para processar cotação FedEx
@@ -258,11 +258,15 @@ Route::post('/processar-cotacao-fedex', function (Illuminate\Http\Request $reque
         'resultado' => $cotacao
     ], now()->addMinutes(30));
     
-    // Retornar para a view com os resultados
-    return view('cotacao-fedex', [
-        'dados' => $validated,
-        'resultado' => $cotacao
-    ]);
+    // Armazenar dados na sessão para exibição na aba de cotação
+    session(['dados_fedex' => $validated, 'resultado_fedex' => $cotacao]);
+    
+    // Redirecionamento para a seção de cotação com a aba FedEx aberta
+    if ($request->wantsJson()) {
+        return response()->json(['dados' => $validated, 'resultado' => $cotacao]);
+    }
+    
+    return redirect('/api/sections/cotacao#fedex');
 });
 
 // Rota para exportar cotação em PDF

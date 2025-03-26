@@ -236,11 +236,6 @@
                 <span class="menu-text">Cotação</span>
             </div>
             
-            <a href="{{ url('/cotacao-fedex') }}" class="menu-item" style="text-decoration: none; color: inherit;">
-                <i class="fab fa-fedex"></i>
-                <span class="menu-text">Cotação FedEx</span>
-            </a>
-            
             <div class="menu-item" data-section="envio">
                 <i class="fas fa-shipping-fast"></i>
                 <span class="menu-text">Envio</span>

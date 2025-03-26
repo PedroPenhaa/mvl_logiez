@@ -36,11 +36,10 @@ return [
     ],
 
     'fedex' => [
-        'use_production' => env('FEDEX_USE_PRODUCTION', false),
-        'client_id' => env('FEDEX_USE_PRODUCTION', false) ? env('FEDEX_PROD_CLIENT_ID') : env('FEDEX_HOM_CLIENT_ID'),
-        'client_secret' => env('FEDEX_USE_PRODUCTION', false) ? env('FEDEX_PROD_CLIENT_SECRET') : env('FEDEX_HOM_CLIENT_SECRET'),
-        'api_url' => env('FEDEX_USE_PRODUCTION', false) ? env('FEDEX_PROD_API_URL', 'https://apis.fedex.com') : env('FEDEX_HOM_API_URL', 'https://apis-sandbox.fedex.com'),
-        'shipper_account' => env('FEDEX_USE_PRODUCTION', false) ? env('FEDEX_PROD_SHIPPER_ACCOUNT') : env('FEDEX_HOM_SHIPPER_ACCOUNT'),
+        'client_id' => env('FEDEX_CLIENT_ID'),
+        'client_secret' => env('FEDEX_CLIENT_SECRET'),
+        'api_url' => env('FEDEX_API_URL', 'https://apis-sandbox.fedex.com'),
+        'shipper_account' => env('FEDEX_SHIPPER_ACCOUNT'),
         'auth_endpoint' => '/oauth/token',
         'rate_endpoint' => '/rate/v1/rates/quotes',
     ],

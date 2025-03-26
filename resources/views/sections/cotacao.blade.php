@@ -72,9 +72,12 @@
                     <p>Calculando as melhores opções de envio...</p>
                 </div>
                 
-                <div class="mb-4 text-center">
+                <div class="mb-4 text-center d-flex justify-content-center gap-2">
                     <button type="submit" class="btn btn-primary btn-lg px-5" id="calcular-cotacao">
                         <i class="fas fa-calculator me-2"></i> Calcular Cotação
+                    </button>
+                    <button type="button" id="limpar-form" class="btn btn-outline-secondary btn-lg px-4">
+                        <i class="fas fa-broom me-2"></i>Limpar
                     </button>
                 </div>
             </form>
@@ -88,6 +91,12 @@
 $(document).ready(function() {
     // Garantir que o loader está escondido inicialmente
     $('#cotacao-loader').hide();
+    
+    // Limpar formulário
+    $('#limpar-form').on('click', function() {
+        $('#cotacao-form')[0].reset();
+        $('#cotacao-resultado').hide();
+    });
     
     // Processar envio do formulário via AJAX
     $('#cotacao-form').on('submit', function(e) {
@@ -208,7 +217,17 @@ $(document).ready(function() {
                         html += '<div class="alert alert-warning">Nenhuma opção de envio encontrada para os parâmetros fornecidos.</div>';
                     }
                     
-                    html += '<div class="text-muted mt-3">Cotação calculada em: ' + response.dataConsulta + '</div>';
+                    html += '<div class="d-flex justify-content-between align-items-center mt-4">';
+                    html += '<div class="text-muted">Cotação calculada em: ' + response.dataConsulta + '</div>';
+                    
+                    html += '<div class="d-flex gap-2">';
+                    html += '<button onclick="window.print();" class="btn btn-outline-secondary">';
+                    html += '<i class="fas fa-print me-2"></i>Imprimir</button>';
+                    
+                    html += '<a href="/exportar-cotacao-pdf?hash=' + response.hash + '" ';
+                    html += 'class="btn btn-danger" target="_blank">';
+                    html += '<i class="fas fa-file-pdf me-2"></i>Baixar PDF</a>';
+                    html += '</div></div>';
                     
                     // Seção de debug para desenvolvedores (escondida por padrão)
                     if (response.debug) {
@@ -251,21 +270,24 @@ $(document).ready(function() {
                 // Esconder o loader
                 $('#cotacao-loader').hide();
                 
-                // Log do erro para depuração
-                console.error('Erro na requisição:', xhr);
-                if (xhr.responseJSON) {
-                    console.error('Detalhes do erro:', xhr.responseJSON);
-                }
-                
                 // Exibir mensagem de erro
                 var html = '<div class="alert alert-danger">';
-                html += '<h4>Erro na requisição</h4>';
-                html += '<p>Não foi possível processar sua solicitação.</p>';
+                html += '<h4>Erro ao processar requisição</h4>';
+                html += '<p>Ocorreu um erro ao comunicar com o servidor. Por favor, tente novamente mais tarde.</p>';
                 
                 if (xhr.responseJSON) {
                     html += '<details>';
                     html += '<summary>Detalhes técnicos</summary>';
-                    html += '<pre class="small">' + JSON.stringify(xhr.responseJSON, null, 2) + '</pre>';
+                    html += '<p>' + (xhr.responseJSON.message || 'Erro desconhecido') + '</p>';
+                    if (xhr.responseJSON.errors) {
+                        html += '<ul>';
+                        Object.keys(xhr.responseJSON.errors).forEach(function(key) {
+                            xhr.responseJSON.errors[key].forEach(function(error) {
+                                html += '<li>' + error + '</li>';
+                            });
+                        });
+                        html += '</ul>';
+                    }
                     html += '</details>';
                 }
                 
@@ -276,4 +298,16 @@ $(document).ready(function() {
         });
     });
 });
-</script> 
+</script>
+
+<style>
+@media print {
+    .card-header, form, .btn, .sidebar, .toggle-sidebar {
+        display: none !important;
+    }
+    .main-content {
+        margin-left: 0 !important;
+        width: 100% !important;
+    }
+}
+</style> 
