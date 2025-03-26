@@ -531,29 +531,43 @@ class SectionController extends Controller
     {
         // Validar os dados de entrada
         $request->validate([
-            'remetente_nome' => 'required|string',
-            'remetente_email' => 'required|email',
-            'remetente_telefone' => 'required|string',
-            'remetente_tipo' => 'required|in:fisica,juridica',
-            'remetente_documento' => 'required|string',
+            'produtos_json' => 'required|string',
+            'valor_total' => 'required|numeric',
+            'peso_total' => 'required|numeric',
             
-            'destinatario_nome' => 'required|string',
-            'destinatario_email' => 'required|email',
-            'destinatario_telefone' => 'required|string',
-            'destinatario_endereco' => 'required|string',
-            'destinatario_cidade' => 'required|string',
-            'destinatario_pais' => 'required|string',
-            'destinatario_cep' => 'required|string',
+            'origem_nome' => 'required|string',
+            'origem_endereco' => 'required|string',
+            'origem_cidade' => 'required|string',
+            'origem_estado' => 'required|string',
+            'origem_cep' => 'required|string',
+            'origem_pais' => 'required|string',
             
-            'mercadoria_tipo' => 'required|string',
-            'mercadoria_valor' => 'required|numeric',
-            'mercadoria_descricao' => 'required|string',
-            'mercadoria_altura' => 'required|numeric',
-            'mercadoria_largura' => 'required|numeric',
-            'mercadoria_comprimento' => 'required|numeric',
-            'mercadoria_peso' => 'required|numeric',
-            'mercadoria_liquido' => 'required|boolean',
+            'destino_nome' => 'required|string',
+            'destino_endereco' => 'required|string',
+            'destino_cidade' => 'required|string',
+            'destino_estado' => 'required|string',
+            'destino_cep' => 'required|string',
+            'destino_pais' => 'required|string',
+            
+            'altura' => 'required|numeric',
+            'largura' => 'required|numeric',
+            'comprimento' => 'required|numeric',
+            'peso_caixa' => 'required|numeric',
         ]);
+        
+        // Decodificar os produtos do JSON
+        $produtos = json_decode($request->produtos_json, true);
+        
+        // Verificar se há produtos
+        if (empty($produtos)) {
+            return response()->json([
+                'success' => false,
+                'message' => 'É necessário adicionar pelo menos um produto para o envio.'
+            ], 422);
+        }
+        
+        // Calcular peso total (produtos + caixa)
+        $pesoTotal = $request->peso_total + $request->peso_caixa;
         
         // Gerar código de envio (simulação)
         $codigoEnvio = 'DHL' . rand(100000000, 999999999);
@@ -565,6 +579,14 @@ class SectionController extends Controller
             'success' => true,
             'codigoEnvio' => $codigoEnvio,
             'message' => 'Dados de envio processados com sucesso.',
+            'produtos' => $produtos,
+            'valorTotal' => $request->valor_total,
+            'pesoTotal' => $pesoTotal,
+            'dimensoes' => [
+                'altura' => $request->altura,
+                'largura' => $request->largura,
+                'comprimento' => $request->comprimento
+            ],
             'nextStep' => 'pagamento'
         ]);
     }
