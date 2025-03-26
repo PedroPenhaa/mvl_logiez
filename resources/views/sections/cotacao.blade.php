@@ -87,6 +87,30 @@
     </div>
 </div>
 
+<!-- Modal para quando a API da FedEx estiver indisponível -->
+<div class="modal fade" id="fedexErrorModal" tabindex="-1" aria-labelledby="fedexErrorModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header bg-warning">
+                <h5 class="modal-title" id="fedexErrorModalLabel">Serviço FedEx Indisponível</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
+            </div>
+            <div class="modal-body">
+                <p>O serviço da FedEx está temporariamente indisponível para cotações em tempo real.</p>
+                <p>Você gostaria de:</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" id="tryAgainButton">
+                    <i class="fas fa-sync-alt me-2"></i>Tentar Novamente
+                </button>
+                <button type="button" class="btn btn-primary" id="useSimulationButton">
+                    <i class="fas fa-calculator me-2"></i>Usar Cotação Simulada
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
 <script>
 $(document).ready(function() {
     // Garantir que o loader está escondido inicialmente
@@ -110,6 +134,9 @@ $(document).ready(function() {
         
         // Obter os dados do formulário
         var formData = $(this).serialize();
+        
+        // Armazenar os dados do formulário para reutilização
+        window.lastFormData = formData;
         
         // Log dos dados que serão enviados
         console.log('Enviando dados para cotação:', {
@@ -136,133 +163,235 @@ $(document).ready(function() {
                 // Exibir logs detalhados no console para depuração
                 console.log('Resposta completa da API:', response);
                 
-                if (response.success) {
-                    // Montar HTML para exibir os resultados
-                    var html = '<div class="card shadow">';
-                    html += '<div class="card-header bg-success text-white"><h4 class="mb-0">Cotação calculada com sucesso!</h4></div>';
-                    html += '<div class="card-body">';
-                    
-                    // Detalhes do peso
-                    html += '<div class="row mb-4">';
-                    html += '<div class="col-md-4">';
-                    html += '<div class="card bg-light">';
-                    html += '<div class="card-body text-center">';
-                    html += '<h5>Peso Cúbico</h5>';
-                    html += '<p class="fs-4">' + response.pesoCubico + ' kg</p>';
-                    html += '</div></div></div>';
-                    
-                    html += '<div class="col-md-4">';
-                    html += '<div class="card bg-light">';
-                    html += '<div class="card-body text-center">';
-                    html += '<h5>Peso Real</h5>';
-                    html += '<p class="fs-4">' + response.pesoReal + ' kg</p>';
-                    html += '</div></div></div>';
-                    
-                    html += '<div class="col-md-4">';
-                    html += '<div class="card bg-light">';
-                    html += '<div class="card-body text-center">';
-                    html += '<h5>Peso Utilizado</h5>';
-                    html += '<p class="fs-4 fw-bold">' + response.pesoUtilizado + ' kg</p>';
-                    html += '</div></div></div>';
-                    html += '</div>';
-                    
-                    // Mensagem de status (se for simulado)
-                    if (response.mensagem) {
-                        html += '<div class="alert alert-info mb-4">';
-                        html += '<i class="fas fa-info-circle me-2"></i> ' + response.mensagem;
-                        html += '</div>';
-                    }
-                    
-                    // Opções de Envio
-                    if (response.cotacoesFedEx && response.cotacoesFedEx.length > 0) {
-                        html += '<h4 class="mb-3">Opções de Envio</h4>';
-                        html += '<div class="table-responsive">';
-                        html += '<table class="table table-striped table-hover">';
-                        html += '<thead><tr>';
-                        html += '<th>Serviço</th>';
-                        html += '<th>Tempo de Entrega</th>';
-                        html += '<th>Valor</th>';
-                        html += '<th>Ação</th>';
-                        html += '</tr></thead><tbody>';
-                        
-                        response.cotacoesFedEx.forEach(function(cotacao) {
-                            html += '<tr>';
-                            html += '<td>' + cotacao.servico + '</td>';
-                            html += '<td>';
-                            if (cotacao.tempoEntrega) {
-                                html += cotacao.tempoEntrega;
-                            } else {
-                                html += 'Consultar';
-                            }
-                            html += '</td>';
-                            html += '<td class="fw-bold">' + cotacao.valorTotal + ' ' + cotacao.moeda + '</td>';
-                            html += '<td><a href="/envio?servico=' + cotacao.servicoTipo + '&valor=' + cotacao.valorTotal + '" class="btn btn-sm btn-primary">Escolher</a></td>';
-                            html += '</tr>';
-                        });
-                        
-                        html += '</tbody></table></div>';
-                    } else {
-                        html += '<div class="alert alert-warning">Nenhuma opção de envio encontrada para os parâmetros fornecidos.</div>';
-                    }
-                    
-                    html += '<div class="d-flex justify-content-between align-items-center mt-4">';
-                    html += '<div class="text-muted">Cotação calculada em: ' + response.dataConsulta + '</div>';
-                    
-                    html += '<div class="d-flex gap-2">';
-                    html += '<button onclick="window.print();" class="btn btn-outline-secondary">';
-                    html += '<i class="fas fa-print me-2"></i>Imprimir</button>';
-                    
-                    if (response.hash) {
-                        html += '<a href="/exportar-cotacao-pdf?hash=' + response.hash + '" ';
-                        html += 'class="btn btn-danger" target="_blank">';
-                        html += '<i class="fas fa-file-pdf me-2"></i>Baixar PDF</a>';
-                    }
-                    html += '</div></div>';
-                    
-                    html += '</div></div>';
-                    
-                    // Exibir resultados
-                    $('#cotacao-resultado').html(html).fadeIn();
-                    
-                    // Scroll suave até os resultados
-                    $('html, body').animate({
-                        scrollTop: $('#cotacao-resultado').offset().top - 100
-                    }, 500);
-                } else {
-                    // Exibir mensagem de erro
-                    var html = '<div class="alert alert-danger">';
-                    html += '<h4>Erro ao calcular cotação</h4>';
-                    html += '<p>' + (response.message || 'Ocorreu um erro ao processar sua cotação. Tente novamente.') + '</p>';
-                    html += '</div>';
-                    
-                    $('#cotacao-resultado').html(html).fadeIn();
-                }
+                // Processar a resposta usando a função compartilhada
+                processarResposta(response);
             },
             error: function(xhr, status, error) {
                 // Esconder o loader
                 $('#cotacao-loader').hide();
                 
-                // Log do erro
-                console.error('Erro na requisição AJAX:', error);
-                console.error('Resposta:', xhr.responseText);
-                
-                // Exibir mensagem de erro
-                var html = '<div class="alert alert-danger">';
-                html += '<h4>Erro ao calcular cotação</h4>';
-                
-                try {
-                    var response = JSON.parse(xhr.responseText);
-                    html += '<p>' + (response.message || 'Ocorreu um erro ao processar sua cotação. Tente novamente.') + '</p>';
-                } catch (e) {
-                    html += '<p>Ocorreu um erro ao processar sua cotação. Tente novamente.</p>';
-                }
-                
-                html += '</div>';
-                
-                $('#cotacao-resultado').html(html).fadeIn();
+                // Usar a função compartilhada para exibir erros
+                exibirErro(xhr);
             }
         });
     });
+    
+    // Configurar o botão "Tentar Novamente" no modal
+    $('#tryAgainButton').on('click', function() {
+        // Reenviar o formulário
+        if (window.lastFormData) {
+            // Ocultar o modal atual
+            var fedexModal = bootstrap.Modal.getInstance(document.getElementById('fedexErrorModal'));
+            fedexModal.hide();
+            
+            // Mostrar o loader
+            $('#cotacao-loader').show();
+            
+            $.ajax({
+                url: '/calcular-cotacao',
+                type: 'POST',
+                data: window.lastFormData,
+                headers: {
+                    'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+                },
+                success: function(response) {
+                    // Esconder o loader
+                    $('#cotacao-loader').hide();
+                    
+                    // Verificar se é o erro específico da FedEx indisponível
+                    if (response.success === false && response.error_code === 'fedex_unavailable') {
+                        // Mostrar o modal de erro da FedEx novamente
+                        var fedexModal = new bootstrap.Modal(document.getElementById('fedexErrorModal'));
+                        fedexModal.show();
+                        return;
+                    }
+                    
+                    // Se não for erro de indisponibilidade, processa a resposta normalmente
+                    processarResposta(response);
+                },
+                error: function(xhr) {
+                    $('#cotacao-loader').hide();
+                    exibirErro(xhr);
+                }
+            });
+        }
+    });
+    
+    // Configurar o botão "Usar Cotação Simulada" no modal
+    $('#useSimulationButton').on('click', function() {
+        // Ocultar o modal
+        var fedexModal = bootstrap.Modal.getInstance(document.getElementById('fedexErrorModal'));
+        fedexModal.hide();
+        
+        // Mostrar loader
+        $('#cotacao-loader').show();
+        
+        // Solicitar cotação simulada
+        if (window.lastFormData) {
+            // Adicionar o parâmetro forcarSimulacao=true ao formData
+            var simulationData = window.lastFormData + '&forcarSimulacao=true';
+            
+            $.ajax({
+                url: '/calcular-cotacao',
+                type: 'POST',
+                data: simulationData,
+                headers: {
+                    'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+                },
+                success: function(response) {
+                    $('#cotacao-loader').hide();
+                    processarResposta(response);
+                },
+                error: function(xhr) {
+                    $('#cotacao-loader').hide();
+                    exibirErro(xhr);
+                }
+            });
+        }
+    });
+    
+    // Função para processar a resposta
+    function processarResposta(response) {
+        // Verificar se é o erro específico da FedEx indisponível
+        if (response.success === false && response.error_code === 'fedex_unavailable') {
+            // Mostrar o modal de erro da FedEx
+            var fedexModal = new bootstrap.Modal(document.getElementById('fedexErrorModal'));
+            fedexModal.show();
+            return;
+        }
+        
+        if (response.success) {
+            // Montar HTML para exibir os resultados
+            var html = '<div class="card shadow">';
+            html += '<div class="card-header bg-success text-white"><h4 class="mb-0">Cotação calculada com sucesso!</h4></div>';
+            html += '<div class="card-body">';
+            
+            // Detalhes do peso
+            html += '<div class="row mb-4">';
+            html += '<div class="col-md-4">';
+            html += '<div class="card bg-light">';
+            html += '<div class="card-body text-center">';
+            html += '<h5>Peso Cúbico</h5>';
+            html += '<p class="fs-4">' + response.pesoCubico + ' kg</p>';
+            html += '</div></div></div>';
+            
+            html += '<div class="col-md-4">';
+            html += '<div class="card bg-light">';
+            html += '<div class="card-body text-center">';
+            html += '<h5>Peso Real</h5>';
+            html += '<p class="fs-4">' + response.pesoReal + ' kg</p>';
+            html += '</div></div></div>';
+            
+            html += '<div class="col-md-4">';
+            html += '<div class="card bg-light">';
+            html += '<div class="card-body text-center">';
+            html += '<h5>Peso Utilizado</h5>';
+            html += '<p class="fs-4 fw-bold">' + response.pesoUtilizado + ' kg</p>';
+            html += '</div></div></div>';
+            html += '</div>';
+            
+            // Mensagem de status (se for simulado)
+            if (response.mensagem) {
+                html += '<div class="alert alert-info mb-4">';
+                html += '<i class="fas fa-info-circle me-2"></i> ' + response.mensagem;
+                html += '</div>';
+            }
+            
+            // Opções de Envio
+            if (response.cotacoesFedEx && response.cotacoesFedEx.length > 0) {
+                html += '<h4 class="mb-3">Opções de Envio</h4>';
+                html += '<div class="table-responsive">';
+                html += '<table class="table table-striped table-hover">';
+                html += '<thead><tr>';
+                html += '<th>Serviço</th>';
+                html += '<th>Tempo de Entrega</th>';
+                html += '<th>Valor</th>';
+                html += '<th>Ação</th>';
+                html += '</tr></thead><tbody>';
+                
+                response.cotacoesFedEx.forEach(function(cotacao) {
+                    html += '<tr>';
+                    html += '<td>' + cotacao.servico + '</td>';
+                    html += '<td>';
+                    if (cotacao.tempoEntrega) {
+                        html += cotacao.tempoEntrega;
+                    } else {
+                        html += 'Consultar';
+                    }
+                    html += '</td>';
+                    html += '<td class="fw-bold">' + cotacao.valorTotal + ' ' + cotacao.moeda + '</td>';
+                    html += '<td><a href="/envio?servico=' + cotacao.servicoTipo + '&valor=' + cotacao.valorTotal + '" class="btn btn-sm btn-primary">Escolher</a></td>';
+                    html += '</tr>';
+                });
+                
+                html += '</tbody></table></div>';
+            } else {
+                html += '<div class="alert alert-warning">Nenhuma opção de envio encontrada para os parâmetros fornecidos.</div>';
+            }
+            
+            html += '<div class="d-flex justify-content-between align-items-center mt-4">';
+            html += '<div class="text-muted">Cotação calculada em: ' + response.dataConsulta + '</div>';
+            
+            html += '<div class="d-flex gap-2">';
+            html += '<button onclick="window.print();" class="btn btn-outline-secondary">';
+            html += '<i class="fas fa-print me-2"></i>Imprimir</button>';
+            
+            if (response.hash) {
+                html += '<a href="/exportar-cotacao-pdf?hash=' + response.hash + '" ';
+                html += 'class="btn btn-danger" target="_blank">';
+                html += '<i class="fas fa-file-pdf me-2"></i>Baixar PDF</a>';
+            }
+            html += '</div></div>';
+            
+            html += '</div></div>';
+            
+            // Exibir resultados
+            $('#cotacao-resultado').html(html).fadeIn();
+            
+            // Scroll suave até os resultados
+            $('html, body').animate({
+                scrollTop: $('#cotacao-resultado').offset().top - 100
+            }, 500);
+        } else {
+            // Exibir mensagem de erro
+            var html = '<div class="alert alert-danger">';
+            html += '<h4>Erro ao calcular cotação</h4>';
+            html += '<p>' + (response.message || 'Ocorreu um erro ao processar sua cotação. Tente novamente.') + '</p>';
+            html += '</div>';
+            
+            $('#cotacao-resultado').html(html).fadeIn();
+        }
+    }
+    
+    // Função para exibir erro
+    function exibirErro(xhr) {
+        // Log do erro
+        console.error('Erro na requisição AJAX:', xhr.status, xhr.statusText);
+        console.error('Resposta:', xhr.responseText);
+        
+        // Exibir mensagem de erro
+        var html = '<div class="alert alert-danger">';
+        html += '<h4>Erro ao calcular cotação</h4>';
+        
+        try {
+            var response = JSON.parse(xhr.responseText);
+            html += '<p>' + (response.message || 'Ocorreu um erro ao processar sua cotação. Tente novamente.') + '</p>';
+            
+            // Se tiver detalhes adicionais
+            if (response.error_details) {
+                html += '<p><small>Detalhes técnicos: ' + response.error_details + '</small></p>';
+            }
+        } catch (e) {
+            html += '<p>Ocorreu um erro ao processar sua cotação. Tente novamente.</p>';
+            if (xhr.status) {
+                html += '<p><small>Status do erro: ' + xhr.status + ' - ' + xhr.statusText + '</small></p>';
+            }
+        }
+        
+        html += '</div>';
+        
+        $('#cotacao-resultado').html(html).fadeIn();
+    }
 });
 </script>
 

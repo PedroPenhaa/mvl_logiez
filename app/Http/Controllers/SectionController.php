@@ -108,7 +108,7 @@ class SectionController extends Controller
             $pesoUtilizado = max($pesoCubico, $peso);
 
             // Se forçar simulação, usar o método do FedexService
-            if ($request->forcarSimulacao == 'true') {
+            if ($request->has('forcarSimulacao') && $request->forcarSimulacao == 'true') {
                 $resultado = $this->fedexService->simularCotacao(
                     $request->origem,
                     $request->destino,
@@ -463,7 +463,17 @@ class SectionController extends Controller
                 'trace' => $e->getTraceAsString()
             ]);
             
-            // Em caso de erro, usar a simulação automaticamente sem mostrar o modal
+            // Em vez de retornar uma simulação automaticamente, retornamos o erro para o usuário decidir
+            if (strpos($e->getMessage(), '503') !== false) {
+                return response()->json([
+                    'success' => false,
+                    'error_code' => 'fedex_unavailable',
+                    'message' => 'O serviço da FedEx está temporariamente indisponível. Deseja usar uma simulação de cotação?',
+                    'error_details' => $e->getMessage()
+                ], 200); // Retornamos 200 para que o AJAX processe normalmente
+            }
+            
+            // Para outros erros, retornar a simulação automaticamente (mantendo o comportamento atual)
             $resultado = $this->fedexService->simularCotacao(
                 $request->origem,
                 $request->destino,
