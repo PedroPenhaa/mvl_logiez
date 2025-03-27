@@ -4,6 +4,7 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\SectionController;
 use App\Http\Controllers\AuthController;
+use App\Http\Controllers\ProdutosController;
 use Illuminate\Http\Request;
 use App\Http\Middleware\CheckAuthenticated;
 use Illuminate\Support\Facades\Auth;
@@ -54,6 +55,9 @@ Route::prefix('api')->name('api.')->group(function () {
     Route::get('/sections/etiqueta', [SectionController::class, 'etiqueta'])->name('sections.etiqueta');
     Route::get('/sections/rastreamento', [SectionController::class, 'rastreamento'])->name('sections.rastreamento');
     Route::get('/sections/perfil', [SectionController::class, 'perfil'])->name('sections.perfil');
+    
+    // Produtos da Receita
+    Route::get('/produtos', [ProdutosController::class, 'getProdutos'])->name('produtos.get');
     
     // Processamento de dados
     Route::post('/envio/processar', [SectionController::class, 'processarEnvio'])->name('envio.processar');

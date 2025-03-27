@@ -6,6 +6,43 @@
         <form id="envio-form" action="{{ route('api.envio.processar') }}" method="POST">
             @csrf
             
+            <!-- Adicionar CSS do Select2 -->
+            <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+            
+            <style>
+                /* Removendo estilos anteriores */
+                #produto-select {
+                    max-height: 300px;
+                }
+                .select2-container {
+                    width: 100% !important;
+                }
+                .select2-selection {
+                    height: 38px !important;
+                    border-radius: 0.375rem !important;
+                    border: 1px solid #dee2e6 !important;
+                    padding: 0.375rem 0.75rem !important;
+                }
+                .select2-selection__arrow {
+                    height: 38px !important;
+                }
+                .select2-search__field {
+                    padding: 8px !important;
+                }
+                .select2-results__option {
+                    padding: 8px;
+                    border-bottom: 1px solid #eee;
+                }
+                .select2-results__option:hover {
+                    background-color: #f0f7ff;
+                }
+                .select2-container--default .select2-results__option[aria-disabled=true] {
+                    color: #999;
+                    font-style: italic;
+                    background-color: #f9f9f9;
+                }
+            </style>
+            
             <div class="row mb-4">
                 <div class="col-12">
                     <div class="card border-light">
@@ -15,15 +52,18 @@
                         <div class="card-body">
                             <div class="row mb-3">
                                 <div class="col-lg-5 col-md-5">
-                                    <select class="form-select" id="produto-select">
-                                        <option value="" selected disabled>Selecione um produto</option>
-                                        <option value="1" data-nome="Smartphone" data-peso="0.3" data-valor="1200.00">Smartphone</option>
-                                        <option value="2" data-nome="Notebook" data-peso="2.5" data-valor="3500.00">Notebook</option>
-                                        <option value="3" data-nome="Headphone" data-peso="0.5" data-valor="350.00">Headphone</option>
-                                        <option value="4" data-nome="Câmera Digital" data-peso="0.7" data-valor="1800.00">Câmera Digital</option>
-                                        <option value="5" data-nome="Relógio Inteligente" data-peso="0.2" data-valor="650.00">Relógio Inteligente</option>
-                                        <option value="6" data-nome="Tablet" data-peso="0.8" data-valor="1500.00">Tablet</option>
-                                    </select>
+                                    <div class="position-relative">
+                                        <select class="form-select produto-select-dropdown" id="produto-select">
+                                            <option value="" selected disabled>Selecione um produto</option>
+                                        </select>
+                                        <small class="text-muted" id="select-status">Carregando produtos...</small>
+                                        <button type="button" class="btn btn-sm btn-outline-secondary position-absolute" 
+                                                style="top: 0; right: 40px; display: none;" 
+                                                id="reload-produtos" 
+                                                title="Recarregar produtos">
+                                            <i class="fas fa-sync-alt"></i>
+                                        </button>
+                                    </div>
                                 </div>
                                 <div class="col-lg-4 col-md-4">
                                     <div class="input-group">
@@ -178,12 +218,175 @@
     </div>
 </div>
 
+<!-- Adicionar o script do Select2 -->
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+
 <script>
     $(document).ready(function() {
+        console.log("Documento pronto, iniciando script");
+        
+        // Verificar se o Select2 está disponível
+        if (typeof $.fn.select2 === 'undefined') {
+            console.error("Select2 não está carregado! Tentando carregar novamente...");
+            // Tentar carregar o Select2 novamente
+            $.getScript("https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js")
+                .done(function() {
+                    console.log("Select2 carregado com sucesso");
+                    inicializarSelect2();
+                })
+                .fail(function(jqxhr, settings, exception) {
+                    console.error("Erro ao carregar Select2:", exception);
+                    alert("Erro ao carregar o componente de seleção de produtos. Por favor, recarregue a página.");
+                });
+        } else {
+            console.log("Select2 já está carregado, inicializando...");
+            inicializarSelect2();
+        }
+        
         // Array para armazenar os produtos adicionados
         let produtos = [];
         let valorTotal = 0;
         let pesoTotal = 0;
+        
+        // Variáveis para controle de paginação e busca
+        let currentPage = 1;
+        let totalPages = 1;
+        let isLoading = false;
+        
+        // Função para inicializar o Select2
+        function inicializarSelect2() {
+            console.log("Destruindo instância anterior de Select2 caso exista");
+            // Destruir instância anterior caso exista
+            if ($('#produto-select').hasClass('select2-hidden-accessible')) {
+                $('#produto-select').select2('destroy');
+            }
+            
+            console.log("Inicializando novo Select2");
+            $('#produto-select').select2({
+                placeholder: 'Selecione ou busque um produto',
+                allowClear: true,
+                width: '100%',
+                dropdownParent: $('#produto-select').parent(),
+                language: {
+                    noResults: function() {
+                        return "Nenhum produto encontrado";
+                    },
+                    searching: function() {
+                        return "Buscando...";
+                    },
+                    inputTooShort: function() {
+                        return "Digite pelo menos 3 caracteres para buscar";
+                    }
+                },
+                ajax: {
+                    url: '{{ route("api.produtos.get") }}',
+                    dataType: 'json',
+                    delay: 300,
+                    data: function(params) {
+                        console.log("Enviando requisição com parâmetros:", params);
+                        return {
+                            search: params.term || '',
+                            page: params.page || 1,
+                            limit: 100
+                        };
+                    },
+                    processResults: function(data, params) {
+                        params.page = params.page || 1;
+                        console.log("Dados recebidos:", data);
+                        
+                        // Verificar se os dados recebidos são válidos
+                        if (!data || !data.produtos || !Array.isArray(data.produtos)) {
+                            console.error("Dados inválidos recebidos da API:", data);
+                            return { results: [] };
+                        }
+                        
+                        // Formatar os resultados para o formato esperado pelo Select2
+                        const results = data.produtos.map(function(produto) {
+                            return {
+                                id: produto.codigo,
+                                text: produto.descricao,
+                                codigo: produto.codigo,
+                                peso: 0.5, // Valores padrão
+                                valor: 10.00
+                            };
+                        });
+                        
+                        console.log("Resultados processados:", results.length);
+                        
+                        return {
+                            results: results,
+                            pagination: {
+                                more: params.page < data.totalPages
+                            }
+                        };
+                    },
+                    error: function(error) {
+                        console.error("Erro na requisição AJAX:", error);
+                    },
+                    cache: true
+                },
+                minimumInputLength: 0 // Permitir carregar todos os produtos sem digitar
+            });
+            
+            // Eventos adicionais
+            $('#produto-select').on('select2:open', function() {
+                console.log("Select2 aberto");
+                
+                // Forçar a primeira consulta ao abrir
+                setTimeout(function() {
+                    var searchField = $('.select2-search__field');
+                    if (searchField.length) {
+                        searchField.val('');
+                        searchField.trigger('input');
+                        console.log("Campo de busca ativado automaticamente");
+                    }
+                }, 100);
+            });
+            
+            // Carregar manualmente a primeira página de resultados
+            $.ajax({
+                url: '{{ route("api.produtos.get") }}',
+                data: { page: 1, limit: 100, search: '' },
+                dataType: 'json',
+                success: function(data) {
+                    console.log("Pré-carregando dados:", data);
+                    $('#select-status').text('');
+                    
+                    if (data && data.produtos && data.produtos.length) {
+                        var options = data.produtos.map(function(produto) {
+                            return new Option(produto.descricao, produto.codigo, false, false);
+                        });
+                        
+                        $('#produto-select').append(options).trigger('change');
+                        console.log("Opções pré-carregadas adicionadas:", options.length);
+                        $('#select-status').text(options.length + ' produtos carregados');
+                        
+                        // Esconder o botão de reload, pois os produtos foram carregados com sucesso
+                        $('#reload-produtos').hide();
+                    } else {
+                        $('#select-status').text('Nenhum produto disponível');
+                        // Mostrar o botão de reload, pois não há produtos
+                        $('#reload-produtos').show();
+                    }
+                },
+                error: function(error) {
+                    console.error("Erro ao pré-carregar dados:", error);
+                    $('#select-status').text('Erro ao carregar produtos');
+                    // Mostrar o botão de reload em caso de erro
+                    $('#reload-produtos').show();
+                }
+            });
+        }
+        
+        // Evento do botão de recarregar produtos
+        $('#reload-produtos').on('click', function() {
+            $('#select-status').text('Recarregando produtos...');
+            $(this).prop('disabled', true).addClass('disabled');
+            inicializarSelect2();
+            setTimeout(() => {
+                $(this).prop('disabled', false).removeClass('disabled');
+            }, 2000);
+        });
         
         // Função para atualizar o resumo de produtos
         function atualizarResumo() {
@@ -225,6 +428,7 @@
                             <div class="card-body">
                                 <h5 class="card-title">${produto.nome}</h5>
                                 <p class="card-text">
+                                    <small class="text-muted">Código: ${produto.codigo || 'N/A'}</small><br>
                                     <small class="text-muted">Peso unitário: ${produto.peso} kg</small><br>
                                     <small class="text-muted">Valor unitário: R$ ${produto.valor.toFixed(2)}</small>
                                 </p>
@@ -280,23 +484,28 @@
         
         // Evento de adicionar produto
         $('#adicionar-produto').on('click', function() {
-            const select = $('#produto-select');
-            const option = select.find('option:selected');
+            const produtoSelecionado = $('#produto-select').select2('data')[0];
             
-            if (option.val()) {
-                const id = option.val();
-                const nome = option.data('nome');
-                const peso = parseFloat(option.data('peso'));
-                const valor = parseFloat(option.data('valor'));
+            if (produtoSelecionado && produtoSelecionado.id) {
+                console.log("Produto selecionado:", produtoSelecionado);
+                
+                const id = produtoSelecionado.id;
+                const codigo = produtoSelecionado.codigo || id;
+                const nome = produtoSelecionado.text;
+                const peso = produtoSelecionado.peso || 0.5;
+                const valor = produtoSelecionado.valor || 10.00;
                 const quantidade = parseInt($('#produto-quantidade').val());
                 
                 const produto = {
                     id: id,
+                    codigo: codigo,
                     nome: nome,
                     peso: peso,
                     valor: valor,
                     quantidade: quantidade
                 };
+                
+                console.log("Produto a ser adicionado:", produto);
                 
                 // Verificar se o produto já existe
                 const existingIndex = produtos.findIndex(p => p.id === id);
@@ -304,18 +513,23 @@
                 if (existingIndex !== -1) {
                     // Se existir, atualiza a quantidade
                     produtos[existingIndex].quantidade += quantidade;
+                    console.log("Atualizada quantidade do produto existente:", produtos[existingIndex]);
                 } else {
                     // Se não existir, adiciona
                     produtos.push(produto);
+                    console.log("Novo produto adicionado:", produto);
                 }
                 
-                // Resetar o formulário de adicionar
-                select.val('');
+                // Limpar a seleção e resetar a quantidade
+                $('#produto-select').val(null).trigger('change');
                 $('#produto-quantidade').val(1);
                 
                 // Renderizar produtos e atualizar resumo
                 renderizarProdutos();
                 atualizarResumo();
+            } else {
+                // Se não houver produto selecionado
+                alert('Por favor, selecione um produto antes de adicionar.');
             }
         });
         
@@ -346,5 +560,4 @@
             });
         });
     });
-</script> 
 </script> 

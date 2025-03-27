@@ -70,43 +70,94 @@ class BuscaProdutos extends Command
             curl_close($ch);
 
             // Verificar se a resposta é um JSON válido
-          // Primeira decodificação
-$decoded = json_decode($response, true);
+            // Primeira decodificação
+            $decoded = json_decode($response, true);
 
-// Se o decode direto não retornar o array esperado, tenta fazer outro decode no campo "data"
-if (isset($decoded['data']) && is_string($decoded['data'])) {
-    $innerData = json_decode($decoded['data'], true);
-} else {
-    $innerData = $decoded;
-}
+            // Se o decode direto não retornar o array esperado, tenta fazer outro decode no campo "data"
+            if (isset($decoded['data']) && is_string($decoded['data'])) {
+                $innerData = json_decode($decoded['data'], true);
+            } else {
+                $innerData = $decoded;
+            }
 
-// Validação do campo "Nomenclaturas"
-if (!isset($innerData['Nomenclaturas'])) {
-    throw new \Exception('Campo "Nomenclaturas" não encontrado.');
-}
+            // Validação do campo "Nomenclaturas"
+            if (!isset($innerData['Nomenclaturas'])) {
+                throw new \Exception('Campo "Nomenclaturas" não encontrado.');
+            }
 
-// Monta o array de produtos
-$produtos = array_map(function ($item) {
-    return [
-        'codigo' => $item['Codigo'],
-        'descricao' => $item['Descricao'],
-    ];
-}, $innerData['Nomenclaturas']);
+            // Monta o array de produtos
+            $produtos = array_map(function ($item) {
+                return [
+                    'codigo' => $item['Codigo'],
+                    'descricao' => $item['Descricao'],
+                ];
+            }, $innerData['Nomenclaturas']);
 
-// Exibir resumo no console
-$totalItems = count($produtos);
-$this->info("Download concluído com sucesso!");
-$this->info("Total de itens encontrados: {$totalItems}");
+            // Exibir resumo no console
+            $totalItems = count($produtos);
+            $this->info("Download concluído com sucesso!");
+            $this->info("Total de itens encontrados: {$totalItems}");
 
-// Debug: mostrar um exemplo
-$this->info('Exemplo de produto:');
-$this->line(print_r($produtos[0], true));
+            // Debug: mostrar um exemplo
+            $this->info('Exemplo de produto:');
+            $this->line(print_r($produtos[0], true));
 
-dd(array_slice($produtos, 0, 50));
-// Opcional: salvar o resultado filtrado
-//Storage::disk('local')->put('produtos_filtrados.json', json_encode($produtos, JSON_PRETTY_PRINT));
+            // Salvar os produtos em um arquivo txt
+            $this->info('Salvando produtos em arquivo texto...');
+            
+            // Criar conteúdo formatado para o arquivo txt
+            $conteudo = "Lista de Produtos SISCOMEX\n";
+            $conteudo .= "=======================\n\n";
+            
+            foreach ($produtos as $index => $produto) {
+                $conteudo .= "[{$index}] Código: {$produto['codigo']}\n";
+                $conteudo .= "     Descrição: {$produto['descricao']}\n\n";
+            }
+            
+            // Definir o caminho do arquivo
+            $txtFilePath = storage_path('app/produtos_receita' . '.txt');
+            
+            // Salvar o arquivo
+            file_put_contents($txtFilePath, $conteudo);
+            $this->info("Arquivo txt criado com sucesso em: {$txtFilePath}");
 
+            //Formatando os caracteres especiais antes de salvar
+            $this->info('Tratando caracteres especiais e formatando descrições...');
+            
+            // Array para armazenar produtos sem repetição de descrição
+            $produtosUnicos = [];
+            $descricoesVistas = [];
+            
+            foreach ($produtos as &$produto) {
+                // 1. Decodifica os caracteres unicode na descrição
+                $produto['descricao'] = json_decode('"' . $produto['descricao'] . '"');
+                
+                // 2. Remove os traços (-- ou -) no início das descrições
+                $produto['descricao'] = preg_replace('/^--?\s+/', '', $produto['descricao']);
+                
+                // 3. Remove tags HTML
+                $produto['descricao'] = strip_tags($produto['descricao']);
+            }
+            
+            // 4. Filtrar produtos para eliminar repetições nas descrições
+            foreach ($produtos as $produto) {
+                if (!in_array($produto['descricao'], $descricoesVistas)) {
+                    $descricoesVistas[] = $produto['descricao'];
+                    $produtosUnicos[] = $produto;
+                }
+            }
+            
+            $this->info('Total de produtos após remoção de duplicidades: ' . count($produtosUnicos));
 
+            //quero que salve todos os produtos no retorno.
+            $this->info('Salvando produtos em arquivo json...');
+            $jsonFilePath = storage_path('app/produtos_receita.json');
+            File::put($jsonFilePath, json_encode($produtosUnicos, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE));
+            $this->info("Arquivo json criado com sucesso em: {$jsonFilePath}");
+
+       
+            // Opcional: salvar o resultado filtrado
+            //Storage::disk('local')->put('produtos_filtrados.json', json_encode($produtos, JSON_PRETTY_PRINT));
 
             return Command::SUCCESS;
         } catch (\Exception $e) {
