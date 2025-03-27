@@ -1132,7 +1132,7 @@
             const cidadeSelect = formGroup.find('.cidade-select');
             const prefixo = $(this).attr('id').split('_')[0]; // Obter prefixo (origem ou destino)
             
-            // Limpar campo de texto da cidade, se existir
+            // Remover campo de texto da cidade, se existir
             const cidadeContainer = $(`#${prefixo}_cidade_container`);
             if (cidadeContainer.length) {
                 cidadeContainer.find('.text-muted').remove();
@@ -1169,12 +1169,6 @@
             const formGroup = $(this).closest('.card-body');
             const cidadeSelect = formGroup.find('.cidade-select');
             
-            // Limpar mensagens informativas anteriores
-            const cidadeContainer = $(`#${prefixo}_cidade_container`);
-            if (cidadeContainer.length) {
-                cidadeContainer.next('.text-muted').remove();
-            }
-            
             carregarCidades(estadoId, cidadeSelect);
         });
         
@@ -1193,7 +1187,6 @@
             
             $.getJSON(`https://viacep.com.br/ws/${cep}/json/?callback=?`, function(data) {
                 if (!data.erro) {
-                    // Preencher o endereço
                     $(`#${prefixo}_endereco`).val(data.logradouro + (data.complemento ? ', ' + data.complemento : '') + ' - ' + data.bairro);
                     
                     // Encontrar o país (Brasil)
@@ -1213,86 +1206,83 @@
                                 // Selecionar o estado
                                 $(`#${prefixo}_estado`).val(estado.id).trigger('change');
                                 
-                                // Aguardar o carregamento das cidades
+                                // Aguardar o carregamento das cidades da API do IBGE
                                 setTimeout(function() {
-                                    preencherCidade(prefixo, data.localidade);
-                                }, 800);
+                                    // Verificar se existe select ou input de cidade
+                                    const hasSelect = $(`#${prefixo}_cidade`).is('select');
+                                    const hasInput = $(`#${prefixo}_cidade_texto`).length > 0;
+                                    
+                                    if (hasSelect) {
+                                        // Função para encontrar e selecionar a cidade no select
+                                        function selecionarCidade() {
+                                            // Verificar se as cidades já foram carregadas
+                                            if ($(`#${prefixo}_cidade option`).length > 1) {
+                                                // Tentar encontrar a cidade pelo nome
+                                                let cidadeEncontrada = false;
+                                                
+                                                $(`#${prefixo}_cidade option`).each(function() {
+                                                    if ($(this).text().toLowerCase() === data.localidade.toLowerCase()) {
+                                                        $(`#${prefixo}_cidade`).val($(this).val());
+                                                        cidadeEncontrada = true;
+                                                        return false; // Break the loop
+                                                    }
+                                                });
+                                                
+                                                if (!cidadeEncontrada) {
+                                                    // Se não encontrou e o select está pronto, adicionar a cidade como opção
+                                                    if ($(`#${prefixo}_cidade option:first`).text() === 'Selecione uma cidade') {
+                                                        console.log('Cidade não encontrada no select: ' + data.localidade);
+                                                        // Adicionar a cidade manualmente como opção
+                                                        $(`#${prefixo}_cidade`).append($('<option>', {
+                                                            value: 'custom_' + data.localidade.replace(/\s/g, '_').toLowerCase(),
+                                                            text: data.localidade
+                                                        }));
+                                                        
+                                                        // Selecionar a cidade adicionada
+                                                        $(`#${prefixo}_cidade option:last`).prop('selected', true);
+                                                    } else {
+                                                        // Se o select ainda está carregando, esperar mais
+                                                        setTimeout(selecionarCidade, 300);
+                                                    }
+                                                }
+                                            } else {
+                                                // Ainda não carregou cidades, esperar mais
+                                                setTimeout(selecionarCidade, 300);
+                                            }
+                                        }
+                                        
+                                        // Iniciar a busca da cidade no select
+                                        selecionarCidade();
+                                    } 
+                                    else if (hasInput) {
+                                        // Se for campo de texto, simplesmente preencher com o nome da cidade
+                                        $(`#${prefixo}_cidade_texto`).val(data.localidade);
+                                    }
+                                    else {
+                                        // Se não encontrou nem select nem input, esperar criação dos elementos
+                                        setTimeout(function() {
+                                            const newHasSelect = $(`#${prefixo}_cidade`).is('select');
+                                            const newHasInput = $(`#${prefixo}_cidade_texto`).length > 0;
+                                            
+                                            if (newHasSelect) {
+                                                selecionarCidade();
+                                            } else if (newHasInput) {
+                                                $(`#${prefixo}_cidade_texto`).val(data.localidade);
+                                            }
+                                        }, 500);
+                                    }
+                                }, 600);
                             }
-                        }, 300);
+                        }, 400);
                     }
                 } else {
                     alert('CEP não encontrado. Por favor, digite o endereço manualmente.');
                     $(`#${prefixo}_endereco`).val('');
                 }
-            }).fail(function(jqxhr, textStatus, error) {
-                console.error("Erro ao buscar CEP:", error);
+            }).fail(function() {
                 alert('Erro ao buscar o CEP. Por favor, digite o endereço manualmente.');
                 $(`#${prefixo}_endereco`).val('');
             });
-            
-            // Função auxiliar para preencher o campo de cidade, independente do tipo
-            function preencherCidade(prefixo, nomeCidade) {
-                // Verificar se existe um campo de seleção ou um campo de texto
-                const selectCidade = $(`#${prefixo}_cidade`);
-                const inputCidade = $(`#${prefixo}_cidade_texto`);
-                
-                // Se temos um campo de entrada de texto, é simples
-                if (inputCidade.length > 0) {
-                    inputCidade.val(nomeCidade);
-                    return;
-                }
-                
-                // Se temos um select, precisamos verificar se a cidade está na lista
-                if (selectCidade.length > 0) {
-                    let cidadeEncontrada = false;
-                    
-                    // Verificar se o select já tem opções carregadas
-                    if (selectCidade.find('option').length > 1) {
-                        // Tentar encontrar a cidade pelo nome
-                        selectCidade.find('option').each(function() {
-                            if ($(this).text().toLowerCase() === nomeCidade.toLowerCase()) {
-                                selectCidade.val($(this).val()).change();
-                                cidadeEncontrada = true;
-                                return false; // Break
-                            }
-                        });
-                        
-                        // Se não encontrou, adicionar a cidade como opção
-                        if (!cidadeEncontrada) {
-                            const novaOpcao = $('<option>', {
-                                value: 'custom_' + nomeCidade.replace(/\s/g, '_').toLowerCase(),
-                                text: nomeCidade
-                            });
-                            
-                            selectCidade.append(novaOpcao);
-                            selectCidade.val(novaOpcao.val()).change();
-                        }
-                    } else {
-                        // O select ainda não tem opções, esperar mais ou transformar em input
-                        console.log('Select de cidade ainda não carregou, esperando...');
-                        
-                        // Verificar novamente após um curto período
-                        setTimeout(function() {
-                            // Se ainda não carregou, tentar uma última vez
-                            if (selectCidade.find('option').length <= 1) {
-                                // Verificar se o container existe
-                                const container = $(`#${prefixo}_cidade_container`);
-                                if (container.length > 0) {
-                                    // Transformar em input
-                                    container.empty().html(`
-                                        <input type="text" class="form-control" id="${prefixo}_cidade_texto" 
-                                               name="${prefixo}_cidade" value="${nomeCidade}" required>
-                                    `);
-                                    container.after(`<small class="text-muted">Campo convertido para entrada de texto.</small>`);
-                                }
-                            } else {
-                                // Tentamos novamente com o select agora preenchido
-                                preencherCidade(prefixo, nomeCidade);
-                            }
-                        }, 500);
-                    }
-                }
-            }
         }
         
         // Eventos para buscar endereço pelo CEP

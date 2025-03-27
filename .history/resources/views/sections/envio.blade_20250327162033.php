@@ -1,5 +1,5 @@
 <div class="card">
-    <div class="card-header">
+    <div class="card-header bg-primary text-white">
         <i class="fas fa-shipping-fast me-2"></i> Dados do Envio
     </div>
     <div class="card-body">
@@ -10,7 +10,64 @@
             <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
             
             <style>
-                /* Removendo estilos anteriores */
+                /* Estilos gerais e cores */
+                .card-header {
+                    font-weight: bold;
+                }
+                .section-card {
+                    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+                    transition: all 0.3s ease;
+                }
+                .section-card:hover {
+                    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+                }
+                .section-header {
+                    background: linear-gradient(45deg, #1a73e8, #0d47a1);
+                    color: white;
+                    border-top-left-radius: 0.375rem;
+                    border-top-right-radius: 0.375rem;
+                }
+                .btn-primary {
+                    background: linear-gradient(45deg, #1a73e8, #0d47a1);
+                    border: none;
+                }
+                .btn-danger {
+                    background: linear-gradient(45deg, #e53935, #c62828);
+                    border: none;
+                }
+                .btn-outline-secondary {
+                    border-color: #1a73e8;
+                    color: #1a73e8;
+                }
+                .btn-outline-secondary:hover {
+                    background-color: #1a73e8;
+                    color: white;
+                }
+                .input-group-text {
+                    background-color: #f0f7ff;
+                    border-color: #1a73e8;
+                    color: #1a73e8;
+                }
+                
+                /* Cores para os cards de produtos e caixas */
+                #produtos-cards .card, #caixas-cards .card {
+                    border-left: 4px solid #1a73e8;
+                    transition: transform 0.2s ease;
+                }
+                #produtos-cards .card:hover, #caixas-cards .card:hover {
+                    transform: translateY(-5px);
+                }
+                #produtos-cards .card-title, #caixas-cards .card-title {
+                    color: #1a73e8;
+                    border-bottom: 1px solid #e0e0e0;
+                    padding-bottom: 8px;
+                }
+                #resumo-produtos {
+                    background-color: #f0f7ff;
+                    border-left: 4px solid #4caf50;
+                }
+                
+                /* Estilos para Select2 */
                 #produto-select {
                     max-height: 300px;
                 }
@@ -20,7 +77,7 @@
                 .select2-selection {
                     height: 38px !important;
                     border-radius: 0.375rem !important;
-                    border: 1px solid #dee2e6 !important;
+                    border: 1px solid #1a73e8 !important;
                     padding: 0.375rem 0.75rem !important;
                 }
                 .select2-selection__arrow {
@@ -28,6 +85,7 @@
                 }
                 .select2-search__field {
                     padding: 8px !important;
+                    border-color: #1a73e8 !important;
                 }
                 .select2-results__option {
                     padding: 8px;
@@ -36,20 +94,60 @@
                 .select2-results__option:hover {
                     background-color: #f0f7ff;
                 }
+                .select2-container--default .select2-results__option--highlighted[aria-selected] {
+                    background-color: #1a73e8;
+                }
+                .select2-container--default .select2-results__option[aria-selected=true] {
+                    background-color: #e3f2fd;
+                }
                 .select2-container--default .select2-results__option[aria-disabled=true] {
                     color: #999;
                     font-style: italic;
                     background-color: #f9f9f9;
                 }
+                
+                /* Estilos para alertas e mensagens */
+                .alert-info {
+                    background-color: #e3f2fd;
+                    border-color: #1a73e8;
+                    color: #0d47a1;
+                }
+                
+                /* Origem e Destino gradientes diferentes */
+                .origem-header {
+                    background: linear-gradient(45deg, #43a047, #2e7d32);
+                }
+                .destino-header {
+                    background: linear-gradient(45deg, #f57c00, #e65100);
+                }
+                
+                /* Realce para campos obrigatórios */
+                .form-label.required:after {
+                    content: " *";
+                    color: #e53935;
+                }
+                
+                /* Botão de enviar maior e mais destacado */
+                .btn-enviar {
+                    padding: 12px 30px;
+                    font-size: 1.1rem;
+                    background: linear-gradient(45deg, #43a047, #2e7d32);
+                    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.12);
+                }
+                .btn-enviar:hover {
+                    background: linear-gradient(45deg, #2e7d32, #1b5e20);
+                    box-shadow: 0 6px 10px rgba(0, 0, 0, 0.18);
+                    transform: translateY(-2px);
+                }
             </style>
             
             <div class="row mb-4">
                 <div class="col-12">
-                    <div class="card border-light">
-                        <div class="card-header bg-light d-flex justify-content-between align-items-center">
-                            <h5 class="mb-0">Produtos para Envio</h5>
+                    <div class="card border-0 section-card">
+                        <div class="card-header section-header d-flex justify-content-between align-items-center">
+                            <h5 class="mb-0"><i class="fas fa-box me-2"></i> Produtos para Envio</h5>
                         </div>
-                        <div class="card-body">
+                        <div class="card-body bg-white">
                             <div class="row mb-3">
                                 <div class="col-lg-5 col-md-5">
                                     <div class="mb-2">
@@ -119,11 +217,11 @@
             <!-- 2. Dimensões da Caixa (agora como cards) -->
             <div class="row mb-4">
                 <div class="col-12">
-                    <div class="card border-light">
-                        <div class="card-header bg-light">
-                            <h5 class="mb-0">Dimensões da Caixa</h5>
+                    <div class="card border-0 section-card">
+                        <div class="card-header section-header">
+                            <h5 class="mb-0"><i class="fas fa-cube me-2"></i> Dimensões da Caixa</h5>
                         </div>
-                        <div class="card-body">
+                        <div class="card-body bg-white">
                             <div class="row">
                                 <div class="col-md-2 col-6 mb-3">
                                     <label for="altura" class="form-label">Altura (cm)</label>
@@ -167,92 +265,72 @@
             <!-- 3. Informações de Origem e Destino -->
             <div class="row mb-4">
                 <div class="col-md-6 mb-4">
-                    <div class="card h-100 section-card">
+                    <div class="card h-100 border-0 section-card">
                         <div class="card-header origem-header">
                             <h5 class="mb-0"><i class="fas fa-home me-2"></i> Origem</h5>
                         </div>
-                        <div class="card-body">
+                        <div class="card-body bg-white">
                             <div class="mb-3">
                                 <label for="origem_nome" class="form-label required">Nome</label>
                                 <input type="text" class="form-control" id="origem_nome" name="origem_nome" required>
                             </div>
                             <div class="mb-3">
-                                <label for="origem_cep" class="form-label">CEP / Código Postal</label>
-                                <div class="input-group">
-                                    <input type="text" class="form-control" id="origem_cep" name="origem_cep" required>
-                                    <button class="btn btn-outline-secondary" type="button" id="origem_buscar_cep">
-                                        <i class="fas fa-search"></i> Buscar
-                                    </button>
-                                </div>
-                                <small class="text-muted">Digite o CEP e clique em buscar para preencher o endereço</small>
-                            </div>
-                            <div class="mb-3">
                                 <label for="origem_endereco" class="form-label">Endereço</label>
                                 <input type="text" class="form-control" id="origem_endereco" name="origem_endereco" required>
                             </div>
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label for="origem_cidade" class="form-label">Cidade</label>
+                                    <input type="text" class="form-control" id="origem_cidade" name="origem_cidade" required>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label for="origem_estado" class="form-label">Estado</label>
+                                    <input type="text" class="form-control" id="origem_estado" name="origem_estado" required>
+                                </div>
+                            </div>
+                            <div class="mb-3">
+                                <label for="origem_cep" class="form-label">CEP</label>
+                                <input type="text" class="form-control" id="origem_cep" name="origem_cep" required>
+                            </div>
                             <div class="mb-3">
                                 <label for="origem_pais" class="form-label">País</label>
-                                <select class="form-select pais-select" id="origem_pais" name="origem_pais" required>
-                                    <option value="" selected disabled>Selecione um país</option>
-                                </select>
-                            </div>
-                            <div class="mb-3">
-                                <label for="origem_estado" class="form-label">Estado</label>
-                                <select class="form-select estado-select" id="origem_estado" name="origem_estado" required disabled>
-                                    <option value="" selected disabled>Selecione um país primeiro</option>
-                                </select>
-                            </div>
-                            <div class="mb-3">
-                                <label for="origem_cidade" class="form-label">Cidade</label>
-                                <select class="form-select cidade-select" id="origem_cidade" name="origem_cidade" required disabled>
-                                    <option value="" selected disabled>Selecione um estado primeiro</option>
-                                </select>
+                                <input type="text" class="form-control" id="origem_pais" name="origem_pais" value="Brasil" required>
                             </div>
                         </div>
                     </div>
                 </div>
                 
                 <div class="col-md-6 mb-4">
-                    <div class="card h-100 section-card">
+                    <div class="card h-100 border-0 section-card">
                         <div class="card-header destino-header">
                             <h5 class="mb-0"><i class="fas fa-map-marker-alt me-2"></i> Destino</h5>
                         </div>
-                        <div class="card-body">
+                        <div class="card-body bg-white">
                             <div class="mb-3">
                                 <label for="destino_nome" class="form-label required">Nome</label>
                                 <input type="text" class="form-control" id="destino_nome" name="destino_nome" required>
                             </div>
                             <div class="mb-3">
-                                <label for="destino_cep" class="form-label">CEP / Código Postal</label>
-                                <div class="input-group">
-                                    <input type="text" class="form-control" id="destino_cep" name="destino_cep" required>
-                                    <button class="btn btn-outline-secondary" type="button" id="destino_buscar_cep">
-                                        <i class="fas fa-search"></i> Buscar
-                                    </button>
-                                </div>
-                                <small class="text-muted">Digite o CEP e clique em buscar para preencher o endereço</small>
-                            </div>
-                            <div class="mb-3">
                                 <label for="destino_endereco" class="form-label">Endereço</label>
                                 <input type="text" class="form-control" id="destino_endereco" name="destino_endereco" required>
                             </div>
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label for="destino_cidade" class="form-label">Cidade</label>
+                                    <input type="text" class="form-control" id="destino_cidade" name="destino_cidade" required>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label for="destino_estado" class="form-label">Estado</label>
+                                    <input type="text" class="form-control" id="destino_estado" name="destino_estado" required>
+                                </div>
+                            </div>
+                            <div class="mb-3">
+                                <label for="destino_cep" class="form-label">CEP</label>
+                                <input type="text" class="form-control" id="destino_cep" name="destino_cep" required>
+                            </div>
                             <div class="mb-3">
                                 <label for="destino_pais" class="form-label">País</label>
-                                <select class="form-select pais-select" id="destino_pais" name="destino_pais" required>
-                                    <option value="" selected disabled>Selecione um país</option>
-                                </select>
-                            </div>
-                            <div class="mb-3">
-                                <label for="destino_estado" class="form-label">Estado</label>
-                                <select class="form-select estado-select" id="destino_estado" name="destino_estado" required disabled>
-                                    <option value="" selected disabled>Selecione um país primeiro</option>
-                                </select>
-                            </div>
-                            <div class="mb-3">
-                                <label for="destino_cidade" class="form-label">Cidade</label>
-                                <select class="form-select cidade-select" id="destino_cidade" name="destino_cidade" required disabled>
-                                    <option value="" selected disabled>Selecione um estado primeiro</option>
-                                </select>
+                                <input type="text" class="form-control" id="destino_pais" name="destino_pais" required>
                             </div>
                         </div>
                     </div>
@@ -260,7 +338,7 @@
             </div>
             
             <div class="text-center mt-4">
-                <button type="submit" class="btn btn-primary btn-lg">
+                <button type="submit" class="btn btn-primary btn-lg btn-enviar">
                     <i class="fas fa-paper-plane me-2"></i> Enviar
                 </button>
             </div>
@@ -305,197 +383,6 @@
         let currentPage = 1;
         let totalPages = 1;
         let isLoading = false;
-        
-        // Dados de países, estados e cidades
-        const paises = [
-            { id: "BR", nome: "Brasil" },
-            { id: "US", nome: "Estados Unidos" },
-            { id: "PT", nome: "Portugal" },
-            { id: "ES", nome: "Espanha" },
-            { id: "FR", nome: "França" },
-            { id: "IT", nome: "Itália" },
-            { id: "DE", nome: "Alemanha" },
-            { id: "GB", nome: "Reino Unido" },
-            { id: "JP", nome: "Japão" },
-            { id: "CN", nome: "China" },
-            { id: "AR", nome: "Argentina" },
-            { id: "UY", nome: "Uruguai" },
-            { id: "CL", nome: "Chile" },
-            { id: "MX", nome: "México" },
-            { id: "CA", nome: "Canadá" },
-            { id: "AU", nome: "Austrália" }
-        ];
-        
-        const estados = {
-            "BR": [
-                { id: "AC", nome: "Acre" },
-                { id: "AL", nome: "Alagoas" },
-                { id: "AM", nome: "Amazonas" },
-                { id: "AP", nome: "Amapá" },
-                { id: "BA", nome: "Bahia" },
-                { id: "CE", nome: "Ceará" },
-                { id: "DF", nome: "Distrito Federal" },
-                { id: "ES", nome: "Espírito Santo" },
-                { id: "GO", nome: "Goiás" },
-                { id: "MA", nome: "Maranhão" },
-                { id: "MG", nome: "Minas Gerais" },
-                { id: "MS", nome: "Mato Grosso do Sul" },
-                { id: "MT", nome: "Mato Grosso" },
-                { id: "PA", nome: "Pará" },
-                { id: "PB", nome: "Paraíba" },
-                { id: "PE", nome: "Pernambuco" },
-                { id: "PI", nome: "Piauí" },
-                { id: "PR", nome: "Paraná" },
-                { id: "RJ", nome: "Rio de Janeiro" },
-                { id: "RN", nome: "Rio Grande do Norte" },
-                { id: "RO", nome: "Rondônia" },
-                { id: "RR", nome: "Roraima" },
-                { id: "RS", nome: "Rio Grande do Sul" },
-                { id: "SC", nome: "Santa Catarina" },
-                { id: "SE", nome: "Sergipe" },
-                { id: "SP", nome: "São Paulo" },
-                { id: "TO", nome: "Tocantins" }
-            ],
-            "US": [
-                { id: "AL", nome: "Alabama" },
-                { id: "AK", nome: "Alaska" },
-                { id: "AZ", nome: "Arizona" },
-                { id: "AR", nome: "Arkansas" },
-                { id: "CA", nome: "California" },
-                { id: "CO", nome: "Colorado" },
-                { id: "CT", nome: "Connecticut" },
-                { id: "DE", nome: "Delaware" },
-                { id: "FL", nome: "Florida" },
-                { id: "GA", nome: "Georgia" },
-                { id: "HI", nome: "Hawaii" },
-                { id: "ID", nome: "Idaho" },
-                { id: "IL", nome: "Illinois" },
-                { id: "IN", nome: "Indiana" },
-                { id: "IA", nome: "Iowa" },
-                { id: "KS", nome: "Kansas" },
-                { id: "KY", nome: "Kentucky" },
-                { id: "LA", nome: "Louisiana" },
-                { id: "ME", nome: "Maine" },
-                { id: "MD", nome: "Maryland" },
-                { id: "MA", nome: "Massachusetts" },
-                { id: "MI", nome: "Michigan" },
-                { id: "MN", nome: "Minnesota" },
-                { id: "MS", nome: "Mississippi" },
-                { id: "MO", nome: "Missouri" },
-                { id: "MT", nome: "Montana" },
-                { id: "NE", nome: "Nebraska" },
-                { id: "NV", nome: "Nevada" },
-                { id: "NH", nome: "New Hampshire" },
-                { id: "NJ", nome: "New Jersey" },
-                { id: "NM", nome: "New Mexico" },
-                { id: "NY", nome: "New York" },
-                { id: "NC", nome: "North Carolina" },
-                { id: "ND", nome: "North Dakota" },
-                { id: "OH", nome: "Ohio" },
-                { id: "OK", nome: "Oklahoma" },
-                { id: "OR", nome: "Oregon" },
-                { id: "PA", nome: "Pennsylvania" },
-                { id: "RI", nome: "Rhode Island" },
-                { id: "SC", nome: "South Carolina" },
-                { id: "SD", nome: "South Dakota" },
-                { id: "TN", nome: "Tennessee" },
-                { id: "TX", nome: "Texas" },
-                { id: "UT", nome: "Utah" },
-                { id: "VT", nome: "Vermont" },
-                { id: "VA", nome: "Virginia" },
-                { id: "WA", nome: "Washington" },
-                { id: "WV", nome: "West Virginia" },
-                { id: "WI", nome: "Wisconsin" },
-                { id: "WY", nome: "Wyoming" }
-            ],
-            // Adicionar alguns estados básicos para outros países
-            "PT": [
-                { id: "LI", nome: "Lisboa" },
-                { id: "PO", nome: "Porto" },
-                { id: "FA", nome: "Faro" },
-                { id: "CO", nome: "Coimbra" }
-            ]
-            // Demais países podem ser adicionados conforme necessário
-        };
-        
-        const cidades = {
-            "SP": [
-                { id: "SAO", nome: "São Paulo" },
-                { id: "CAM", nome: "Campinas" },
-                { id: "RIB", nome: "Ribeirão Preto" },
-                { id: "SJC", nome: "São José dos Campos" },
-                { id: "SAN", nome: "Santos" }
-            ],
-            "RJ": [
-                { id: "RIO", nome: "Rio de Janeiro" },
-                { id: "NIT", nome: "Niterói" },
-                { id: "PET", nome: "Petrópolis" },
-                { id: "MAC", nome: "Macaé" }
-            ],
-            "MG": [
-                { id: "BHZ", nome: "Belo Horizonte" },
-                { id: "UBE", nome: "Uberlândia" },
-                { id: "CON", nome: "Contagem" },
-                { id: "JDF", nome: "Juiz de Fora" },
-                { id: "MOC", nome: "Montes Claros" },
-                { id: "IPA", nome: "Ipatinga" },
-                { id: "DIV", nome: "Divinópolis" },
-                { id: "POC", nome: "Poços de Caldas" },
-                { id: "VAR", nome: "Varginha" },
-                { id: "UBA", nome: "Uberaba" },
-                { id: "GVR", nome: "Governador Valadares" },
-                { id: "PSS", nome: "Pouso Alegre" },
-                { id: "SJR", nome: "São João del-Rei" },
-                { id: "ITA", nome: "Itajubá" },
-                { id: "LAV", nome: "Lavras" },
-                { id: "BAR", nome: "Barbacena" },
-                { id: "ARA", nome: "Araxá" },
-                { id: "ITU", nome: "Ituiutaba" },
-                { id: "FOR", nome: "Formiga" },
-                { id: "CAT", nome: "Cataguases" },
-                { id: "TEO", nome: "Teófilo Otoni" },
-                { id: "PSO", nome: "Passos" },
-                { id: "MUR", nome: "Muriaé" },
-                { id: "PAT", nome: "Patos de Minas" },
-                { id: "IBI", nome: "Ibirité" },
-                { id: "SAB", nome: "Sabará" },
-                { id: "NLA", nome: "Nova Lima" },
-                { id: "LFO", nome: "Lafaiete" },
-                { id: "BTC", nome: "Betim" },
-                { id: "SCL", nome: "Santa Luzia" },
-                { id: "ITC", nome: "Itaúna" },
-                { id: "COG", nome: "Congonhas" },
-                { id: "AXE", nome: "Araguari" },
-                { id: "PAR", nome: "Paracatu" },
-                { id: "TPI", nome: "Três Pontas" },
-                { id: "OPA", nome: "Ouro Preto" }
-            ],
-            "CA": [
-                { id: "LA", nome: "Los Angeles" },
-                { id: "SF", nome: "San Francisco" },
-                { id: "SD", nome: "San Diego" },
-                { id: "SJ", nome: "San Jose" }
-            ],
-            "NY": [
-                { id: "NYC", nome: "New York City" },
-                { id: "BUF", nome: "Buffalo" },
-                { id: "ROC", nome: "Rochester" },
-                { id: "SYR", nome: "Syracuse" }
-            ],
-            "TX": [
-                { id: "HOU", nome: "Houston" },
-                { id: "DAL", nome: "Dallas" },
-                { id: "AUS", nome: "Austin" },
-                { id: "SAT", nome: "San Antonio" }
-            ],
-            "LI": [
-                { id: "LIS", nome: "Lisboa" },
-                { id: "CAS", nome: "Cascais" },
-                { id: "SIN", nome: "Sintra" },
-                { id: "OEI", nome: "Oeiras" }
-            ]
-            // Outras cidades podem ser adicionadas conforme necessário
-        };
         
         // Função para inicializar o Select2
         function inicializarSelect2() {
@@ -740,14 +627,14 @@
             
             produtos.forEach(function(produto, index) {
                 const card = `
-                    <div class="col-lg-4 col-md-6">
+                    <div class="col-lg-4 col-md-6 mb-3">
                         <div class="card h-100">
                             <div class="card-body">
                                 <h5 class="card-title">${produto.nome}</h5>
                                 <p class="card-text">
-                                    <small class="text-muted">Ncm: ${produto.codigo || 'N/A'}</small><br>
-                                    <small class="text-muted">Peso unitário: ${produto.peso} kg</small><br>
-                                    <small class="text-muted">Valor unitário: R$ ${produto.valor.toFixed(2)} <span class="text-info">(informado pelo usuário)</span></small>
+                                    <small class="text-muted"><i class="fas fa-barcode me-1"></i> NCM: ${produto.codigo || 'N/A'}</small><br>
+                                    <small class="text-muted"><i class="fas fa-weight-hanging me-1"></i> Peso unitário: ${produto.peso} kg</small><br>
+                                    <small class="text-muted"><i class="fas fa-tag me-1"></i> Valor unitário: R$ ${produto.valor.toFixed(2)} <span class="text-info">(informado pelo usuário)</span></small>
                                 </p>
                                 <div class="d-flex justify-content-between align-items-center mt-3">
                                     <div class="btn-group" role="group">
@@ -866,14 +753,14 @@
             
             caixas.forEach(function(caixa, index) {
                 const card = `
-                    <div class="col-lg-4 col-md-6">
+                    <div class="col-lg-4 col-md-6 mb-3">
                         <div class="card h-100">
                             <div class="card-body">
-                                <h5 class="card-title">Caixa #${index + 1}</h5>
+                                <h5 class="card-title"><i class="fas fa-box me-2"></i>Caixa #${index + 1}</h5>
                                 <p class="card-text">
-                                    <small class="text-muted">Dimensões: ${caixa.altura} × ${caixa.largura} × ${caixa.comprimento} cm</small><br>
-                                    <small class="text-muted">Volume: ${(caixa.altura * caixa.largura * caixa.comprimento / 1000).toFixed(2)} litros</small><br>
-                                    <small class="text-muted">Peso: ${caixa.peso} kg</small>
+                                    <small class="text-muted"><i class="fas fa-ruler-combined me-1"></i> Dimensões: ${caixa.altura} × ${caixa.largura} × ${caixa.comprimento} cm</small><br>
+                                    <small class="text-muted"><i class="fas fa-flask me-1"></i> Volume: ${(caixa.altura * caixa.largura * caixa.comprimento / 1000).toFixed(2)} litros</small><br>
+                                    <small class="text-muted"><i class="fas fa-weight-hanging me-1"></i> Peso: ${caixa.peso} kg</small>
                                 </p>
                                 <div class="d-flex justify-content-end mt-3">
                                     <button type="button" class="btn btn-danger btn-remover-caixa" data-index="${index}">
@@ -937,387 +824,6 @@
             $('#sem-caixas-alert').addClass('d-none');
             atualizarResumo();
         });
-        
-        // Função para preencher o select de países
-        function carregarPaises() {
-            $('.pais-select').each(function() {
-                const select = $(this);
-                select.find('option:not(:first)').remove();
-                
-                paises.forEach(function(pais) {
-                    select.append($('<option>', {
-                        value: pais.id,
-                        text: pais.nome
-                    }));
-                });
-            });
-        }
-        
-        // Função para preencher o select de estados com base no país selecionado
-        function carregarEstados(paisId, estadoSelect) {
-            const paisEstados = estados[paisId] || [];
-            estadoSelect.find('option:not(:first)').remove();
-            estadoSelect.prop('disabled', paisEstados.length === 0);
-            
-            if (paisEstados.length === 0) {
-                estadoSelect.find('option:first').text('Nenhum estado disponível para este país');
-                return;
-            }
-            
-            estadoSelect.find('option:first').text('Selecione um estado');
-            
-            paisEstados.forEach(function(estado) {
-                estadoSelect.append($('<option>', {
-                    value: estado.id,
-                    text: estado.nome
-                }));
-            });
-        }
-        
-        // Função para preencher o select de cidades com base no estado selecionado
-        function carregarCidades(estadoId, cidadeSelect) {
-            // Mostrar indicador de carregamento
-            cidadeSelect.prop('disabled', true);
-            cidadeSelect.find('option:not(:first)').remove();
-            cidadeSelect.find('option:first').text('Carregando cidades...');
-            
-            // Obter informações de contexto
-            const formGroup = cidadeSelect.closest('.card-body');
-            const paisSelect = formGroup.find('.pais-select');
-            const paisId = paisSelect.val();
-            const prefixo = paisSelect.attr('id').split('_')[0]; // 'origem' ou 'destino'
-            
-            // Nome do container que irá conter o select ou input
-            const cidadeContainerId = `#${prefixo}_cidade_container`;
-            
-            // Verificar se já existe o container, caso contrário, criar
-            if ($(cidadeContainerId).length === 0) {
-                cidadeSelect.wrap(`<div id="${prefixo}_cidade_container"></div>`);
-            }
-            
-            // Primeiro verificar se temos cidades cadastradas para este estado
-            const estadoCidades = cidades[estadoId] || [];
-            
-            // Variável para controlar se devemos usar o IBGE
-            const isBrasil = paisId === 'BR';
-            const usarAPIIBGE = isBrasil && estadoId.length === 2; // Estados brasileiros têm UF com 2 caracteres
-            
-            // Se tem cidades no array estático ou vamos usar a API do IBGE, tentamos o select
-            if (estadoCidades.length > 0 || usarAPIIBGE) {
-                // Se temos cidades cadastradas para este estado, usar o select
-                if (estadoCidades.length > 0) {
-                    // Exibir o select para estados com cidades cadastradas
-                    exibirSelectCidade(prefixo);
-                    
-                    cidadeSelect.find('option:not(:first)').remove();
-                    cidadeSelect.find('option:first').text('Selecione uma cidade');
-                    
-                    estadoCidades.forEach(function(cidade) {
-                        cidadeSelect.append($('<option>', {
-                            value: cidade.id,
-                            text: cidade.nome
-                        }));
-                    });
-                    
-                    cidadeSelect.prop('disabled', false);
-                    console.log(`Carregadas ${estadoCidades.length} cidades para o estado ${estadoId} do array estático`);
-                }
-                // Se não temos cidades cadastradas, mas é um estado brasileiro, usar a API do IBGE
-                else if (usarAPIIBGE) {
-                    $.ajax({
-                        url: `https://servicodados.ibge.gov.br/api/v1/localidades/estados/${estadoId}/municipios`,
-                        method: 'GET',
-                        dataType: 'json',
-                        success: function(data) {
-                            // Certificar-se de exibir o select para estados brasileiros
-                            exibirSelectCidade(prefixo);
-                            
-                            cidadeSelect.find('option:not(:first)').remove();
-                            cidadeSelect.find('option:first').text('Selecione uma cidade');
-                            
-                            // Ordenar cidades por nome
-                            data.sort((a, b) => a.nome.localeCompare(b.nome));
-                            
-                            // Popular o select com todas as cidades retornadas
-                            data.forEach(function(cidade) {
-                                cidadeSelect.append($('<option>', {
-                                    value: cidade.id,
-                                    text: cidade.nome
-                                }));
-                            });
-                            
-                            cidadeSelect.prop('disabled', false);
-                            
-                            console.log(`Carregadas ${data.length} cidades para o estado ${estadoId} via API IBGE`);
-                        },
-                        error: function(error) {
-                            console.error('Erro ao carregar cidades do IBGE:', error);
-                            // Exibir campo de entrada de texto se a API falhar
-                            exibirInputCidade(prefixo, `Erro ao carregar cidades. Digite o nome da cidade manualmente.`);
-                        }
-                    });
-                }
-            } else {
-                // Se não temos cidades cadastradas e não é um estado brasileiro, exibir campo de entrada de texto
-                exibirInputCidade(prefixo, `Não há lista de cidades disponível para ${obterNomeEstado(estadoId, paisId)}. Digite o nome da cidade manualmente.`);
-            }
-            
-            // Função para obter o nome do estado (para mensagem informativa)
-            function obterNomeEstado(estadoId, paisId) {
-                const paisEstados = estados[paisId] || [];
-                const estado = paisEstados.find(e => e.id === estadoId);
-                return estado ? estado.nome : 'este estado';
-            }
-            
-            // Função para exibir o select de cidades
-            function exibirSelectCidade(prefixo) {
-                const container = $(`#${prefixo}_cidade_container`);
-                
-                // Se já tem o select, não faz nada
-                if (container.find(`select#${prefixo}_cidade`).length > 0) {
-                    return;
-                }
-                
-                // Remover mensagem informativa existente
-                container.next('.text-muted').remove();
-                
-                // Remover o input se existir
-                container.find(`input#${prefixo}_cidade_texto`).remove();
-                
-                // Recriar o select
-                container.empty();
-                container.append(`
-                    <select class="form-select cidade-select" id="${prefixo}_cidade" name="${prefixo}_cidade" required>
-                        <option value="" selected disabled>Selecione uma cidade</option>
-                    </select>
-                `);
-                
-                // Atualizar a referência
-                cidadeSelect = $(`#${prefixo}_cidade`);
-            }
-            
-            // Função para exibir o input de cidades
-            function exibirInputCidade(prefixo, mensagem) {
-                const container = $(`#${prefixo}_cidade_container`);
-                
-                // Se já tem o input, não faz nada
-                if (container.find(`input#${prefixo}_cidade_texto`).length > 0) {
-                    return;
-                }
-                
-                // Remover mensagem informativa existente
-                container.next('.text-muted').remove();
-                
-                // Remover o select
-                container.empty();
-                
-                // Criar o input
-                container.append(`
-                    <input type="text" class="form-control" id="${prefixo}_cidade_texto" 
-                           name="${prefixo}_cidade" placeholder="Digite o nome da cidade" required>
-                `);
-                
-                // Exibir uma mensagem informativa
-                if (mensagem) {
-                    container.after(`<small class="text-muted">${mensagem}</small>`);
-                }
-            }
-        }
-        
-        // Eventos para os selects de país, estado e cidade
-        $('.pais-select').on('change', function() {
-            const paisId = $(this).val();
-            const formGroup = $(this).closest('.card-body');
-            const estadoSelect = formGroup.find('.estado-select');
-            const cidadeSelect = formGroup.find('.cidade-select');
-            const prefixo = $(this).attr('id').split('_')[0]; // Obter prefixo (origem ou destino)
-            
-            // Limpar campo de texto da cidade, se existir
-            const cidadeContainer = $(`#${prefixo}_cidade_container`);
-            if (cidadeContainer.length) {
-                cidadeContainer.find('.text-muted').remove();
-                cidadeContainer.next('.text-muted').remove();
-            }
-            
-            carregarEstados(paisId, estadoSelect);
-            
-            // Limpar e desabilitar o campo de cidade, seja select ou input
-            if ($(`#${prefixo}_cidade`).length) {
-                $(`#${prefixo}_cidade`).prop('disabled', true);
-                $(`#${prefixo}_cidade`).val('');
-            }
-            
-            if ($(`#${prefixo}_cidade_texto`).length) {
-                $(`#${prefixo}_cidade_texto`).val('');
-                
-                // Se voltou para o Brasil, remover o input e voltar para select
-                if (paisId === 'BR') {
-                    // A função carregarCidades vai cuidar de criar o select
-                    const cidadeContainer = $(`#${prefixo}_cidade_container`);
-                    cidadeContainer.empty();
-                    cidadeContainer.append(`
-                        <select class="form-select cidade-select" id="${prefixo}_cidade" name="${prefixo}_cidade" required disabled>
-                            <option value="" selected disabled>Selecione um estado primeiro</option>
-                        </select>
-                    `);
-                }
-            }
-        });
-        
-        $('.estado-select').on('change', function() {
-            const estadoId = $(this).val();
-            const formGroup = $(this).closest('.card-body');
-            const cidadeSelect = formGroup.find('.cidade-select');
-            
-            // Limpar mensagens informativas anteriores
-            const cidadeContainer = $(`#${prefixo}_cidade_container`);
-            if (cidadeContainer.length) {
-                cidadeContainer.next('.text-muted').remove();
-            }
-            
-            carregarCidades(estadoId, cidadeSelect);
-        });
-        
-        // Função para buscar CEP via API ViaCEP (Brasil)
-        function buscarCEP(cep, prefixo) {
-            if (cep.length < 8) {
-                alert('CEP inválido. Por favor, digite um CEP válido com 8 dígitos.');
-                return;
-            }
-            
-            // Remove caracteres não numéricos
-            cep = cep.replace(/\D/g, '');
-            
-            // Mostrar indicador de carregamento
-            $(`#${prefixo}_endereco`).val('Buscando...');
-            
-            $.getJSON(`https://viacep.com.br/ws/${cep}/json/?callback=?`, function(data) {
-                if (!data.erro) {
-                    // Preencher o endereço
-                    $(`#${prefixo}_endereco`).val(data.logradouro + (data.complemento ? ', ' + data.complemento : '') + ' - ' + data.bairro);
-                    
-                    // Encontrar o país (Brasil)
-                    const paisBrasil = paises.find(pais => pais.id === 'BR');
-                    if (paisBrasil) {
-                        // Selecionar Brasil como país
-                        $(`#${prefixo}_pais`).val(paisBrasil.id).trigger('change');
-                        
-                        // Aguardar o carregamento dos estados
-                        setTimeout(function() {
-                            // Encontrar o estado pelo código UF
-                            const estado = estados['BR'].find(estado => 
-                                estado.id === data.uf
-                            );
-                            
-                            if (estado) {
-                                // Selecionar o estado
-                                $(`#${prefixo}_estado`).val(estado.id).trigger('change');
-                                
-                                // Aguardar o carregamento das cidades
-                                setTimeout(function() {
-                                    preencherCidade(prefixo, data.localidade);
-                                }, 800);
-                            }
-                        }, 300);
-                    }
-                } else {
-                    alert('CEP não encontrado. Por favor, digite o endereço manualmente.');
-                    $(`#${prefixo}_endereco`).val('');
-                }
-            }).fail(function(jqxhr, textStatus, error) {
-                console.error("Erro ao buscar CEP:", error);
-                alert('Erro ao buscar o CEP. Por favor, digite o endereço manualmente.');
-                $(`#${prefixo}_endereco`).val('');
-            });
-            
-            // Função auxiliar para preencher o campo de cidade, independente do tipo
-            function preencherCidade(prefixo, nomeCidade) {
-                // Verificar se existe um campo de seleção ou um campo de texto
-                const selectCidade = $(`#${prefixo}_cidade`);
-                const inputCidade = $(`#${prefixo}_cidade_texto`);
-                
-                // Se temos um campo de entrada de texto, é simples
-                if (inputCidade.length > 0) {
-                    inputCidade.val(nomeCidade);
-                    return;
-                }
-                
-                // Se temos um select, precisamos verificar se a cidade está na lista
-                if (selectCidade.length > 0) {
-                    let cidadeEncontrada = false;
-                    
-                    // Verificar se o select já tem opções carregadas
-                    if (selectCidade.find('option').length > 1) {
-                        // Tentar encontrar a cidade pelo nome
-                        selectCidade.find('option').each(function() {
-                            if ($(this).text().toLowerCase() === nomeCidade.toLowerCase()) {
-                                selectCidade.val($(this).val()).change();
-                                cidadeEncontrada = true;
-                                return false; // Break
-                            }
-                        });
-                        
-                        // Se não encontrou, adicionar a cidade como opção
-                        if (!cidadeEncontrada) {
-                            const novaOpcao = $('<option>', {
-                                value: 'custom_' + nomeCidade.replace(/\s/g, '_').toLowerCase(),
-                                text: nomeCidade
-                            });
-                            
-                            selectCidade.append(novaOpcao);
-                            selectCidade.val(novaOpcao.val()).change();
-                        }
-                    } else {
-                        // O select ainda não tem opções, esperar mais ou transformar em input
-                        console.log('Select de cidade ainda não carregou, esperando...');
-                        
-                        // Verificar novamente após um curto período
-                        setTimeout(function() {
-                            // Se ainda não carregou, tentar uma última vez
-                            if (selectCidade.find('option').length <= 1) {
-                                // Verificar se o container existe
-                                const container = $(`#${prefixo}_cidade_container`);
-                                if (container.length > 0) {
-                                    // Transformar em input
-                                    container.empty().html(`
-                                        <input type="text" class="form-control" id="${prefixo}_cidade_texto" 
-                                               name="${prefixo}_cidade" value="${nomeCidade}" required>
-                                    `);
-                                    container.after(`<small class="text-muted">Campo convertido para entrada de texto.</small>`);
-                                }
-                            } else {
-                                // Tentamos novamente com o select agora preenchido
-                                preencherCidade(prefixo, nomeCidade);
-                            }
-                        }, 500);
-                    }
-                }
-            }
-        }
-        
-        // Eventos para buscar endereço pelo CEP
-        $('#origem_buscar_cep').on('click', function() {
-            const cep = $('#origem_cep').val();
-            buscarCEP(cep, 'origem');
-        });
-        
-        $('#destino_buscar_cep').on('click', function() {
-            const cep = $('#destino_cep').val();
-            buscarCEP(cep, 'destino');
-        });
-        
-        // Máscara para CEP
-        $('#origem_cep, #destino_cep').on('input', function() {
-            const value = $(this).val().replace(/\D/g, '');
-            if (value.length <= 5) {
-                $(this).val(value);
-            } else {
-                $(this).val(value.substring(0, 5) + '-' + value.substring(5, 8));
-            }
-        });
-        
-        // Inicializar os selects de países
-        carregarPaises();
         
         // Processar o envio do formulário
         $('#envio-form').on('submit', function(e) {
