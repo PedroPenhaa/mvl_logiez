@@ -52,6 +52,16 @@
                         <div class="card-body">
                             <div class="row mb-3">
                                 <div class="col-lg-5 col-md-5">
+                                    <div class="mb-2">
+                                        <div class="input-group mb-2">
+                                            <span class="input-group-text"><i class="fas fa-search"></i></span>
+                                            <input type="text" class="form-control" id="busca-descricao" placeholder="Buscar por descrição...">
+                                        </div>
+                                        <div class="input-group mb-2">
+                                            <span class="input-group-text"><i class="fas fa-barcode"></i></span>
+                                            <input type="text" class="form-control" id="busca-codigo" placeholder="Buscar por Ncm...">
+                                        </div>
+                                    </div>
                                     <div class="position-relative">
                                         <select class="form-select produto-select-dropdown" id="produto-select">
                                             <option value="" selected disabled>Selecione um produto</option>
@@ -66,9 +76,13 @@
                                     </div>
                                 </div>
                                 <div class="col-lg-4 col-md-4">
-                                    <div class="input-group">
+                                    <div class="input-group mb-2">
                                         <span class="input-group-text">Quantidade</span>
                                         <input type="number" class="form-control" id="produto-quantidade" min="1" value="1">
+                                    </div>
+                                    <div class="input-group">
+                                        <span class="input-group-text">Valor R$</span>
+                                        <input type="number" class="form-control" id="produto-valor" min="0.01" step="0.01" value="0.00">
                                     </div>
                                 </div>
                                 <div class="col-lg-3 col-md-3">
@@ -283,9 +297,29 @@
                     dataType: 'json',
                     delay: 300,
                     data: function(params) {
-                        console.log("Enviando requisição com parâmetros:", params);
+                        // Obter os valores dos campos de busca
+                        const buscaDescricao = $('#busca-descricao').val();
+                        const buscaNCM = $('#busca-codigo').val();
+                        
+                        // Criar o objeto de busca
+                        const searchParams = {};
+                        
+                        // Usar a busca das caixas de texto se estiverem preenchidas
+                        if (buscaDescricao) searchParams.descricao = buscaDescricao;
+                        if (buscaNCM) searchParams.codigo = buscaNCM;
+                        
+                        // Se não há busca nas caixas, usar o termo do dropdown
+                        if (!buscaDescricao && !buscaNCM && params.term) {
+                            searchParams.descricao = params.term;
+                        }
+                        
+                        console.log("Enviando requisição com parâmetros:", { 
+                            termo: searchParams, 
+                            page: params.page 
+                        });
+                        
                         return {
-                            search: params.term || '',
+                            search: JSON.stringify(searchParams),
                             page: params.page || 1,
                             limit: 100
                         };
@@ -305,7 +339,7 @@
                             return {
                                 id: produto.codigo,
                                 text: produto.descricao,
-                                codigo: produto.codigo,
+                                codigo: produto.codigo, // mantém o nome da propriedade para compatibilidade
                                 peso: 0.5, // Valores padrão
                                 valor: 10.00
                             };
@@ -343,14 +377,48 @@
                 }, 100);
             });
             
+            // Evento ao selecionar um produto
+            $('#produto-select').on('select2:select', function(e) {
+                const produtoSelecionado = e.params.data;
+                console.log("Produto selecionado:", produtoSelecionado);
+                
+                // Sugerir valor inicial (pode ser editado pelo usuário)
+                const valorSugerido = produtoSelecionado.valor || 10.00;
+                $('#produto-valor').val(valorSugerido.toFixed(2));
+                $('#produto-valor').select(); // Seleciona o texto para fácil edição
+            });
+            
             // Carregar manualmente a primeira página de resultados
+            realizarBusca();
+        }
+        
+        // Função para realizar a busca baseada nos campos de busca
+        function realizarBusca() {
+            $('#select-status').text('Buscando produtos...');
+            
+            const buscaDescricao = $('#busca-descricao').val();
+            const buscaNCM = $('#busca-codigo').val();
+            
+            // Criar o objeto de busca
+            const searchParams = {};
+            if (buscaDescricao) searchParams.descricao = buscaDescricao;
+            if (buscaNCM) searchParams.codigo = buscaNCM;
+            
             $.ajax({
                 url: '{{ route("api.produtos.get") }}',
-                data: { page: 1, limit: 100, search: '' },
+                data: { 
+                    page: 1, 
+                    limit: 100, 
+                    search: JSON.stringify(searchParams)
+                },
                 dataType: 'json',
                 success: function(data) {
-                    console.log("Pré-carregando dados:", data);
+                    console.log("Resultados da busca:", data);
                     $('#select-status').text('');
+                    
+                    // Limpar opções existentes, preservando a opção padrão
+                    const defaultOption = $('#produto-select option[value=""]').clone();
+                    $('#produto-select').empty().append(defaultOption);
                     
                     if (data && data.produtos && data.produtos.length) {
                         var options = data.produtos.map(function(produto) {
@@ -358,31 +426,44 @@
                         });
                         
                         $('#produto-select').append(options).trigger('change');
-                        console.log("Opções pré-carregadas adicionadas:", options.length);
-                        $('#select-status').text(options.length + ' produtos carregados');
+                        console.log("Opções carregadas:", options.length);
+                        $('#select-status').text(options.length + ' produtos encontrados');
                         
                         // Esconder o botão de reload, pois os produtos foram carregados com sucesso
                         $('#reload-produtos').hide();
                     } else {
-                        $('#select-status').text('Nenhum produto disponível');
+                        $('#select-status').text('Nenhum produto encontrado');
                         // Mostrar o botão de reload, pois não há produtos
                         $('#reload-produtos').show();
                     }
                 },
                 error: function(error) {
-                    console.error("Erro ao pré-carregar dados:", error);
-                    $('#select-status').text('Erro ao carregar produtos');
+                    console.error("Erro ao buscar produtos:", error);
+                    $('#select-status').text('Erro ao buscar produtos');
                     // Mostrar o botão de reload em caso de erro
                     $('#reload-produtos').show();
                 }
             });
         }
         
+        // Eventos para os campos de busca com debounce
+        let timer;
+        $('#busca-descricao, #busca-codigo').on('input', function() {
+            clearTimeout(timer);
+            timer = setTimeout(realizarBusca, 500); // Debounce de 500ms
+        });
+        
         // Evento do botão de recarregar produtos
         $('#reload-produtos').on('click', function() {
             $('#select-status').text('Recarregando produtos...');
             $(this).prop('disabled', true).addClass('disabled');
+            
+            // Limpar os campos de busca
+            $('#busca-descricao').val('');
+            $('#busca-codigo').val(''); // Campo para busca de NCM
+            
             inicializarSelect2();
+            
             setTimeout(() => {
                 $(this).prop('disabled', false).removeClass('disabled');
             }, 2000);
@@ -428,9 +509,9 @@
                             <div class="card-body">
                                 <h5 class="card-title">${produto.nome}</h5>
                                 <p class="card-text">
-                                    <small class="text-muted">Código: ${produto.codigo || 'N/A'}</small><br>
+                                    <small class="text-muted">Ncm: ${produto.codigo || 'N/A'}</small><br>
                                     <small class="text-muted">Peso unitário: ${produto.peso} kg</small><br>
-                                    <small class="text-muted">Valor unitário: R$ ${produto.valor.toFixed(2)}</small>
+                                    <small class="text-muted">Valor unitário: R$ ${produto.valor.toFixed(2)} <span class="text-info">(informado pelo usuário)</span></small>
                                 </p>
                                 <div class="d-flex justify-content-between align-items-center mt-3">
                                     <div class="btn-group" role="group">
@@ -493,7 +574,15 @@
                 const codigo = produtoSelecionado.codigo || id;
                 const nome = produtoSelecionado.text;
                 const peso = produtoSelecionado.peso || 0.5;
-                const valor = produtoSelecionado.valor || 10.00;
+                const valorInformado = parseFloat($('#produto-valor').val());
+                
+                // Validar valor
+                if (isNaN(valorInformado) || valorInformado <= 0) {
+                    alert('Por favor, informe um valor válido para o produto.');
+                    $('#produto-valor').focus();
+                    return;
+                }
+                
                 const quantidade = parseInt($('#produto-quantidade').val());
                 
                 const produto = {
@@ -501,7 +590,7 @@
                     codigo: codigo,
                     nome: nome,
                     peso: peso,
-                    valor: valor,
+                    valor: valorInformado,
                     quantidade: quantidade
                 };
                 
@@ -523,6 +612,7 @@
                 // Limpar a seleção e resetar a quantidade
                 $('#produto-select').val(null).trigger('change');
                 $('#produto-quantidade').val(1);
+                $('#produto-valor').val(0.00);
                 
                 // Renderizar produtos e atualizar resumo
                 renderizarProdutos();
