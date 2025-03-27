@@ -59,7 +59,7 @@
                                         </div>
                                         <div class="input-group mb-2">
                                             <span class="input-group-text"><i class="fas fa-barcode"></i></span>
-                                            <input type="text" class="form-control" id="busca-codigo" placeholder="Buscar por NCM...">
+                                            <input type="text" class="form-control" id="busca-codigo" placeholder="Buscar por Ncm...">
                                         </div>
                                     </div>
                                     <div class="position-relative">
@@ -116,55 +116,6 @@
                 </div>
             </div>
             
-            <!-- 2. Dimensões da Caixa (agora como cards) -->
-            <div class="row mb-4">
-                <div class="col-12">
-                    <div class="card border-light">
-                        <div class="card-header bg-light">
-                            <h5 class="mb-0">Dimensões da Caixa</h5>
-                        </div>
-                        <div class="card-body">
-                            <div class="row">
-                                <div class="col-md-2 col-6 mb-3">
-                                    <label for="altura" class="form-label">Altura (cm)</label>
-                                    <input type="number" step="0.1" min="1" class="form-control" id="altura" name="altura_temp" value="10">
-                                </div>
-                                <div class="col-md-2 col-6 mb-3">
-                                    <label for="largura" class="form-label">Largura (cm)</label>
-                                    <input type="number" step="0.1" min="1" class="form-control" id="largura" name="largura_temp" value="20">
-                                </div>
-                                <div class="col-md-2 col-6 mb-3">
-                                    <label for="comprimento" class="form-label">Comprimento (cm)</label>
-                                    <input type="number" step="0.1" min="1" class="form-control" id="comprimento" name="comprimento_temp" value="30">
-                                </div>
-                                <div class="col-md-2 col-6 mb-3">
-                                    <label for="peso_caixa" class="form-label">Peso (kg)</label>
-                                    <input type="number" step="0.1" min="0.1" class="form-control" id="peso_caixa" name="peso_caixa_temp" value="0.5">
-                                </div>
-                                <div class="col-md-4 col-12 mb-3 d-flex align-items-end">
-                                    <button type="button" class="btn btn-primary w-100" id="adicionar-caixa">
-                                        <i class="fas fa-plus me-2"></i>Adicionar Caixa
-                                    </button>
-                                </div>
-                            </div>
-                            
-                            <div id="caixas-container" class="mt-4">
-                                <div class="alert alert-info" id="sem-caixas-alert">
-                                    <i class="fas fa-info-circle me-2"></i> Adicione pelo menos uma caixa para o envio.
-                                </div>
-                                <div id="caixas-cards" class="row g-3">
-                                    <!-- Os cards de caixas serão adicionados aqui dinamicamente -->
-                                </div>
-                            </div>
-                            
-                            <!-- Campos ocultos para enviar os dados das caixas -->
-                            <input type="hidden" name="caixas_json" id="caixas-json">
-                        </div>
-                    </div>
-                </div>
-            </div>
-            
-            <!-- 3. Informações de Origem e Destino -->
             <div class="row mb-4">
                 <div class="col-md-6 mb-4">
                     <div class="card h-100 border-light">
@@ -239,6 +190,39 @@
                 </div>
             </div>
             
+            <div class="row mb-4">
+                <div class="col-12">
+                    <div class="card border-light">
+                        <div class="card-header bg-light">
+                            <h5 class="mb-0">Dimensões da Caixa</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-md-3 col-6 mb-3">
+                                    <label for="altura" class="form-label">Altura (cm)</label>
+                                    <input type="number" step="0.1" min="1" class="form-control" id="altura" name="altura" required>
+                                </div>
+                                <div class="col-md-3 col-6 mb-3">
+                                    <label for="largura" class="form-label">Largura (cm)</label>
+                                    <input type="number" step="0.1" min="1" class="form-control" id="largura" name="largura" required>
+                                </div>
+                                <div class="col-md-3 col-6 mb-3">
+                                    <label for="comprimento" class="form-label">Comprimento (cm)</label>
+                                    <input type="number" step="0.1" min="1" class="form-control" id="comprimento" name="comprimento" required>
+                                </div>
+                                <div class="col-md-3 col-6 mb-3">
+                                    <label for="peso_caixa" class="form-label">Peso da Caixa (kg)</label>
+                                    <input type="number" step="0.1" min="0.1" class="form-control" id="peso_caixa" name="peso_caixa" required>
+                                </div>
+                            </div>
+                            <div class="alert alert-info">
+                                <i class="fas fa-info-circle me-2"></i> O peso total do envio será calculado como a soma do peso da caixa com o peso dos produtos.
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
             <div class="text-center mt-4">
                 <button type="submit" class="btn btn-primary btn-lg">
                     <i class="fas fa-paper-plane me-2"></i> Enviar
@@ -277,9 +261,6 @@
         let produtos = [];
         let valorTotal = 0;
         let pesoTotal = 0;
-        
-        // Array para armazenar as caixas adicionadas
-        let caixas = [];
         
         // Variáveis para controle de paginação e busca
         let currentPage = 1;
@@ -498,17 +479,11 @@
                 pesoTotal += produto.peso * produto.quantidade;
             });
             
-            // Adicionar o peso das caixas
-            caixas.forEach(function(caixa) {
-                pesoTotal += parseFloat(caixa.peso);
-            });
-            
             $('#valor-total').text(valorTotal.toFixed(2));
             $('#peso-total').text(pesoTotal.toFixed(2));
             
             // Atualizando os campos ocultos para envio
             $('#produtos-json').val(JSON.stringify(produtos));
-            $('#caixas-json').val(JSON.stringify(caixas));
             $('#valor-total-input').val(valorTotal.toFixed(2));
             $('#peso-total-input').val(pesoTotal.toFixed(2));
             
@@ -648,85 +623,6 @@
             }
         });
         
-        // Renderizar as caixas adicionadas
-        function renderizarCaixas() {
-            const container = $('#caixas-cards');
-            container.empty();
-            
-            caixas.forEach(function(caixa, index) {
-                const card = `
-                    <div class="col-lg-4 col-md-6">
-                        <div class="card h-100">
-                            <div class="card-body">
-                                <h5 class="card-title">Caixa #${index + 1}</h5>
-                                <p class="card-text">
-                                    <small class="text-muted">Dimensões: ${caixa.altura} × ${caixa.largura} × ${caixa.comprimento} cm</small><br>
-                                    <small class="text-muted">Volume: ${(caixa.altura * caixa.largura * caixa.comprimento / 1000).toFixed(2)} litros</small><br>
-                                    <small class="text-muted">Peso: ${caixa.peso} kg</small>
-                                </p>
-                                <div class="d-flex justify-content-end mt-3">
-                                    <button type="button" class="btn btn-danger btn-remover-caixa" data-index="${index}">
-                                        <i class="fas fa-trash"></i> Remover
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                `;
-                
-                container.append(card);
-            });
-            
-            // Adicionar eventos após renderizar
-            $('.btn-remover-caixa').on('click', function() {
-                const index = $(this).data('index');
-                caixas.splice(index, 1);
-                renderizarCaixas();
-                atualizarResumo();
-                
-                // Atualizar visualização de alertas
-                if (caixas.length === 0) {
-                    $('#sem-caixas-alert').removeClass('d-none');
-                }
-            });
-        }
-        
-        // Evento de adicionar caixa
-        $('#adicionar-caixa').on('click', function() {
-            const altura = parseFloat($('#altura').val());
-            const largura = parseFloat($('#largura').val());
-            const comprimento = parseFloat($('#comprimento').val());
-            const peso = parseFloat($('#peso_caixa').val());
-            
-            // Validação básica
-            if (isNaN(altura) || isNaN(largura) || isNaN(comprimento) || isNaN(peso) ||
-                altura <= 0 || largura <= 0 || comprimento <= 0 || peso <= 0) {
-                alert('Por favor, preencha todas as dimensões da caixa com valores válidos.');
-                return;
-            }
-            
-            // Adicionar a caixa
-            const caixa = {
-                altura: altura,
-                largura: largura,
-                comprimento: comprimento,
-                peso: peso
-            };
-            
-            caixas.push(caixa);
-            
-            // Resetar os valores para adicionar nova caixa
-            $('#altura').val(10);
-            $('#largura').val(20);
-            $('#comprimento').val(30);
-            $('#peso_caixa').val(0.5);
-            
-            // Renderizar as caixas e atualizar o resumo
-            renderizarCaixas();
-            $('#sem-caixas-alert').addClass('d-none');
-            atualizarResumo();
-        });
-        
         // Processar o envio do formulário
         $('#envio-form').on('submit', function(e) {
             e.preventDefault();
@@ -734,12 +630,6 @@
             // Verificar se há produtos adicionados
             if (produtos.length === 0) {
                 showAlert('Adicione pelo menos um produto para envio.', 'warning');
-                return false;
-            }
-            
-            // Verificar se há caixas adicionadas
-            if (caixas.length === 0) {
-                showAlert('Adicione pelo menos uma caixa para envio.', 'warning');
                 return false;
             }
             
