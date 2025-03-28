@@ -63,6 +63,7 @@ Route::prefix('api')->name('api.')->group(function () {
     Route::post('/envio/processar', [SectionController::class, 'processarEnvio'])->name('envio.processar');
     Route::post('/pagamento/processar', [SectionController::class, 'processarPagamento'])->name('pagamento.processar');
     Route::post('/rastreamento/buscar', [SectionController::class, 'buscarRastreamento'])->name('rastreamento.buscar');
+    Route::post('/rastreamento/comprovante', [SectionController::class, 'solicitarComprovanteEntrega'])->name('rastreamento.comprovante');
     Route::post('/perfil/atualizar', [SectionController::class, 'atualizarPerfil'])->name('perfil.atualizar');
 });
 

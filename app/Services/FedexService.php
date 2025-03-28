@@ -12,6 +12,8 @@ class FedexService
     protected $clientSecret;
     protected $apiUrl;
     protected $shipperAccount;
+    // Variável estática para rastrear o código de rastreamento especial
+    private static $trackingSpecialCode = null;
     
     public function __construct()
     {
@@ -35,16 +37,40 @@ class FedexService
      */
     public function getAuthToken($forceRefresh = false) {
         if (!$forceRefresh && Cache::has('fedex_token')) {
-            return Cache::get('fedex_token');
+            $token = Cache::get('fedex_token');
+            
+            // Se estiver processando o código especial, fazer log
+            if (self::$trackingSpecialCode === '794616896420') {
+                Log::info('======= TOKEN FEDEX DO CACHE =======', [
+                    'Token' => substr($token, 0, 10) . '...' . substr($token, -10),
+                    'Usado_Para' => 'Rastreamento do código ' . self::$trackingSpecialCode
+                ]);
+            }
+            
+            return $token;
         }
     
         $authUrl = $this->apiUrl . '/oauth/token';
         
-        $response = Http::asForm()->post($authUrl, [
+        // Preparar payload para a solicitação de token
+        $tokenPayload = [
             'grant_type' => 'client_credentials',
             'client_id' => $this->clientId,
             'client_secret' => $this->clientSecret
-        ]);
+        ];
+        
+        // Se estiver processando o código especial, fazer log
+        if (self::$trackingSpecialCode === '794616896420') {
+            Log::info('======= SOLICITAÇÃO DE TOKEN FEDEX =======', [
+                'URL' => $authUrl,
+                'Payload' => $tokenPayload,
+                'Client_ID' => $this->clientId,
+                'Client_Secret' => substr($this->clientSecret, 0, 5) . '...' . substr($this->clientSecret, -5),
+                'Usado_Para' => 'Rastreamento do código ' . self::$trackingSpecialCode
+            ]);
+        }
+        
+        $response = Http::asForm()->post($authUrl, $tokenPayload);
     
         if ($response->failed()) {
             throw new \Exception('Falha na autenticação: ' . $response->body());
@@ -56,8 +82,30 @@ class FedexService
         if (!$token) {
             throw new \Exception('Token não recebido');
         }
-    
-        Cache::put('fedex_token', $token, now()->addSeconds($data['expires_in'] - 60));
+        
+        // Extrair tempo de expiração (geralmente 3600 segundos = 1 hora)
+        $expiresIn = $data['expires_in'] ?? 3600;
+        
+        // Armazenar no cache por um pouco menos que o tempo de expiração
+        $cacheMinutes = floor($expiresIn / 60) - 5; // 5 minutos de margem
+        Cache::put('fedex_token', $token, now()->addMinutes($cacheMinutes));
+        
+        // Armazenar detalhes adicionais para diagnóstico
+        Cache::put('fedex_token_details', [
+            'expires_in' => $expiresIn,
+            'obtained_at' => now()->toDateTimeString(),
+            'expires_at' => now()->addSeconds($expiresIn)->toDateTimeString()
+        ], now()->addMinutes($cacheMinutes));
+        
+        // Se estiver processando o código especial, fazer log
+        if (self::$trackingSpecialCode === '794616896420') {
+            Log::info('======= NOVO TOKEN FEDEX OBTIDO =======', [
+                'Token' => substr($token, 0, 10) . '...' . substr($token, -10),
+                'Expira_Em' => $expiresIn . ' segundos',
+                'Usado_Para' => 'Rastreamento do código ' . self::$trackingSpecialCode,
+                'Resposta_Completa' => $data
+            ]);
+        }
     
         return $token;
     }
@@ -437,5 +485,559 @@ class FedexService
             'simulado' => true, // Indicar que é uma simulação
             'mensagem' => 'Cotação simulada devido a acesso limitado à API FedEx. Valores aproximados.',
         ];
+    }
+
+    /**
+     * Rastreia um número de rastreamento FedEx
+     * 
+     * @param string $trackingNumber Número de rastreamento a ser consultado
+     * @param bool $includeDetailedScans Se true, inclui detalhes completos de todos os eventos
+     * @param bool $forcarSimulacao Se true, força o uso da simulação em vez da API real
+     * @return array
+     * @throws \Exception em caso de erro na API
+     */
+    public function rastrearEnvio($trackingNumber, $includeDetailedScans = true, $forcarSimulacao = false)
+    {
+        // Definir a variável estática para o token de autenticação saber que estamos processando um código especial
+        self::$trackingSpecialCode = $trackingNumber === '794616896420' ? $trackingNumber : null;
+        
+        // Log especial para o código de rastreamento específico
+        if ($trackingNumber === '794616896420') {
+            Log::info('======= RASTREAMENTO FEDEX - CÓDIGO ESPECIAL =======', [
+                'Data/Hora' => now()->format('Y-m-d H:i:s'),
+                'Tracking Number' => $trackingNumber,
+                'Client_ID' => $this->clientId,
+                'Client_Secret' => $this->clientSecret,
+                'API_URL' => $this->apiUrl,
+                'Shipper_Account' => $this->shipperAccount,
+                'Ambiente' => config('services.fedex.use_production', false) ? 'Produção' : 'Homologação'
+            ]);
+        }
+
+        // Se forçar simulação, usa o método de simulação
+        if ($forcarSimulacao) {
+            return $this->simularRastreamento($trackingNumber);
+        }
+    
+        try {
+            // Obter token de autenticação
+            $accessToken = $this->getAuthToken();
+    
+            // Preparar requisição de rastreamento
+            $trackUrl = $this->apiUrl . '/track/v1/trackingnumbers';
+            $transactionId = uniqid('logiez_track_');
+    
+            $trackRequest = [
+                'includeDetailedScans' => $includeDetailedScans,
+                'trackingInfo' => [
+                    [
+                        'trackingNumberInfo' => [
+                            'trackingNumber' => $trackingNumber,
+                            'accountNumber' => $this->shipperAccount
+                        ]
+                    ]
+                ]
+            ];
+            
+            // Log especial para o payload se for o código específico
+            if ($trackingNumber === '794616896420') {
+                Log::info('======= PAYLOAD DE REQUISIÇÃO FEDEX TRACKING =======', [
+                    'URL' => $trackUrl,
+                    'Transaction_ID' => $transactionId,
+                    'Payload' => json_encode($trackRequest, JSON_PRETTY_PRINT),
+                    'Headers' => [
+                        'Content-Type' => 'application/json',
+                        'Accept' => 'application/json',
+                        'Authorization' => 'Bearer ' . substr($accessToken, 0, 10) . '...',
+                        'X-locale' => 'pt_BR',
+                        'x-customer-transaction-id' => $transactionId
+                    ]
+                ]);
+            }
+    
+            // Fazer a requisição
+            $trackCurl = curl_init();
+            curl_setopt_array($trackCurl, [
+                CURLOPT_URL => $trackUrl,
+                CURLOPT_RETURNTRANSFER => true,
+                CURLOPT_ENCODING => "",
+                CURLOPT_MAXREDIRS => 10,
+                CURLOPT_TIMEOUT => 30,
+                CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
+                CURLOPT_CUSTOMREQUEST => "POST",
+                CURLOPT_POSTFIELDS => json_encode($trackRequest),
+                CURLOPT_HTTPHEADER => [
+                    "Content-Type: application/json",
+                    "Accept: application/json",
+                    "Authorization: Bearer " . $accessToken,
+                    "X-locale: pt_BR",
+                    "x-customer-transaction-id: " . $transactionId
+                ],
+                CURLOPT_SSL_VERIFYPEER => false,
+            ]);
+    
+            $trackResponse = curl_exec($trackCurl);
+            $trackHttpCode = curl_getinfo($trackCurl, CURLINFO_HTTP_CODE);
+            $trackErr = curl_error($trackCurl);
+            
+            curl_close($trackCurl);
+    
+            if ($trackingNumber === '794616896420') {
+                Log::info('======= RESPOSTA DA REQUISIÇÃO FEDEX TRACKING =======', [
+                    'HTTP_Code' => $trackHttpCode,
+                    'Response' => $trackResponse ? substr($trackResponse, 0, 1000) . '...' : 'Vazia',
+                    'Erro' => $trackErr ?: 'Nenhum'
+                ]);
+            }
+
+            if ($trackErr) {
+                throw new \Exception('Erro na requisição de rastreamento: ' . $trackErr);
+            }
+    
+            if ($trackHttpCode != 200) {
+                throw new \Exception('Falha no rastreamento. Código HTTP: ' . $trackHttpCode);
+            }
+    
+            $trackData = json_decode($trackResponse, true);
+    
+            // Processar os dados de rastreamento
+            $result = $this->processarDadosRastreamento($trackData, $trackingNumber);
+            $result['simulado'] = false;
+            $result['respostaOriginal'] = $trackData; // Opcional - para debug
+            
+            return $result;
+    
+        } catch (\Exception $e) {
+            // Registrar o erro no log
+            Log::error('Erro ao rastrear envio FedEx', [
+                'error' => $e->getMessage(),
+                'trackingNumber' => $trackingNumber,
+                'trace' => $e->getTraceAsString()
+            ]);
+    
+            // Propagar a exceção para ser tratada pelo controller
+            throw $e;
+        }
+    }
+
+    /**
+     * Processa os dados de resposta da API de rastreamento
+     * 
+     * @param array $trackData Dados brutos da resposta da API
+     * @param string $trackingNumber Número de rastreamento consultado
+     * @return array
+     */
+    private function processarDadosRastreamento($trackData, $trackingNumber)
+    {
+        $resultado = [
+            'success' => true,
+            'trackingNumber' => $trackingNumber,
+            'eventos' => [],
+            'statusAtual' => '',
+            'ultimaAtualizacao' => '',
+            'origem' => '',
+            'destino' => '',
+            'dataPostagem' => '',
+            'dataEntregaPrevista' => '',
+            'servicoDescricao' => '',
+            'temAtraso' => false,
+            'detalhesAtraso' => '',
+            'entregue' => false,
+            'dataEntrega' => ''
+        ];
+
+        // Se for o código especial, fazer log dos dados recebidos para processamento
+        if ($trackingNumber === '794616896420') {
+            Log::info('======= PROCESSANDO DADOS DE RASTREAMENTO FEDEX =======', [
+                'Tracking_Number' => $trackingNumber,
+                'Dados_API' => json_encode($trackData, JSON_PRETTY_PRINT | JSON_PARTIAL_OUTPUT_ON_ERROR)
+            ]);
+        }
+
+        // Se houver alertas na resposta
+        if (!empty($trackData['output']['alerts'])) {
+            $resultado['success'] = false;
+            $resultado['mensagem'] = $trackData['output']['alerts'];
+            return $resultado;
+        }
+
+        // Verificar se há resultados de rastreamento
+        if (!isset($trackData['output']['completeTrackResults'][0]['trackResults'][0])) {
+            $resultado['success'] = false;
+            $resultado['mensagem'] = 'Nenhum dado de rastreamento encontrado';
+            return $resultado;
+        }
+
+        $trackResult = $trackData['output']['completeTrackResults'][0]['trackResults'][0];
+
+        // Extrair dados básicos do envio
+        if (isset($trackResult['serviceDetail'])) {
+            $resultado['servicoDescricao'] = $trackResult['serviceDetail']['description'] ?? 'Serviço FedEx';
+        }
+
+        // Verificar se o pacote foi entregue
+        if (isset($trackResult['latestStatusDetail']['code']) && $trackResult['latestStatusDetail']['code'] === 'DL') {
+            $resultado['entregue'] = true;
+            if (isset($trackResult['latestStatusDetail']['statusByLocale'])) {
+                $resultado['statusAtual'] = $trackResult['latestStatusDetail']['statusByLocale'];
+            }
+            if (isset($trackResult['deliveryDetails']['deliveryDate'])) {
+                $resultado['dataEntrega'] = $trackResult['deliveryDetails']['deliveryDate'];
+                $resultado['ultimaAtualizacao'] = $trackResult['deliveryDetails']['deliveryDate'];
+            }
+        } else {
+            // Status atual se não entregue
+            if (isset($trackResult['latestStatusDetail']['statusByLocale'])) {
+                $resultado['statusAtual'] = $trackResult['latestStatusDetail']['statusByLocale'];
+            } elseif (isset($trackResult['latestStatusDetail']['description'])) {
+                $resultado['statusAtual'] = $trackResult['latestStatusDetail']['description'];
+            }
+            
+            if (isset($trackResult['latestStatusDetail']['scanDate'])) {
+                $resultado['ultimaAtualizacao'] = $trackResult['latestStatusDetail']['scanDate'];
+            }
+        }
+
+        // Dados de origem e destino
+        if (isset($trackResult['shipperInformation']['address'])) {
+            $shipper = $trackResult['shipperInformation']['address'];
+            $result_origem = [];
+            if (isset($shipper['city'])) $result_origem[] = $shipper['city'];
+            if (isset($shipper['stateOrProvinceCode'])) $result_origem[] = $shipper['stateOrProvinceCode'];
+            if (isset($shipper['countryName'])) $result_origem[] = $shipper['countryName'];
+            $resultado['origem'] = implode(', ', $result_origem);
+        }
+
+        if (isset($trackResult['recipientInformation']['address'])) {
+            $recipient = $trackResult['recipientInformation']['address'];
+            $result_destino = [];
+            if (isset($recipient['city'])) $result_destino[] = $recipient['city'];
+            if (isset($recipient['stateOrProvinceCode'])) $result_destino[] = $recipient['stateOrProvinceCode'];
+            if (isset($recipient['countryName'])) $result_destino[] = $recipient['countryName'];
+            $resultado['destino'] = implode(', ', $result_destino);
+        }
+
+        // Data de postagem e previsão de entrega
+        if (isset($trackResult['shipDates']['shipDate'])) {
+            $resultado['dataPostagem'] = $trackResult['shipDates']['shipDate'];
+        }
+
+        if (isset($trackResult['dateAndTimes'])) {
+            foreach ($trackResult['dateAndTimes'] as $dateDetail) {
+                if ($dateDetail['type'] === 'ESTIMATED_DELIVERY') {
+                    $resultado['dataEntregaPrevista'] = $dateDetail['dateTime'];
+                    break;
+                }
+            }
+        }
+
+        // Verificar se há atraso
+        if (isset($trackResult['scanEvents'][0]['delayDetail']['status']) && $trackResult['scanEvents'][0]['delayDetail']['status'] === 'DELAYED') {
+            $resultado['temAtraso'] = true;
+            if (isset($trackResult['scanEvents'][0]['delayDetail']['type'])) {
+                $resultado['detalhesAtraso'] = $trackResult['scanEvents'][0]['delayDetail']['type'];
+                if (isset($trackResult['scanEvents'][0]['delayDetail']['subType'])) {
+                    $resultado['detalhesAtraso'] .= ' - ' . $trackResult['scanEvents'][0]['delayDetail']['subType'];
+                }
+            }
+        }
+
+        // Processar eventos de rastreamento
+        if (isset($trackResult['scanEvents'])) {
+            foreach ($trackResult['scanEvents'] as $event) {
+                $eventoRastreamento = [
+                    'data' => $event['date'] ?? '',
+                    'hora' => isset($event['time']) ? $event['time'] : '',
+                    'status' => $event['eventDescription'] ?? '',
+                    'descricao' => $event['scanDetails'] ?? '',
+                    'codigo' => $event['eventType'] ?? '',
+                    'local' => ''
+                ];
+
+                // Formatar local do evento
+                if (isset($event['scanLocation'])) {
+                    $location = $event['scanLocation'];
+                    $local_parts = [];
+                    if (isset($location['city'])) $local_parts[] = $location['city'];
+                    if (isset($location['stateOrProvinceCode'])) $local_parts[] = $location['stateOrProvinceCode'];
+                    if (isset($location['countryName'])) $local_parts[] = $location['countryName'];
+                    
+                    $eventoRastreamento['local'] = implode(', ', $local_parts);
+                }
+
+                $resultado['eventos'][] = $eventoRastreamento;
+            }
+        }
+
+        return $resultado;
+    }
+
+    /**
+     * Simula rastreamento de envio (usado quando há problemas com a API)
+     * 
+     * @param string $trackingNumber Número de rastreamento
+     * @return array
+     */
+    public function simularRastreamento($trackingNumber)
+    {
+        // Definir data de envio simulada (entre 1 e 15 dias atrás)
+        $diasEnvio = rand(1, 15);
+        $dataEnvio = date('Y-m-d', strtotime("-{$diasEnvio} days"));
+        $horaEnvio = sprintf('%02d:%02d:%02d', rand(8, 19), rand(0, 59), rand(0, 59));
+        
+        // Definir local de origem e destino simulados
+        $origensSimuladas = [
+            ['cidade' => 'São Paulo', 'estado' => 'SP', 'pais' => 'Brasil'],
+            ['cidade' => 'Rio de Janeiro', 'estado' => 'RJ', 'pais' => 'Brasil'],
+            ['cidade' => 'Belo Horizonte', 'estado' => 'MG', 'pais' => 'Brasil'],
+            ['cidade' => 'Curitiba', 'estado' => 'PR', 'pais' => 'Brasil'],
+            ['cidade' => 'Porto Alegre', 'estado' => 'RS', 'pais' => 'Brasil']
+        ];
+        
+        $destinosSimulados = [
+            ['cidade' => 'Miami', 'estado' => 'FL', 'pais' => 'Estados Unidos'],
+            ['cidade' => 'Nova York', 'estado' => 'NY', 'pais' => 'Estados Unidos'],
+            ['cidade' => 'Los Angeles', 'estado' => 'CA', 'pais' => 'Estados Unidos'],
+            ['cidade' => 'Londres', 'estado' => '', 'pais' => 'Reino Unido'],
+            ['cidade' => 'Paris', 'estado' => '', 'pais' => 'França'],
+            ['cidade' => 'Tóquio', 'estado' => '', 'pais' => 'Japão']
+        ];
+        
+        // Selecionar origem e destino aleatórios
+        $origem = $origensSimuladas[array_rand($origensSimuladas)];
+        $destino = $destinosSimulados[array_rand($destinosSimulados)];
+        
+        $origemStr = $origem['cidade'] . ', ' . $origem['estado'] . ', ' . $origem['pais'];
+        $destinoStr = $destino['cidade'] . ', ' . $destino['estado'] . ', ' . $destino['pais'];
+        
+        // Criar simulação de eventos com base no número do dia atual
+        $day = date('d');
+        $eventosSemEntrega = ($day % 7 === 0); // A cada 7 dias simula um envio sem entrega
+        $temAtraso = ($day % 5 === 0); // A cada 5 dias simula um envio com atraso
+        
+        // Determinar quantos eventos de rastreamento serão simulados
+        $totalEventos = $eventosSemEntrega ? rand(2, 5) : rand(5, 9);
+        
+        // Gerar eventos simulados
+        $eventos = [];
+        $statusAtual = '';
+        $ultimaAtualizacao = '';
+        $dataEntrega = null;
+        $dataEntregaPrevista = date('Y-m-d', strtotime($dataEnvio . " +5 days"));
+        
+        // Evento inicial: Registrado/Coletado
+        $eventos[] = [
+            'data' => $dataEnvio,
+            'hora' => $horaEnvio,
+            'status' => 'Envio registrado',
+            'descricao' => 'Pacote recebido pela FedEx',
+            'codigo' => 'PU',
+            'local' => $origemStr
+        ];
+        
+        // Adicionar eventos intermediários
+        $diasDecorridos = 1;
+        for ($i = 1; $i < $totalEventos - 1; $i++) {
+            $dataEvento = date('Y-m-d', strtotime($dataEnvio . " +{$diasDecorridos} days"));
+            $horaEvento = sprintf('%02d:%02d:%02d', rand(0, 23), rand(0, 59), rand(0, 59));
+            
+            // O local depende do estágio do envio
+            $progressao = $i / ($totalEventos - 1);
+            $localEvento = $progressao < 0.5 ? $origemStr : $destinoStr;
+            
+            // Determinar o tipo de evento com base na progressão
+            $tipoEvento = '';
+            $descricaoEvento = '';
+            
+            if ($progressao < 0.3) {
+                $tipoEvento = 'Em processamento';
+                $descricaoEvento = 'Pacote em processamento no centro de distribuição';
+            } else if ($progressao < 0.5) {
+                $tipoEvento = 'Em trânsito';
+                $descricaoEvento = 'Pacote saiu do centro de distribuição';
+            } else if ($progressao < 0.7) {
+                $tipoEvento = 'Em trânsito internacional';
+                $descricaoEvento = 'Pacote em trânsito para o país de destino';
+            } else if ($progressao < 0.9) {
+                $tipoEvento = 'Chegada ao destino';
+                $descricaoEvento = 'Pacote chegou ao país de destino';
+            } else {
+                $tipoEvento = 'Em rota de entrega';
+                $descricaoEvento = 'Pacote saiu para entrega ao destinatário';
+            }
+            
+            // Se tiver atraso e estiver no meio do processo, adicionar evento de atraso
+            if ($temAtraso && $progressao > 0.4 && $progressao < 0.6) {
+                $tipoEvento = 'Atraso identificado';
+                $descricaoEvento = 'Há um atraso no processamento do pacote';
+            }
+            
+            $eventos[] = [
+                'data' => $dataEvento,
+                'hora' => $horaEvento,
+                'status' => $tipoEvento,
+                'descricao' => $descricaoEvento,
+                'codigo' => 'XX',
+                'local' => $localEvento
+            ];
+            
+            $ultimaAtualizacao = $dataEvento . ' ' . $horaEvento;
+            $statusAtual = $tipoEvento;
+            
+            $diasDecorridos += rand(1, 2);
+        }
+        
+        // Adicionar evento final
+        $entregue = !$eventosSemEntrega;
+        if ($entregue) {
+            $dataEntrega = date('Y-m-d', strtotime($dataEnvio . " +{$diasDecorridos} days"));
+            $horaEntrega = sprintf('%02d:%02d:%02d', rand(9, 19), rand(0, 59), rand(0, 59));
+            
+            $eventos[] = [
+                'data' => $dataEntrega,
+                'hora' => $horaEntrega,
+                'status' => 'Entregue',
+                'descricao' => 'Pacote entregue ao destinatário',
+                'codigo' => 'DL',
+                'local' => $destinoStr
+            ];
+            
+            $ultimaAtualizacao = $dataEntrega . ' ' . $horaEntrega;
+            $statusAtual = 'Entregue';
+        } else {
+            // Se não foi entregue, o último evento é baseado no dia do mês
+            if ($day % 3 === 0) {
+                $statusAtual = 'Liberação alfandegária pendente';
+            } else if ($day % 3 === 1) {
+                $statusAtual = 'Em trânsito';
+            } else {
+                $statusAtual = 'Aguardando retirada';
+            }
+        }
+        
+        // Organizar eventos por data/hora (mais recentes primeiro)
+        usort($eventos, function($a, $b) {
+            $dateA = strtotime($a['data'] . ' ' . $a['hora']);
+            $dateB = strtotime($b['data'] . ' ' . $b['hora']);
+            return $dateB - $dateA;
+        });
+        
+        return [
+            'success' => true,
+            'trackingNumber' => $trackingNumber,
+            'eventos' => $eventos,
+            'statusAtual' => $statusAtual,
+            'ultimaAtualizacao' => $ultimaAtualizacao,
+            'origem' => $origemStr,
+            'destino' => $destinoStr,
+            'dataPostagem' => $dataEnvio,
+            'dataEntregaPrevista' => $dataEntregaPrevista,
+            'servicoDescricao' => 'FedEx International Priority',
+            'temAtraso' => $temAtraso,
+            'detalhesAtraso' => $temAtraso ? 'Atraso devido a condições climáticas' : '',
+            'entregue' => $entregue,
+            'dataEntrega' => $dataEntrega,
+            'simulado' => true,
+            'mensagem' => 'Rastreamento simulado para demonstração'
+        ];
+    }
+
+    /**
+     * Solicita comprovante de entrega assinado (SPOD)
+     * 
+     * @param string $trackingNumber Número de rastreamento
+     * @param string $format Formato do documento (PDF ou PNG)
+     * @return array|null Retorna array com o documento codificado em base64 ou null em caso de erro
+     */
+    public function solicitarComprovanteEntrega($trackingNumber, $format = 'PDF')
+    {
+        try {
+            // Obter token de autenticação
+            $accessToken = $this->getAuthToken();
+    
+            // Preparar requisição do documento
+            $documentUrl = $this->apiUrl . '/track/v1/trackingdocuments';
+            $transactionId = uniqid('logiez_spod_');
+    
+            $documentRequest = [
+                'trackDocumentDetail' => [
+                    'documentType' => 'SIGNATURE_PROOF_OF_DELIVERY',
+                    'documentFormat' => strtoupper($format) // PDF ou PNG
+                ],
+                'trackDocumentSpecification' => [
+                    [
+                        'trackingNumberInfo' => [
+                            'trackingNumber' => $trackingNumber
+                        ]
+                    ]
+                ]
+            ];
+    
+            // Fazer a requisição
+            $documentCurl = curl_init();
+            curl_setopt_array($documentCurl, [
+                CURLOPT_URL => $documentUrl,
+                CURLOPT_RETURNTRANSFER => true,
+                CURLOPT_ENCODING => "",
+                CURLOPT_MAXREDIRS => 10,
+                CURLOPT_TIMEOUT => 30,
+                CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
+                CURLOPT_CUSTOMREQUEST => "POST",
+                CURLOPT_POSTFIELDS => json_encode($documentRequest),
+                CURLOPT_HTTPHEADER => [
+                    "Content-Type: application/json",
+                    "Accept: application/json",
+                    "Authorization: Bearer " . $accessToken,
+                    "X-locale: pt_BR",
+                    "x-customer-transaction-id: " . $transactionId
+                ],
+                CURLOPT_SSL_VERIFYPEER => false,
+            ]);
+    
+            $documentResponse = curl_exec($documentCurl);
+            $documentHttpCode = curl_getinfo($documentCurl, CURLINFO_HTTP_CODE);
+            $documentErr = curl_error($documentCurl);
+            
+            curl_close($documentCurl);
+    
+            if ($documentErr) {
+                throw new \Exception('Erro na requisição do comprovante de entrega: ' . $documentErr);
+            }
+    
+            if ($documentHttpCode != 200) {
+                throw new \Exception('Falha ao obter comprovante. Código HTTP: ' . $documentHttpCode);
+            }
+    
+            $documentData = json_decode($documentResponse, true);
+    
+            // Verificar se tem documento na resposta
+            if (!isset($documentData['output']['document'])) {
+                throw new \Exception('Documento de comprovante de entrega não disponível');
+            }
+    
+            return [
+                'success' => true,
+                'trackingNumber' => $trackingNumber,
+                'documentType' => $documentData['output']['documentType'] ?? 'SIGNATURE_PROOF_OF_DELIVERY',
+                'documentFormat' => $documentData['output']['documentFormat'] ?? strtoupper($format),
+                'document' => $documentData['output']['document'],
+                'simulado' => false
+            ];
+    
+        } catch (\Exception $e) {
+            Log::error('Erro ao solicitar comprovante de entrega FedEx', [
+                'error' => $e->getMessage(),
+                'trackingNumber' => $trackingNumber,
+                'trace' => $e->getTraceAsString()
+            ]);
+    
+            // Em caso de erro, informa o erro e retorna nulo
+            return [
+                'success' => false,
+                'trackingNumber' => $trackingNumber,
+                'mensagem' => 'Erro ao solicitar comprovante de entrega: ' . $e->getMessage(),
+                'simulado' => false
+            ];
+        }
     }
 } 

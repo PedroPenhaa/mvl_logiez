@@ -635,7 +635,7 @@ class SectionController extends Controller
     }
     
     /**
-     * Busca informações de rastreamento.
+     * Busca informações de rastreamento de um envio.
      *
      * @param  \Illuminate\Http\Request  $request
      * @return \Illuminate\Http\JsonResponse
@@ -643,111 +643,149 @@ class SectionController extends Controller
     public function buscarRastreamento(Request $request)
     {
         $request->validate([
-            'codigo' => 'required|string',
+            'codigo_rastreamento' => 'required|string',
         ]);
         
-        // Simulação de rastreamento
-        // Em produção, aqui seria feita a integração com a API da DHL
-        
-        // Gerar histórico de eventos de forma aleatória
-        $eventos = $this->gerarEventosRastreamento($request->codigo);
-        
-        return response()->json([
-            'success' => true,
-            'codigo' => $request->codigo,
-            'origem' => 'São Paulo, Brasil',
-            'destino' => 'Miami, Estados Unidos',
-            'dataPostagem' => '2023-10-15',
-            'status' => $eventos[0]['status'],
-            'eventos' => $eventos
-        ]);
-    }
-    
-    /**
-     * Gera eventos simulados de rastreamento.
-     *
-     * @param  string  $codigo
-     * @return array
-     */
-    private function gerarEventosRastreamento($codigo)
-    {
-        $eventos = [];
-        $statusOptions = [
-            'Objeto postado',
-            'Em trânsito',
-            'Saiu para entrega',
-            'Entregue ao destinatário',
-            'Aguardando retirada',
-            'Em processo de desembaraço',
-            'Pagamento de taxa necessário'
-        ];
-        
-        $locaisOptions = [
-            'São Paulo, Brasil',
-            'Rio de Janeiro, Brasil',
-            'Miami, Estados Unidos',
-            'Nova York, Estados Unidos',
-            'Frankfurt, Alemanha',
-            'Londres, Reino Unido',
-            'Tóquio, Japão'
-        ];
-        
-        // Data base (hoje menos alguns dias)
-        $dataBase = strtotime('-10 days');
-        
-        // Número aleatório de eventos (entre 3 e 7)
-        $numEventos = rand(3, 7);
-        
-        for ($i = 0; $i < $numEventos; $i++) {
-            // Data do evento (incrementa alguns dias a cada evento)
-            $dataEvento = date('Y-m-d H:i:s', $dataBase + ($i * rand(8, 24) * 3600));
-            
-            // Status para esse evento (último evento tem 50% de chance de ser entrega)
-            $status = ($i === $numEventos - 1 && rand(0, 1) === 1) 
-                ? 'Entregue ao destinatário' 
-                : $statusOptions[array_rand($statusOptions)];
-            
-            // Local do evento
-            $local = $locaisOptions[array_rand($locaisOptions)];
-            
-            // Adicionar evento ao array
-            $eventos[] = [
-                'data' => $dataEvento,
-                'status' => $status,
-                'local' => $local,
-                'detalhe' => $this->gerarDetalheEvento($status)
-            ];
+        // Log especial para o código de rastreamento específico
+        if ($request->codigo_rastreamento === '794616896420') {
+            Log::info('====== CONTROLLER: RASTREAMENTO DE CÓDIGO ESPECIAL ======', [
+                'codigo' => $request->codigo_rastreamento,
+                'data_hora' => now()->format('Y-m-d H:i:s'),
+                'ip' => $request->ip(),
+                'user_agent' => $request->header('User-Agent'),
+                'forcarSimulacao' => $request->has('forcarSimulacao') && $request->forcarSimulacao === 'true'
+            ]);
         }
         
-        // Ordenar eventos por data (mais recente primeiro)
-        usort($eventos, function($a, $b) {
-            return strtotime($b['data']) - strtotime($a['data']);
-        });
-        
-        return $eventos;
+        try {
+            // Verificar se estamos forçando simulação
+            $forcarSimulacao = $request->has('forcarSimulacao') && $request->forcarSimulacao === 'true';
+            
+            // Usar o serviço FedEx para rastrear o envio
+            $resultado = $this->fedexService->rastrearEnvio(
+                $request->codigo_rastreamento,
+                true, // incluir scans detalhados
+                $forcarSimulacao 
+            );
+            
+            // Log da resposta para o código especial
+            if ($request->codigo_rastreamento === '794616896420') {
+                Log::info('====== CONTROLLER: RESPOSTA DO RASTREAMENTO ======', [
+                    'codigo' => $request->codigo_rastreamento,
+                    'sucesso' => $resultado['success'],
+                    'status' => $resultado['statusAtual'],
+                    'entregue' => $resultado['entregue'],
+                    'simulado' => $resultado['simulado'],
+                    'eventos_count' => count($resultado['eventos'] ?? [])
+                ]);
+            }
+            
+            // Estruturar resultado para a view
+            return response()->json([
+                'success' => true,
+                'codigo' => $resultado['trackingNumber'],
+                'origem' => $resultado['origem'],
+                'destino' => $resultado['destino'],
+                'dataPostagem' => $resultado['dataPostagem'],
+                'dataEntregaPrevista' => $resultado['dataEntregaPrevista'],
+                'status' => $resultado['statusAtual'],
+                'entregue' => $resultado['entregue'],
+                'servicoDescricao' => $resultado['servicoDescricao'],
+                'temAtraso' => $resultado['temAtraso'],
+                'detalhesAtraso' => $resultado['detalhesAtraso'],
+                'ultimaAtualizacao' => $resultado['ultimaAtualizacao'],
+                'dataEntrega' => $resultado['dataEntrega'],
+                'eventos' => $resultado['eventos'],
+                'simulado' => $resultado['simulado'],
+                'mensagem' => $resultado['mensagem'] ?? null
+            ]);
+        } catch (\Exception $e) {
+            Log::error('Erro ao buscar rastreamento', [
+                'error' => $e->getMessage(),
+                'codigo' => $request->codigo_rastreamento
+            ]);
+            
+            // Em vez de retornar uma simulação automaticamente, retornamos um erro específico
+            // que o front-end identificará para mostrar o modal de escolha
+            if (strpos($e->getMessage(), '503') !== false) {
+                return response()->json([
+                    'success' => false,
+                    'error_code' => 'fedex_unavailable',
+                    'message' => 'O serviço da FedEx está temporariamente indisponível. Deseja usar uma simulação de rastreamento?',
+                    'error_details' => $e->getMessage()
+                ], 200); // Retornamos 200 para que o AJAX processe normalmente
+            }
+            
+            // Para outros erros da API
+            if (strpos($e->getMessage(), 'Falha no rastreamento.') !== false || 
+                strpos($e->getMessage(), 'API') !== false) {
+                return response()->json([
+                    'success' => false,
+                    'error_code' => 'fedex_api_error',
+                    'message' => 'Não foi possível obter informações de rastreamento da FedEx. Deseja ver uma simulação?',
+                    'error_details' => $e->getMessage()
+                ], 200);
+            }
+            
+            // Para erros genéricos
+            return response()->json([
+                'success' => false,
+                'error_code' => 'general_error',
+                'message' => 'Erro ao buscar informações de rastreamento: ' . $e->getMessage()
+            ], 500);
+        }
     }
     
     /**
-     * Gera detalhes para o evento de rastreamento.
+     * Solicita o comprovante de entrega assinado.
      *
-     * @param  string  $status
-     * @return string
+     * @param  \Illuminate\Http\Request  $request
+     * @return \Illuminate\Http\JsonResponse
      */
-    private function gerarDetalheEvento($status)
+    public function solicitarComprovanteEntrega(Request $request)
     {
-        $detalhes = [
-            'Objeto postado' => 'Objeto postado pelo remetente',
-            'Em trânsito' => 'Objeto em trânsito para o destino',
-            'Saiu para entrega' => 'Objeto saiu para entrega ao destinatário',
-            'Entregue ao destinatário' => 'Objeto entregue ao destinatário',
-            'Aguardando retirada' => 'Objeto disponível para retirada em unidade',
-            'Em processo de desembaraço' => 'Objeto em processo de desembaraço alfandegário',
-            'Pagamento de taxa necessário' => 'Pagamento de taxa alfandegária necessário para liberação'
-        ];
+        $request->validate([
+            'codigo_rastreamento' => 'required|string',
+            'formato' => 'nullable|string|in:PDF,PNG'
+        ]);
         
-        return $detalhes[$status] ?? 'Evento registrado no sistema';
+        $formato = $request->formato ?? 'PDF';
+        
+        try {
+            // Usar o serviço FedEx para obter o comprovante de entrega
+            $documento = $this->fedexService->solicitarComprovanteEntrega(
+                $request->codigo_rastreamento,
+                $formato
+            );
+            
+            if (!$documento['success']) {
+                return response()->json([
+                    'success' => false,
+                    'mensagem' => $documento['mensagem']
+                ], 404);
+            }
+            
+            return response()->json([
+                'success' => true,
+                'trackingNumber' => $documento['trackingNumber'],
+                'documentType' => $documento['documentType'],
+                'documentFormat' => $documento['documentFormat'],
+                'document' => $documento['document'], // Este é o documento em Base64
+                'simulado' => $documento['simulado']
+            ]);
+        } catch (\Exception $e) {
+            Log::error('Erro ao solicitar comprovante de entrega', [
+                'error' => $e->getMessage(),
+                'codigo' => $request->codigo_rastreamento
+            ]);
+            
+            return response()->json([
+                'success' => false,
+                'mensagem' => 'Erro ao solicitar comprovante de entrega: ' . $e->getMessage()
+            ], 500);
+        }
     }
-    
+
     /**
      * Atualiza os dados do perfil do usuário.
      *
