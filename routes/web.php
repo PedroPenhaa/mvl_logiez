@@ -66,6 +66,9 @@ Route::prefix('api')->name('api.')->group(function () {
     // Produtos da Receita
     Route::get('/produtos', [ProdutosController::class, 'getProdutos'])->name('produtos.get');
     
+    // Consulta de NCM via Gemini
+    Route::post('/consulta-gemini', [ProdutosController::class, 'consultarGemini'])->name('consulta.gemini');
+    
     // Processamento de dados
     Route::post('/envio/processar', [SectionController::class, 'processarEnvio'])->name('envio.processar');
     Route::post('/pagamento/processar', [SectionController::class, 'processarPagamento'])->name('pagamento.processar');

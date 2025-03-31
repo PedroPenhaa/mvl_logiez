@@ -13,7 +13,8 @@ class ConsultaGemini extends Command
      *
      * @var string
      */
-    protected $signature = 'consulta:gemini';
+    protected $signature = 'consulta:gemini 
+                            {--produto= : Nome do produto para consultar o NCM}';
 
     /**
      * The console command description.
@@ -30,8 +31,13 @@ class ConsultaGemini extends Command
         $this->info('Consulta de NCM de produtos via API Gemini');
         $this->line('----------------------------------------');
 
-        // Solicitar o nome do produto ao usuário
-        $produto = $this->ask('Digite o nome do produto para consultar o NCM');
+        // Verificar se o produto foi passado como parâmetro
+        $produto = $this->option('produto');
+        
+        // Se o produto não for passado como parâmetro e o modo interativo estiver ativo, solicitar ao usuário
+        if (empty($produto) && $this->input->isInteractive()) {
+            $produto = $this->ask('Digite o nome do produto para consultar o NCM');
+        }
 
         if (empty($produto)) {
             $this->error('Nome do produto não pode ser vazio!');
