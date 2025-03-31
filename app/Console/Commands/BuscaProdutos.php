@@ -73,6 +73,9 @@ class BuscaProdutos extends Command
             // Primeira decodificação
             $decoded = json_decode($response, true);
 
+
+        dd($decoded);
+
             // Se o decode direto não retornar o array esperado, tenta fazer outro decode no campo "data"
             if (isset($decoded['data']) && is_string($decoded['data'])) {
                 $innerData = json_decode($decoded['data'], true);
@@ -127,6 +130,8 @@ class BuscaProdutos extends Command
             // Array para armazenar produtos sem repetição de descrição
             $produtosUnicos = [];
             $descricoesVistas = [];
+
+            dd($produtos);
             
             foreach ($produtos as &$produto) {
                 // 1. Decodifica os caracteres unicode na descrição
@@ -138,6 +143,8 @@ class BuscaProdutos extends Command
                 // 3. Remove tags HTML
                 $produto['descricao'] = strip_tags($produto['descricao']);
             }
+
+
             
             // 4. Filtrar produtos para eliminar repetições nas descrições
             foreach ($produtos as $produto) {
