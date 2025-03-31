@@ -10,6 +10,7 @@ use App\Http\Middleware\CheckAuthenticated;
 use Illuminate\Support\Facades\Auth;
 use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\CotacaoController;
+use App\Http\Controllers\Auth\SocialAuthController;
 
 /*
 |--------------------------------------------------------------------------
@@ -28,6 +29,12 @@ Route::post('/login', [LoginController::class, 'login']);
 Route::post('/logout', [LoginController::class, 'logout'])->name('logout');
 Route::get('/register', [HomeController::class, 'register'])->name('register.form');
 Route::post('/register', [HomeController::class, 'storeUser'])->name('register.store');
+
+// Rotas para autenticação social
+Route::get('/auth/{provider}/redirect', [SocialAuthController::class, 'redirect'])->name('social.redirect');
+Route::get('/auth/{provider}/callback', [SocialAuthController::class, 'callback'])->name('social.callback');
+Route::get('/auth/user-data', [SocialAuthController::class, 'showUserData'])->name('social.userData');
+Route::post('/auth/complete-profile', [SocialAuthController::class, 'completeProfile'])->name('social.completeProfile');
 
 // Rotas protegidas por autenticação (temporariamente sem verificação)
 Route::middleware('web')->group(function () {

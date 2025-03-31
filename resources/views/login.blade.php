@@ -398,21 +398,25 @@
                     <a href="{{ route('dashboard') }}" class="btn btn-primary w-100">Entrar</a>
                 </form>
                 
-                <div class="login-footer">
-                    <p>Novo na plataforma? <a href="{{ route('register.form') }}">Criar uma conta</a></p>
-                </div>
-                
                 <div class="separator">
-                    <span>ou</span>
+                    <span>ou continue com</span>
                 </div>
                 
-                <div class="social-login">
-                    <a href="#" class="social-btn google-btn">
-                        <i class="fab fa-google"></i>
-                    </a>
-                    <a href="#" class="social-btn github-btn">
-                        <i class="fab fa-github"></i>
-                    </a>
+                <div class="row mt-3">
+                    <div class="col-12 mb-3">
+                        <a href="{{ route('social.redirect', ['provider' => 'google']) }}" class="btn btn-outline-danger w-100">
+                            <i class="fab fa-google me-2"></i> Entrar com o Gmail
+                        </a>
+                    </div>
+                    <div class="col-12">
+                        <a href="{{ route('social.redirect', ['provider' => 'apple']) }}" class="btn btn-outline-dark w-100">
+                            <i class="fab fa-apple me-2"></i> Entrar com o iCloud
+                        </a>
+                    </div>
+                </div>
+                
+                <div class="login-footer mt-4">
+                    <p>Novo na plataforma? <a href="{{ route('register.form') }}">Criar uma conta</a></p>
                 </div>
             </div>
         </div>
