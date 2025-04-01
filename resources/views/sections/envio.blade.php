@@ -315,6 +315,9 @@
             inicializarSelect2();
         }
         
+        // Variável para armazenar a última resposta do Gemini
+        let ultimaDescricaoGemini = '';
+        
         // Array para armazenar os produtos adicionados
         let produtos = [];
         let valorTotal = 0;
@@ -519,13 +522,31 @@
             // Outras cidades podem ser adicionadas conforme necessário
         };
         
+        // Variável para controlar se o Select2 está sendo inicializado
+        let inicializandoSelect2 = false;
+        
         // Função para inicializar o Select2
         function inicializarSelect2() {
+            // Evitar inicialização múltipla
+            if (inicializandoSelect2) {
+                console.log("Select2 já está sendo inicializado. Aguardando...");
+                return;
+            }
+            
+            inicializandoSelect2 = true;
             console.log("Destruindo instância anterior de Select2 caso exista");
+            
+            // Fechar qualquer dropdown aberto
+            $('.select2-container').remove();
+            
             // Destruir instância anterior caso exista
             if ($('#produto-select').hasClass('select2-hidden-accessible')) {
                 $('#produto-select').select2('destroy');
             }
+            
+            // Limpar lista de produtos e garantir que tenha a opção padrão
+            $('#produto-select').empty();
+            $('#produto-select').append(new Option('Selecione um produto', '', true, true));
             
             console.log("Inicializando novo Select2");
             $('#produto-select').select2({
@@ -544,89 +565,7 @@
                         return "Digite pelo menos 3 caracteres para buscar";
                     }
                 },
-                ajax: {
-                    url: '{{ route("api.produtos.get") }}',
-                    dataType: 'json',
-                    delay: 300,
-                    data: function(params) {
-                        // Obter os valores dos campos de busca
-                        const buscaDescricao = $('#busca-descricao').val();
-                        const buscaNCM = $('#busca-codigo').val();
-                        
-                        // Criar o objeto de busca
-                        const searchParams = {};
-                        
-                        // Usar a busca das caixas de texto se estiverem preenchidas
-                        if (buscaDescricao) searchParams.descricao = buscaDescricao;
-                        if (buscaNCM) searchParams.codigo = buscaNCM;
-                        
-                        // Se não há busca nas caixas, usar o termo do dropdown
-                        if (!buscaDescricao && !buscaNCM && params.term) {
-                            searchParams.descricao = params.term;
-                        }
-                        
-                        console.log("Enviando requisição com parâmetros:", { 
-                            termo: searchParams, 
-                            page: params.page 
-                        });
-                        
-                        return {
-                            search: JSON.stringify(searchParams),
-                            page: params.page || 1,
-                            limit: 100
-                        };
-                    },
-                    processResults: function(data, params) {
-                        params.page = params.page || 1;
-                        console.log("Dados recebidos:", data);
-                        
-                        // Verificar se os dados recebidos são válidos
-                        if (!data || !data.produtos || !Array.isArray(data.produtos)) {
-                            console.error("Dados inválidos recebidos da API:", data);
-                            return { results: [] };
-                        }
-                        
-                        // Formatar os resultados para o formato esperado pelo Select2
-                        const results = data.produtos.map(function(produto) {
-                            return {
-                                id: produto.codigo,
-                                text: produto.descricao + ' (NCM: ' + produto.codigo + ')', // Adicionar NCM na descrição
-                                codigo: produto.codigo, // mantém o nome da propriedade para compatibilidade
-                                peso: 0.5, // Valores padrão
-                                valor: 10.00
-                            };
-                        });
-                        
-                        console.log("Resultados processados:", results.length);
-                        
-                        return {
-                            results: results,
-                            pagination: {
-                                more: params.page < data.totalPages
-                            }
-                        };
-                    },
-                    error: function(error) {
-                        console.error("Erro na requisição AJAX:", error);
-                    },
-                    cache: true
-                },
                 minimumInputLength: 0 // Permitir carregar todos os produtos sem digitar
-            });
-            
-            // Eventos adicionais
-            $('#produto-select').on('select2:open', function() {
-                console.log("Select2 aberto");
-                
-                // Forçar a primeira consulta ao abrir
-                setTimeout(function() {
-                    var searchField = $('.select2-search__field');
-                    if (searchField.length) {
-                        searchField.val('');
-                        searchField.trigger('input');
-                        console.log("Campo de busca ativado automaticamente");
-                    }
-                }, 100);
             });
             
             // Evento ao selecionar um produto
@@ -634,9 +573,12 @@
                 const produtoSelecionado = e.params.data;
                 console.log("Produto selecionado:", produtoSelecionado);
                 
-                // Mostrar detalhes do produto selecionado
+                // Garantir que temos as propriedades código e NCM
                 const ncm = produtoSelecionado.codigo || produtoSelecionado.id;
                 const descricao = produtoSelecionado.text.split(' (NCM:')[0]; // Extrair apenas a descrição
+                
+                // Atualizar também o campo de NCM para mostrar o código do produto selecionado
+                $('#busca-codigo').val(ncm);
                 
                 // Mostrar uma mensagem informativa sobre o produto selecionado
                 $('#select-status').html('<strong>Produto selecionado:</strong> ' + descricao + ' <span class="badge bg-info">NCM: ' + ncm + '</span>');
@@ -647,8 +589,9 @@
                 $('#produto-valor').select(); // Seleciona o texto para fácil edição
             });
             
-            // Carregar manualmente a primeira página de resultados
-            realizarBusca();
+            inicializandoSelect2 = false;
+            
+            // Não realizamos a busca automática aqui - a busca será feita por quem chamou a função
         }
         
         // Função para realizar a busca baseada nos campos de busca
@@ -657,6 +600,18 @@
             
             const buscaDescricao = $('#busca-descricao').val();
             const buscaNCM = $('#busca-codigo').val();
+            
+            // Limpar a descrição anterior do Gemini
+            ultimaDescricaoGemini = '';
+            
+            // Destruir a instância do Select2 para garantir que seja completamente reinicializado
+            if ($('#produto-select').hasClass('select2-hidden-accessible')) {
+                $('#produto-select').select2('destroy');
+            }
+            
+            // Limpar completamente o select
+            $('#produto-select').empty();
+            $('#produto-select').append(new Option('Selecione um produto', '', true, true));
             
             // Se tiver uma descrição de produto e não tiver um NCM, consultar o Gemini
             if (buscaDescricao && !buscaNCM) {
@@ -682,16 +637,22 @@
                         
                         if (response.success) {
                             console.log("Consulta bem-sucedida. Resposta do Gemini:", response.resultado);
-                            
+                        
                             // Extrair o NCM da resposta
                             const ncmExtraido = extrairNCM(response.resultado);
+                            
+                            // Armazenar a descrição completa do Gemini
+                            ultimaDescricaoGemini = response.resultado;
                             
                             if (ncmExtraido) {
                                 console.log("NCM extraído:", ncmExtraido);
                                 $('#select-status').text('NCM identificado: ' + ncmExtraido + '. Buscando produtos...');
                                 
+                                // Atualizar apenas o campo NCM, mantendo a descrição do produto
+                                $('#busca-codigo').val(ncmExtraido);
+                                
                                 // Buscar produtos pelo NCM extraído
-                                buscarProdutosPorNCM(ncmExtraido);
+                                buscarProdutos({ codigo: ncmExtraido, descricao: buscaDescricao });
                             } else {
                                 $('#select-status').text('Não foi possível identificar o NCM. Tentando busca direta...');
                                 // Continuar com a busca normal
@@ -789,12 +750,35 @@
             // Adicionar o NCM também no campo de busca por código para visualização
             $('#busca-codigo').val(ncm);
             
-            // Executar a busca usando o NCM
-            buscarProdutos({ codigo: ncm });
+            // Manter o valor atual do campo de descrição
+            const descricaoAtual = $('#busca-descricao').val();
+            
+            // Executar a busca usando o NCM e mantendo a descrição
+            if (descricaoAtual) {
+                buscarProdutos({ codigo: ncm, descricao: descricaoAtual });
+            } else {
+                buscarProdutos({ codigo: ncm });
+            }
         }
         
         // Função para buscar produtos (extraída da busca original)
         function buscarProdutos(searchParams) {
+            // Garantir que a interface limpe completamente os resultados anteriores
+            $('#select-status').text('Buscando produtos...');
+            
+            // Destruir completamente a instância atual do Select2
+            if ($('#produto-select').hasClass('select2-hidden-accessible')) {
+                $('#produto-select').select2('destroy');
+            }
+            
+            // Limpar completamente o select
+            $('#produto-select').empty();
+            $('#produto-select').append(new Option('Selecione um produto', '', true, true));
+            
+            // Inicializar o Select2 novamente
+            inicializarSelect2();
+            
+            // Agora fazer a busca
             $.ajax({
                 url: '{{ route("api.produtos.get") }}',
                 data: { 
@@ -805,39 +789,151 @@
                 dataType: 'json',
                 success: function(data) {
                     console.log("Resultados da busca:", data);
-                    $('#select-status').text('');
                     
-                    // Limpar opções existentes, preservando a opção padrão
-                    const defaultOption = $('#produto-select option[value=""]').clone();
-                    $('#produto-select').empty().append(defaultOption);
+                    // Limpar o select novamente para garantir
+                    $('#produto-select').empty();
+                    $('#produto-select').append(new Option('Selecione um produto', '', true, true));
                     
                     if (data && data.produtos && data.produtos.length) {
-                        var options = data.produtos.map(function(produto) {
+                        // Criar e adicionar as opções
+                        data.produtos.forEach(function(produto) {
                             // Adicionar o NCM na descrição do produto
                             const descricaoFormatada = produto.descricao + ' (NCM: ' + produto.codigo + ')';
                             
                             const option = new Option(descricaoFormatada, produto.codigo, false, false);
-                            // Armazenar a descrição original e o código separadamente para uso posterior
-                            option.setAttribute('data-descricao-original', produto.descricao);
-                            option.setAttribute('data-ncm', produto.codigo);
-                            return option;
+                            // Armazenar dados adicionais para uso posterior
+                            $(option).data('codigo', produto.codigo);
+                            $(option).data('descricao', produto.descricao);
+                            $(option).data('peso', 0.5); // Valor padrão
+                            $(option).data('valor', 10); // Valor padrão
+                            
+                            $('#produto-select').append(option);
                         });
                         
-                        $('#produto-select').append(options).trigger('change');
-                        console.log("Opções carregadas:", options.length);
+                        // Acionar o change para atualizar o Select2
+                        $('#produto-select').trigger('change');
+                        
+                        console.log("Opções carregadas:", data.produtos.length);
                         
                         // Mostrar quantos produtos foram encontrados e o NCM identificado
                         if (searchParams.codigo) {
-                            $('#select-status').html('<strong>' + options.length + ' produtos encontrados</strong> com NCM: ' + searchParams.codigo);
+                            $('#select-status').html('<strong>' + data.produtos.length + ' produtos encontrados</strong> com NCM: ' + searchParams.codigo);
                         } else {
-                            $('#select-status').text(options.length + ' produtos encontrados');
+                            $('#select-status').text(data.produtos.length + ' produtos encontrados');
                         }
                         
                         // Esconder o botão de reload, pois os produtos foram carregados com sucesso
                         $('#reload-produtos').hide();
                     } else {
                         if (searchParams.codigo) {
-                            $('#select-status').html('<strong>Nenhum produto encontrado</strong> com NCM: ' + searchParams.codigo);
+                            // Se não encontrou produtos, mas temos uma descrição do Gemini, exibi-la
+                            if (ultimaDescricaoGemini) {
+                                // Extrair a descrição relevante do resultado do Gemini
+                                let descricaoLimpa = '';
+                                
+                                // Extrair o texto de resposta útil
+                                let respostaUtil = '';
+                                
+                                // Se tiver o marcador de resultado da consulta, usar apenas o que vem depois
+                                if (ultimaDescricaoGemini.includes('Resultado da consulta:')) {
+                                    respostaUtil = ultimaDescricaoGemini.split('Resultado da consulta:')[1];
+                                } else if (ultimaDescricaoGemini.includes('Resposta recebida:')) {
+                                    // Se tiver JSON na resposta, ignorá-lo
+                                    const partes = ultimaDescricaoGemini.split('Resposta recebida:');
+                                    if (partes.length > 1) {
+                                        // Tenta encontrar onde termina o JSON e começa o texto real
+                                        const textoRestante = partes[1];
+                                        if (textoRestante.includes('Resultado da consulta:')) {
+                                            respostaUtil = textoRestante.split('Resultado da consulta:')[1];
+                                        } else {
+                                            // Se não encontrar o marcador, usar tudo que vem depois do início do JSON
+                                            const jsonFim = textoRestante.indexOf('}') + 1;
+                                            if (jsonFim > 0) {
+                                                respostaUtil = textoRestante.substring(jsonFim);
+                                            } else {
+                                                respostaUtil = textoRestante;
+                                            }
+                                        }
+                                    }
+                                } else {
+                                    // Usar a resposta completa
+                                    respostaUtil = ultimaDescricaoGemini;
+                                }
+                                
+                                // Limpar a resposta
+                                respostaUtil = respostaUtil.replace(/---+/g, '').trim();
+                                
+                                // Tentar encontrar a parte da descrição após o NCM
+                                const linhasGemini = respostaUtil.split('\n');
+                                for (const linha of linhasGemini) {
+                                    // Procurar por uma linha que contenha o NCM e uma descrição
+                                    if (linha.includes(searchParams.codigo)) {
+                                        // Extrair a descrição após o NCM
+                                        const partes = linha.split(' - ');
+                                        if (partes.length > 1) {
+                                            descricaoLimpa = partes[1].replace(/\*\*/g, '').trim();
+                                            break;
+                                        } else if (linha.includes(':')) {
+                                            // Tentar com dois pontos
+                                            const partesDoisPontos = linha.split(':');
+                                            if (partesDoisPontos.length > 1) {
+                                                descricaoLimpa = partesDoisPontos[1].replace(/\*\*/g, '').trim();
+                                                break;
+                                            }
+                                        }
+                                    }
+                                }
+                                
+                                // Se não conseguir extrair a descrição específica, tentar encontrar 
+                                // qualquer descrição útil no texto
+                                if (!descricaoLimpa) {
+                                    // Limpar asteriscos e outros marcadores
+                                    respostaUtil = respostaUtil.replace(/\*\*/g, '').trim();
+                                    
+                                    // Procurar por descrições comuns em produtos
+                                    const termos = ['produto', 'artigo', 'mercadoria', 'item', 'bem'];
+                                    for (const termo of termos) {
+                                        if (respostaUtil.toLowerCase().includes(termo)) {
+                                            // Pegar a sentença ou o parágrafo que contém o termo
+                                            const sentencas = respostaUtil.split(/[.!?]\s+/);
+                                            for (const sentenca of sentencas) {
+                                                if (sentenca.toLowerCase().includes(termo)) {
+                                                    descricaoLimpa = sentenca.trim();
+                                                    break;
+                                                }
+                                            }
+                                            if (descricaoLimpa) break;
+                                        }
+                                    }
+                                    
+                                    if (!descricaoLimpa) {
+                                        descricaoLimpa = respostaUtil;
+                                    }
+                                }
+                                
+                                // Garantir que a descrição não seja muito longa
+                                if (descricaoLimpa.length > 100) {
+                                    descricaoLimpa = descricaoLimpa.substring(0, 97) + '...';
+                                }
+                                
+                                // Adicionar uma opção manual baseada na descrição do Gemini
+                                const descricaoFormatada = descricaoLimpa + ' (NCM: ' + searchParams.codigo + ')';
+                                const option = new Option(descricaoFormatada, searchParams.codigo, false, false);
+                                
+                                // Armazenar dados adicionais para uso posterior
+                                $(option).data('codigo', searchParams.codigo);
+                                $(option).data('descricao', descricaoLimpa);
+                                $(option).data('peso', 0.5); // Valor padrão
+                                $(option).data('valor', 10); // Valor padrão
+                                
+                                $('#produto-select').append(option);
+                                $('#produto-select').trigger('change');
+                                
+                                // Mostrar mensagem informativa
+                                $('#select-status').html('<strong>Produto criado com descrição do Gemini</strong> - NCM: ' + searchParams.codigo);
+                            } else {
+                                $('#select-status').html('<strong>Nenhum produto encontrado</strong> com NCM: ' + searchParams.codigo);
+                            }
                         } else {
                             $('#select-status').text('Nenhum produto encontrado');
                         }
@@ -886,16 +982,36 @@
         // Evento do botão de limpar busca
         $('#limpar-busca').on('click', function() {
             console.log("Limpando campo de busca");
+            
+            // Limpar os campos de entrada
             $('#busca-descricao').val('').focus();
             $('#busca-codigo').val('');
             $('#select-status').text('Digite um produto para buscar');
             
+            // Limpar a descrição do Gemini
+            ultimaDescricaoGemini = '';
+            
+            // Destruir instância anterior de Select2
+            if ($('#produto-select').hasClass('select2-hidden-accessible')) {
+                $('#produto-select').select2('destroy');
+            }
+            
             // Limpar a lista de produtos no select
-            const defaultOption = $('#produto-select option[value=""]').clone();
-            $('#produto-select').empty().append(defaultOption).trigger('change');
+            $('#produto-select').empty();
+            $('#produto-select').append(new Option('Selecione um produto', '', true, true));
+            
+            // Inicializar o Select2 novamente
+            inicializarSelect2();
             
             // Mostrar mensagem informativa
             $('#sem-produtos-alert').removeClass('d-none');
+            
+            // Também limpar os valores dos campos relacionados
+            $('#produto-valor').val('0.00');
+            $('#produto-quantidade').val('1');
+            
+            // Buscar os 100 produtos iniciais
+            buscarProdutos({});
         });
         
         // Evento do botão de recarregar produtos
