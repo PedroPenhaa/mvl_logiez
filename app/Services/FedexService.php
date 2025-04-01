@@ -32,15 +32,15 @@ class FedexService
     /**
      * Obter token de autenticação da API FedEx
      * 
-     * @param bool $forcarNovoToken Se true, ignora cache e solicita novo token
+     * @param bool $forceRefresh Se true, ignora cache e solicita novo token
      * @return string Token de acesso
      */
     public function getAuthToken($forceRefresh = false) {
         if (!$forceRefresh && Cache::has('fedex_token')) {
             $token = Cache::get('fedex_token');
             
-            // Se estiver processando o código especial, fazer log
-            if (self::$trackingSpecialCode === '794616896420') {
+            // Se estiver processando um código especial, fazer log
+            if (self::$trackingSpecialCode) {
                 Log::info('======= TOKEN FEDEX DO CACHE =======', [
                     'Token' => substr($token, 0, 10) . '...' . substr($token, -10),
                     'Usado_Para' => 'Rastreamento do código ' . self::$trackingSpecialCode
@@ -59,8 +59,8 @@ class FedexService
             'client_secret' => $this->clientSecret
         ];
         
-        // Se estiver processando o código especial, fazer log
-        if (self::$trackingSpecialCode === '794616896420') {
+        // Se estiver processando um código especial, fazer log
+        if (self::$trackingSpecialCode) {
             Log::info('======= SOLICITAÇÃO DE TOKEN FEDEX =======', [
                 'URL' => $authUrl,
                 'Payload' => $tokenPayload,
@@ -97,8 +97,8 @@ class FedexService
             'expires_at' => now()->addSeconds($expiresIn)->toDateTimeString()
         ], now()->addMinutes($cacheMinutes));
         
-        // Se estiver processando o código especial, fazer log
-        if (self::$trackingSpecialCode === '794616896420') {
+        // Se estiver processando um código especial, fazer log
+        if (self::$trackingSpecialCode) {
             Log::info('======= NOVO TOKEN FEDEX OBTIDO =======', [
                 'Token' => substr($token, 0, 10) . '...' . substr($token, -10),
                 'Expira_Em' => $expiresIn . ' segundos',
@@ -501,16 +501,22 @@ class FedexService
         // Definir a variável estática para o token de autenticação saber que estamos processando um código especial
         self::$trackingSpecialCode = $trackingNumber === '794616896420' ? $trackingNumber : null;
         
-        // Log especial para o código de rastreamento específico
-        if ($trackingNumber === '794616896420') {
+        // Verificar se é um código de rastreio especial que precisa de credenciais específicas
+        $specialTrackingConfig = config('services.fedex.special_tracking.' . $trackingNumber);
+        if (!empty($specialTrackingConfig)) {
+            // Substituição para código específico - use as credenciais de configuração
+            $this->clientId = $specialTrackingConfig['client_id'];
+            $this->clientSecret = $specialTrackingConfig['client_secret'];
+            $this->apiUrl = $specialTrackingConfig['api_url'];
+            
             Log::info('======= RASTREAMENTO FEDEX - CÓDIGO ESPECIAL =======', [
                 'Data/Hora' => now()->format('Y-m-d H:i:s'),
                 'Tracking Number' => $trackingNumber,
                 'Client_ID' => $this->clientId,
-                'Client_Secret' => $this->clientSecret,
+                'Client_Secret' => substr($this->clientSecret, 0, 5) . '...' . substr($this->clientSecret, -5),
                 'API_URL' => $this->apiUrl,
                 'Shipper_Account' => $this->shipperAccount,
-                'Ambiente' => config('services.fedex.use_production', false) ? 'Produção' : 'Homologação'
+                'Ambiente' => "Teste específico para o código " . $trackingNumber
             ]);
         }
 
@@ -520,8 +526,8 @@ class FedexService
         }
     
         try {
-            // Obter token de autenticação
-            $accessToken = $this->getAuthToken();
+            // Obter token de autenticação - forçar renovação para códigos especiais
+            $accessToken = $this->getAuthToken(!empty($specialTrackingConfig));
     
             // Preparar requisição de rastreamento
             $trackUrl = $this->apiUrl . '/track/v1/trackingnumbers';
@@ -532,15 +538,14 @@ class FedexService
                 'trackingInfo' => [
                     [
                         'trackingNumberInfo' => [
-                            'trackingNumber' => $trackingNumber,
-                            'accountNumber' => $this->shipperAccount
+                            'trackingNumber' => $trackingNumber
                         ]
                     ]
                 ]
             ];
             
             // Log especial para o payload se for o código específico
-            if ($trackingNumber === '794616896420') {
+            if (self::$trackingSpecialCode) {
                 Log::info('======= PAYLOAD DE REQUISIÇÃO FEDEX TRACKING =======', [
                     'URL' => $trackUrl,
                     'Transaction_ID' => $transactionId,
@@ -582,7 +587,7 @@ class FedexService
             
             curl_close($trackCurl);
     
-            if ($trackingNumber === '794616896420') {
+            if (self::$trackingSpecialCode) {
                 Log::info('======= RESPOSTA DA REQUISIÇÃO FEDEX TRACKING =======', [
                     'HTTP_Code' => $trackHttpCode,
                     'Response' => $trackResponse ? substr($trackResponse, 0, 1000) . '...' : 'Vazia',
@@ -599,11 +604,34 @@ class FedexService
             }
     
             $trackData = json_decode($trackResponse, true);
+            
+            // Para código especial 794616896420, verificar se temos resposta virtual
+            $isVirtualResponse = false;
+            if ($trackingNumber === '794616896420' && isset($trackData['output']['alerts'])) {
+                foreach ($trackData['output']['alerts'] as $alert) {
+                    if (isset($alert['code']) && $alert['code'] === 'VIRTUAL.RESPONSE') {
+                        $isVirtualResponse = true;
+                        Log::info('======= RESPOSTA VIRTUAL DETECTADA NA API FEDEX =======', [
+                            'Tracking_Number' => $trackingNumber,
+                            'Alert' => $alert
+                        ]);
+                        // Continuar normalmente pois existem dados de rastreamento válidos
+                    }
+                }
+            }
     
             // Processar os dados de rastreamento
             $result = $this->processarDadosRastreamento($trackData, $trackingNumber);
             $result['simulado'] = false;
             $result['respostaOriginal'] = $trackData; // Opcional - para debug
+            
+            // Se foi detectada uma resposta virtual e o processamento falhou, ativar simulação
+            if ($isVirtualResponse && !$result['success']) {
+                Log::info('======= ATIVANDO SIMULAÇÃO PARA RESPOSTA VIRTUAL =======', [
+                    'Tracking_Number' => $trackingNumber
+                ]);
+                return $this->simularRastreamento($trackingNumber);
+            }
             
             return $result;
     
@@ -646,16 +674,32 @@ class FedexService
             'dataEntrega' => ''
         ];
 
-        // Se for o código especial, fazer log dos dados recebidos para processamento
-        if ($trackingNumber === '794616896420') {
+        // Se for um código especial, fazer log dos dados recebidos para processamento
+        if (self::$trackingSpecialCode) {
             Log::info('======= PROCESSANDO DADOS DE RASTREAMENTO FEDEX =======', [
                 'Tracking_Number' => $trackingNumber,
                 'Dados_API' => json_encode($trackData, JSON_PRETTY_PRINT | JSON_PARTIAL_OUTPUT_ON_ERROR)
             ]);
         }
 
-        // Se houver alertas na resposta
+        // Verificar se temos uma resposta virtual
+        $isVirtualResponse = false;
         if (!empty($trackData['output']['alerts'])) {
+            foreach ($trackData['output']['alerts'] as $alert) {
+                if (isset($alert['code']) && $alert['code'] === 'VIRTUAL.RESPONSE') {
+                    $isVirtualResponse = true;
+                    // É uma resposta virtual, não consideramos como falha
+                    Log::info('======= RESPOSTA VIRTUAL DETECTADA =======', [
+                        'Tracking_Number' => $trackingNumber,
+                        'alert' => $alert
+                    ]);
+                    // Continue processando normalmente, pois há dados válidos
+                }
+            }
+        }
+        
+        // Se houver alertas na resposta e não for uma resposta virtual, consideramos falha
+        if (!empty($trackData['output']['alerts']) && !$isVirtualResponse) {
             $resultado['success'] = false;
             $resultado['mensagem'] = $trackData['output']['alerts'];
             return $resultado;
