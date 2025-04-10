@@ -181,6 +181,12 @@
                             
                             <!-- Campos ocultos para enviar os dados das caixas -->
                             <input type="hidden" name="caixas_json" id="caixas-json">
+                            
+                            <!-- Campos ocultos para dimensões -->
+                            <input type="hidden" name="altura" id="altura-hidden">
+                            <input type="hidden" name="largura" id="largura-hidden">
+                            <input type="hidden" name="comprimento" id="comprimento-hidden">
+                            <input type="hidden" name="peso_caixa" id="peso-caixa-hidden">
                         </div>
                     </div>
                 </div>
@@ -198,37 +204,49 @@
                                 <label for="origem_nome" class="form-label required">Nome</label>
                                 <input type="text" class="form-control" id="origem_nome" name="origem_nome" required>
                             </div>
+                            
                             <div class="mb-3">
-                                <label for="origem_cep" class="form-label">CEP / Código Postal</label>
-                                <div class="input-group">
-                                    <input type="text" class="form-control" id="origem_cep" name="origem_cep" required>
-                                    <button class="btn btn-outline-secondary" type="button" id="origem_buscar_cep">
-                                        <i class="fas fa-search"></i> Buscar
-                                    </button>
-                                </div>
-                                <small class="text-muted">Digite o CEP e clique em buscar para preencher o endereço</small>
+                                <label for="origem_telefone" class="form-label required">Telefone</label>
+                                <input type="text" class="form-control" id="origem_telefone" name="origem_telefone" required placeholder="+55 11 98765-4321">
                             </div>
+                            
                             <div class="mb-3">
-                                <label for="origem_endereco" class="form-label">Endereço</label>
+                                <label for="origem_email" class="form-label required">E-mail</label>
+                                <input type="email" class="form-control" id="origem_email" name="origem_email" required placeholder="email@exemplo.com">
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label for="origem_endereco" class="form-label required">Endereço</label>
                                 <input type="text" class="form-control" id="origem_endereco" name="origem_endereco" required>
                             </div>
+                            
                             <div class="mb-3">
-                                <label for="origem_pais" class="form-label">País</label>
-                                <select class="form-select pais-select" id="origem_pais" name="origem_pais" required>
-                                    <option value="" selected disabled>Selecione um país</option>
-                                </select>
+                                <label for="origem_complemento" class="form-label">Complemento</label>
+                                <input type="text" class="form-control" id="origem_complemento" name="origem_complemento">
                             </div>
-                            <div class="mb-3">
-                                <label for="origem_estado" class="form-label">Estado</label>
-                                <select class="form-select estado-select" id="origem_estado" name="origem_estado" required disabled>
-                                    <option value="" selected disabled>Selecione um país primeiro</option>
-                                </select>
+                            
+                            <div class="row">
+                                <div class="col-6 mb-3">
+                                    <label for="origem_cidade" class="form-label required">Cidade</label>
+                                    <input type="text" class="form-control" id="origem_cidade" name="origem_cidade" required>
+                                </div>
+                                <div class="col-6 mb-3">
+                                    <label for="origem_estado" class="form-label required">Estado</label>
+                                    <input type="text" class="form-control" id="origem_estado" name="origem_estado" required maxlength="2">
+                                </div>
                             </div>
-                            <div class="mb-3">
-                                <label for="origem_cidade" class="form-label">Cidade</label>
-                                <select class="form-select cidade-select" id="origem_cidade" name="origem_cidade" required disabled>
-                                    <option value="" selected disabled>Selecione um estado primeiro</option>
-                                </select>
+                            
+                            <div class="row">
+                                <div class="col-6 mb-3">
+                                    <label for="origem_cep" class="form-label required">CEP</label>
+                                    <input type="text" class="form-control" id="origem_cep" name="origem_cep" required>
+                                </div>
+                                <div class="col-6 mb-3">
+                                    <label for="origem_pais" class="form-label required">País</label>
+                                    <select class="form-select" id="origem_pais" name="origem_pais" required>
+                                        <option value="BR" selected>Brasil</option>
+                                    </select>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -244,37 +262,84 @@
                                 <label for="destino_nome" class="form-label required">Nome</label>
                                 <input type="text" class="form-control" id="destino_nome" name="destino_nome" required>
                             </div>
+                            
                             <div class="mb-3">
-                                <label for="destino_cep" class="form-label">CEP / Código Postal</label>
-                                <div class="input-group">
-                                    <input type="text" class="form-control" id="destino_cep" name="destino_cep" required>
-                                    <button class="btn btn-outline-secondary" type="button" id="destino_buscar_cep">
-                                        <i class="fas fa-search"></i> Buscar
-                                    </button>
-                                </div>
-                                <small class="text-muted">Digite o CEP e clique em buscar para preencher o endereço</small>
+                                <label for="destino_telefone" class="form-label required">Telefone</label>
+                                <input type="text" class="form-control" id="destino_telefone" name="destino_telefone" required placeholder="+1 555 123-4567">
                             </div>
+                            
                             <div class="mb-3">
-                                <label for="destino_endereco" class="form-label">Endereço</label>
+                                <label for="destino_email" class="form-label required">E-mail</label>
+                                <input type="email" class="form-control" id="destino_email" name="destino_email" required placeholder="email@exemplo.com">
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label for="destino_endereco" class="form-label required">Endereço</label>
                                 <input type="text" class="form-control" id="destino_endereco" name="destino_endereco" required>
                             </div>
+                            
                             <div class="mb-3">
-                                <label for="destino_pais" class="form-label">País</label>
-                                <select class="form-select pais-select" id="destino_pais" name="destino_pais" required>
-                                    <option value="" selected disabled>Selecione um país</option>
-                                </select>
+                                <label for="destino_complemento" class="form-label">Complemento</label>
+                                <input type="text" class="form-control" id="destino_complemento" name="destino_complemento">
                             </div>
-                            <div class="mb-3">
-                                <label for="destino_estado" class="form-label">Estado</label>
-                                <select class="form-select estado-select" id="destino_estado" name="destino_estado" required disabled>
-                                    <option value="" selected disabled>Selecione um país primeiro</option>
-                                </select>
+                            
+                            <div class="row">
+                                <div class="col-6 mb-3">
+                                    <label for="destino_cidade" class="form-label required">Cidade</label>
+                                    <input type="text" class="form-control" id="destino_cidade" name="destino_cidade" required>
+                                </div>
+                                <div class="col-6 mb-3">
+                                    <label for="destino_estado" class="form-label required">Estado</label>
+                                    <input type="text" class="form-control" id="destino_estado" name="destino_estado" required maxlength="2">
+                                </div>
                             </div>
-                            <div class="mb-3">
-                                <label for="destino_cidade" class="form-label">Cidade</label>
-                                <select class="form-select cidade-select" id="destino_cidade" name="destino_cidade" required disabled>
-                                    <option value="" selected disabled>Selecione um estado primeiro</option>
-                                </select>
+                            
+                            <div class="row">
+                                <div class="col-6 mb-3">
+                                    <label for="destino_cep" class="form-label required">CEP</label>
+                                    <input type="text" class="form-control" id="destino_cep" name="destino_cep" required>
+                                </div>
+                                <div class="col-6 mb-3">
+                                    <label for="destino_pais" class="form-label required">País</label>
+                                    <select class="form-select" id="destino_pais" name="destino_pais" required>
+                                        <option value="US" selected>Estados Unidos</option>
+                                        <option value="CA">Canadá</option>
+                                        <option value="MX">México</option>
+                                        <option value="PT">Portugal</option>
+                                        <option value="ES">Espanha</option>
+                                        <option value="IT">Itália</option>
+                                        <option value="FR">França</option>
+                                        <option value="DE">Alemanha</option>
+                                        <option value="UK">Reino Unido</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 4. Serviço de Entrega -->
+            <div class="row mb-4">
+                <div class="col-12">
+                    <div class="card border-light">
+                        <div class="card-header bg-light">
+                            <h5 class="mb-0"><i class="fas fa-shipping-fast me-2"></i> Serviço de Entrega FedEx</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-md-12 mb-3">
+                                    <label for="servico_entrega" class="form-label required">Serviço de Entrega</label>
+                                    <select class="form-select" id="servico_entrega" name="servico_entrega" required>
+                                        <option value="" disabled selected>Selecione o serviço</option>
+                                        <option value="FEDEX_INTERNATIONAL_PRIORITY">FedEx International Priority</option>
+                                        <option value="FEDEX_INTERNATIONAL_ECONOMY">FedEx International Economy</option>
+                                        <option value="INTERNATIONAL_PRIORITY_EXPRESS">International Priority Express</option>
+                                        <option value="INTERNATIONAL_PRIORITY">International Priority</option>
+                                        <option value="INTERNATIONAL_ECONOMY">International Economy</option>
+                                    </select>
+                                    <small class="text-muted">O serviço determina a velocidade de entrega e o preço</small>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -282,8 +347,8 @@
             </div>
             
             <div class="text-center mt-4">
-                <button type="submit" class="btn btn-primary btn-lg">
-                    <i class="fas fa-paper-plane me-2"></i> Enviar
+                <button type="submit" class="btn btn-primary btn-lg" id="submit-button">
+                    <i class="fas fa-paper-plane me-2"></i> Processar Envio
                 </button>
             </div>
         </form>
@@ -296,6 +361,35 @@
 <script>
     $(document).ready(function() {
         console.log("Documento pronto, iniciando script");
+        
+        // Função para mostrar alertas
+        function showAlert(message, type) {
+            const alertHtml = `
+                <div class="alert alert-${type} alert-dismissible fade show" role="alert">
+                    ${message}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            `;
+            
+            // Verificar se já existe um container de alerta
+            if ($('#alert-container').length === 0) {
+                // Criar container de alerta antes do formulário
+                $('.card-body').prepend('<div id="alert-container"></div>');
+            }
+            
+            // Adicionar o alerta e rolar até ele
+            $('#alert-container').html(alertHtml);
+            $('html, body').animate({
+                scrollTop: $('#alert-container').offset().top - 100
+            }, 500);
+            
+            // Auto-fechamento após 5 segundos para alertas de sucesso
+            if (type === 'success') {
+                setTimeout(function() {
+                    $('.alert').alert('close');
+                }, 5000);
+            }
+        }
         
         // Verificar se o Select2 está disponível
         if (typeof $.fn.select2 === 'undefined') {
@@ -1035,7 +1129,13 @@
             valorTotal = 0;
             pesoTotal = 0;
             
+            // Garantir que cada produto tenha valor_unitario
             produtos.forEach(function(produto) {
+                // Adicionar valor_unitario se não existir
+                if (!produto.valor_unitario && produto.valor !== undefined) {
+                    produto.valor_unitario = produto.valor;
+                }
+                
                 valorTotal += produto.valor * produto.quantidade;
                 pesoTotal += produto.peso * produto.quantidade;
             });
@@ -1053,6 +1153,14 @@
             $('#caixas-json').val(JSON.stringify(caixas));
             $('#valor-total-input').val(valorTotal.toFixed(2));
             $('#peso-total-input').val(pesoTotal.toFixed(2));
+            
+            // Atualizar os campos ocultos de dimensões com a primeira caixa (se existir)
+            if (caixas.length > 0) {
+                $('#altura-hidden').val(caixas[0].altura);
+                $('#largura-hidden').val(caixas[0].largura);
+                $('#comprimento-hidden').val(caixas[0].comprimento);
+                $('#peso-caixa-hidden').val(caixas[0].peso);
+            }
             
             // Mostrar ou esconder o resumo
             if (produtos.length > 0) {
@@ -1256,6 +1364,14 @@
             };
             
             caixas.push(caixa);
+            
+            // Atualizar também os campos ocultos com os valores da primeira caixa
+            if (caixas.length === 1) {
+                $('#altura-hidden').val(altura);
+                $('#largura-hidden').val(largura);
+                $('#comprimento-hidden').val(comprimento);
+                $('#peso-caixa-hidden').val(peso);
+            }
             
             // Resetar os valores para adicionar nova caixa
             $('#altura').val(10);
@@ -1650,37 +1766,207 @@
         // Inicializar os selects de países
         carregarPaises();
         
-        // Processar o envio do formulário
+        // Evento de submissão do formulário
         $('#envio-form').on('submit', function(e) {
             e.preventDefault();
             
-            // Verificar se há produtos adicionados
+            // Validar se há produtos
             if (produtos.length === 0) {
-                showAlert('Adicione pelo menos um produto para envio.', 'warning');
+                showAlert('Por favor, adicione pelo menos um produto para o envio.', 'warning');
                 return false;
             }
             
-            // Verificar se há caixas adicionadas
+            // Validar se há caixas
             if (caixas.length === 0) {
-                showAlert('Adicione pelo menos uma caixa para envio.', 'warning');
+                showAlert('Por favor, adicione pelo menos uma caixa para o envio.', 'warning');
                 return false;
             }
             
-            // Submeter o formulário via AJAX
+            // Verificar se os campos ocultos de dimensões estão preenchidos
+            const altura = $('#altura-hidden').val();
+            const largura = $('#largura-hidden').val();
+            const comprimento = $('#comprimento-hidden').val();
+            const pesoCaixa = $('#peso-caixa-hidden').val();
+            
+            if (!altura || !largura || !comprimento || !pesoCaixa) {
+                console.error('Campos de dimensão não preenchidos:', {
+                    altura: altura,
+                    largura: largura,
+                    comprimento: comprimento,
+                    pesoCaixa: pesoCaixa
+                });
+                
+                // Tentar preencher com os valores da primeira caixa
+                if (caixas.length > 0) {
+                    $('#altura-hidden').val(caixas[0].altura);
+                    $('#largura-hidden').val(caixas[0].largura);
+                    $('#comprimento-hidden').val(caixas[0].comprimento);
+                    $('#peso-caixa-hidden').val(caixas[0].peso);
+                    
+                    console.log('Dimensões corrigidas com a primeira caixa:', {
+                        altura: caixas[0].altura,
+                        largura: caixas[0].largura,
+                        comprimento: caixas[0].comprimento,
+                        pesoCaixa: caixas[0].peso
+                    });
+                } else {
+                    showAlert('Erro ao processar dimensões da caixa. Por favor, tente novamente.', 'danger');
+                    return false;
+                }
+            }
+            
+            // Verificar o método de entrega
+            if (!$('#servico_entrega').val()) {
+                showAlert('Por favor, selecione um método de entrega.', 'warning');
+                return false;
+            }
+            
+            // Log para debug
+            console.log('Enviando dados:', {
+                produtos: JSON.parse($('#produtos-json').val() || '[]'),
+                caixas: JSON.parse($('#caixas-json').val() || '[]'),
+                valorTotal: $('#valor-total-input').val(),
+                pesoTotal: $('#peso-total-input').val(),
+                dimensoes: {
+                    altura: $('#altura-hidden').val(),
+                    largura: $('#largura-hidden').val(),
+                    comprimento: $('#comprimento-hidden').val(),
+                    pesoCaixa: $('#peso-caixa-hidden').val()
+                },
+                servicoEntrega: $('#servico_entrega').val()
+            });
+            
+            // Se passou pela validação, enviar o formulário via AJAX
             $.ajax({
-                url: $(this).attr('action'),
+                url: "{{ route('api.envio.processar') }}",
                 method: 'POST',
-                data: $(this).serialize(),
+                data: function() {
+                    // Atualizar produtos para garantir que tenham valor_unitario
+                    try {
+                        const produtosString = $('#produtos-json').val();
+                        if (produtosString) {
+                            const produtosObj = JSON.parse(produtosString);
+                            // Adicionar valor_unitario onde falta
+                            produtosObj.forEach(function(produto) {
+                                if (!produto.valor_unitario && produto.valor) {
+                                    produto.valor_unitario = produto.valor;
+                                }
+                            });
+                            // Atualizar o campo
+                            $('#produtos-json').val(JSON.stringify(produtosObj));
+                        }
+                    } catch (e) {
+                        console.error('Erro ao processar produtos:', e);
+                    }
+                    
+                    // Garantir que as dimensões e peso da caixa sejam definidos corretamente
+                    try {
+                        // Se temos caixas, use a primeira para as dimensões principais
+                        const caixasString = $('#caixas-json').val();
+                        if (caixasString) {
+                            const caixasObj = JSON.parse(caixasString);
+                            if (caixasObj && caixasObj.length > 0) {
+                                // Use as dimensões da primeira caixa
+                                const primeiraCaixa = caixasObj[0];
+                                $('#altura-hidden').val(primeiraCaixa.altura);
+                                $('#largura-hidden').val(primeiraCaixa.largura);
+                                $('#comprimento-hidden').val(primeiraCaixa.comprimento);
+                                $('#peso-caixa-hidden').val(primeiraCaixa.peso);
+                                
+                                console.log('Dimensões atualizadas:', {
+                                    altura: primeiraCaixa.altura,
+                                    largura: primeiraCaixa.largura,
+                                    comprimento: primeiraCaixa.comprimento,
+                                    peso: primeiraCaixa.peso
+                                });
+                            }
+                        }
+                    } catch (e) {
+                        console.error('Erro ao processar dimensões da caixa:', e);
+                    }
+                    
+                    // Retornar os dados serializados do form
+                    return $('#envio-form').serialize();
+                }(),
+                headers: {
+                    'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+                },
+                beforeSend: function() {
+                    // Mostrar indicador de carregamento
+                    $('#submit-button').prop('disabled', true).html('<i class="fas fa-spinner fa-spin"></i> Processando...');
+                },
                 success: function(response) {
+                    console.log('Resposta do servidor:', response);
                     showAlert('Envio registrado com sucesso!', 'success');
                     setTimeout(function() {
-                        loadSection('pagamento');
+                        loadSection('etiqueta'); // Mudado para etiqueta em vez de pagamento
                     }, 1500);
                 },
                 error: function(xhr) {
-                    showAlert('Erro ao processar o envio. Verifique os campos e tente novamente.', 'danger');
+                    console.error('Erro ao processar envio:', xhr);
+                    console.error('Status:', xhr.status);
+                    console.error('Status Text:', xhr.statusText);
+                    console.error('Response Text:', xhr.responseText);
+                    
+                    let errorMsg = '<strong>Erro ao processar o envio.</strong><br>';
+                    
+                    // Se tivermos mensagens de validação, vamos exibi-las
+                    if (xhr.responseJSON && xhr.responseJSON.errors) {
+                        errorMsg += '<div class="mt-2"><strong>Erros de validação:</strong><ul>';
+                        $.each(xhr.responseJSON.errors, function(campo, erros) {
+                            errorMsg += '<li>' + campo + ': ' + erros[0] + '</li>';
+                        });
+                        errorMsg += '</ul></div>';
+                    }
+                    
+                    // Se houver mensagem específica
+                    if (xhr.responseJSON && xhr.responseJSON.message) {
+                        errorMsg += '<div class="mt-2"><strong>Mensagem da API:</strong><br>' + xhr.responseJSON.message + '</div>';
+                    }
+                    
+                    // Exibir resposta completa da API
+                    errorMsg += '<div class="mt-3"><strong>Resposta completa da API:</strong><br>';
+                    errorMsg += '<pre class="bg-light p-2 mt-2 small" style="max-height: 200px; overflow-y: auto;">' + 
+                                JSON.stringify(xhr.responseJSON || JSON.parse(xhr.responseText || '{}'), null, 2) + 
+                                '</pre></div>';
+                    
+                    showAlert(errorMsg, 'danger');
+                },
+                complete: function() {
+                    // Restaurar botão de envio
+                    $('#submit-button').prop('disabled', false).html('<i class="fas fa-paper-plane me-2"></i> Processar Envio');
                 }
             });
+        });
+
+        // Inicializar campos de telefone com máscara
+        $('#origem_telefone, #destino_telefone').on('input', function() {
+            let value = $(this).val().replace(/\D/g, '');
+            if ($(this).attr('id') === 'origem_telefone') {
+                // Formato brasileiro: +55 11 98765-4321
+                if (value.length <= 2) {
+                    $(this).val('+' + value);
+                } else if (value.length <= 4) {
+                    $(this).val('+' + value.substring(0, 2) + ' ' + value.substring(2));
+                } else if (value.length <= 8) {
+                    $(this).val('+' + value.substring(0, 2) + ' ' + value.substring(2, 4) + ' ' + value.substring(4));
+                } else {
+                    $(this).val('+' + value.substring(0, 2) + ' ' + value.substring(2, 4) + ' ' + 
+                        value.substring(4, 9) + '-' + value.substring(9, 13));
+                }
+            } else {
+                // Formato americano: +1 555 123-4567
+                if (value.length <= 1) {
+                    $(this).val('+' + value);
+                } else if (value.length <= 4) {
+                    $(this).val('+' + value.substring(0, 1) + ' ' + value.substring(1));
+                } else if (value.length <= 7) {
+                    $(this).val('+' + value.substring(0, 1) + ' ' + value.substring(1, 4) + ' ' + value.substring(4));
+                } else {
+                    $(this).val('+' + value.substring(0, 1) + ' ' + value.substring(1, 4) + ' ' + 
+                        value.substring(4, 7) + '-' + value.substring(7, 11));
+                }
+            }
         });
     });
 </script> 

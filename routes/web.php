@@ -91,6 +91,36 @@ Route::get('/cotacao-fedex', function () {
     return redirect('/cotacao');
 });
 
+// Rota para teste de processamento de envio
+Route::post('/teste-envio', function(Illuminate\Http\Request $request) {
+    // Registrar no log
+    \Illuminate\Support\Facades\Log::info('TESTE-ENVIO: Dados recebidos', [
+        'all' => $request->all(),
+        'produtos_json' => $request->produtos_json,
+        'origem_nome' => $request->origem_nome,
+        'destino_nome' => $request->destino_nome,
+        'altura' => $request->altura,
+        'largura' => $request->largura,
+        'comprimento' => $request->comprimento,
+        'peso_caixa' => $request->peso_caixa,
+        'servico_entrega' => $request->servico_entrega
+    ]);
+    
+    // Retornar resposta de sucesso simulada
+    return response()->json([
+        'success' => true,
+        'trackingNumber' => 'TEST'.rand(1000000, 9999999),
+        'shipmentId' => 'SIM'.rand(1000000, 9999999),
+        'labelUrl' => 'https://example.com/label-test.pdf',
+        'servicoContratado' => $request->servico_entrega ?: 'FEDEX_INTERNATIONAL_PRIORITY',
+        'dataCriacao' => date('Y-m-d H:i:s'),
+        'simulado' => true,
+        'message' => 'Teste de envio registrado com sucesso para fins de depuração. Isso é apenas uma simulação.',
+        'hash' => md5(time()),
+        'nextStep' => 'etiqueta'
+    ]);
+})->name('teste.envio.processar');
+
 // Rota para autenticação FedEx (para testes e desenvolvimento)
 Route::get('/test-fedex-auth', function() {
     $fedexService = app(App\Services\FedexService::class);

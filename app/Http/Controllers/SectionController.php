@@ -40,8 +40,31 @@ class SectionController extends Controller
         return view('sections.pagamento');
     }
     
-    public function etiqueta()
+    public function etiqueta(Request $request)
     {
+        // Verificar se é uma solicitação para checar dados na sessão
+        if ($request->has('check_session')) {
+            $resultadoEnvio = session('resultado_envio');
+            $dadosEnvio = session('dados_envio');
+            
+            // Se tiver dados de envio na sessão, retornar
+            if ($resultadoEnvio) {
+                // Adicionar os dados detalhados do envio ao resultado
+                $resultadoEnvio['dados'] = $dadosEnvio;
+                
+                return response()->json([
+                    'hasEnvio' => true,
+                    'envio' => $resultadoEnvio
+                ]);
+            }
+            
+            // Caso não tenha dados na sessão
+            return response()->json([
+                'hasEnvio' => false
+            ]);
+        }
+        
+        // Renderização normal da view
         return view('sections.etiqueta');
     }
     
@@ -529,6 +552,20 @@ class SectionController extends Controller
      */
     public function processarEnvio(Request $request)
     {
+        // Log para diagnosticar problemas
+        Log::info('Dados recebidos no processarEnvio', [
+            'all' => $request->all(),
+            'produtos_json' => $request->produtos_json,
+            'valor_total' => $request->valor_total,
+            'peso_total' => $request->peso_total,
+            'altura' => $request->altura,
+            'largura' => $request->largura,
+            'comprimento' => $request->comprimento,
+            'peso_caixa' => $request->peso_caixa,
+            'caixas_json' => $request->caixas_json,
+            'servico_entrega' => $request->servico_entrega,
+        ]);
+        
         // Validar os dados de entrada
         $request->validate([
             'produtos_json' => 'required|string',
@@ -541,6 +578,8 @@ class SectionController extends Controller
             'origem_estado' => 'required|string',
             'origem_cep' => 'required|string',
             'origem_pais' => 'required|string',
+            'origem_telefone' => 'required|string',
+            'origem_email' => 'required|email',
             
             'destino_nome' => 'required|string',
             'destino_endereco' => 'required|string',
@@ -548,15 +587,24 @@ class SectionController extends Controller
             'destino_estado' => 'required|string',
             'destino_cep' => 'required|string',
             'destino_pais' => 'required|string',
+            'destino_telefone' => 'required|string',
+            'destino_email' => 'required|email',
             
             'altura' => 'required|numeric',
             'largura' => 'required|numeric',
             'comprimento' => 'required|numeric',
             'peso_caixa' => 'required|numeric',
+            'servico_entrega' => 'required|string',
         ]);
         
         // Decodificar os produtos do JSON
         $produtos = json_decode($request->produtos_json, true);
+        
+        // Log detalhado dos produtos recebidos
+        Log::info('Produtos recebidos para processamento:', [
+            'produtos_json' => $request->produtos_json,
+            'produtos_decodificados' => $produtos
+        ]);
         
         // Verificar se há produtos
         if (empty($produtos)) {
@@ -569,26 +617,124 @@ class SectionController extends Controller
         // Calcular peso total (produtos + caixa)
         $pesoTotal = $request->peso_total + $request->peso_caixa;
         
-        // Gerar código de envio (simulação)
-        $codigoEnvio = 'DHL' . rand(100000000, 999999999);
+        // Preparar dados para o FedexService
+        $dadosRemetente = [
+            'nome' => $request->origem_nome,
+            'endereco' => $request->origem_endereco,
+            'complemento' => $request->origem_complemento ?? '',
+            'cidade' => $request->origem_cidade,
+            'estado' => $request->origem_estado,
+            'cep' => $request->origem_cep,
+            'pais' => $request->origem_pais,
+            'telefone' => $request->origem_telefone,
+            'email' => $request->origem_email
+        ];
         
-        // Em produção, aqui seria feita a gravação no banco de dados
-        // e integração com a API da DHL para iniciar o processo de envio
+        $dadosDestinatario = [
+            'nome' => $request->destino_nome,
+            'endereco' => $request->destino_endereco,
+            'complemento' => $request->destino_complemento ?? '',
+            'cidade' => $request->destino_cidade,
+            'estado' => $request->destino_estado,
+            'cep' => $request->destino_cep,
+            'pais' => $request->destino_pais,
+            'telefone' => $request->destino_telefone,
+            'email' => $request->destino_email
+        ];
         
-        return response()->json([
-            'success' => true,
-            'codigoEnvio' => $codigoEnvio,
-            'message' => 'Dados de envio processados com sucesso.',
-            'produtos' => $produtos,
-            'valorTotal' => $request->valor_total,
-            'pesoTotal' => $pesoTotal,
-            'dimensoes' => [
-                'altura' => $request->altura,
-                'largura' => $request->largura,
-                'comprimento' => $request->comprimento
-            ],
-            'nextStep' => 'pagamento'
-        ]);
+        $dadosPacote = [
+            'altura' => $request->altura,
+            'largura' => $request->largura,
+            'comprimento' => $request->comprimento,
+            'peso' => $pesoTotal
+        ];
+        
+        // Formatar produtos para o formato esperado pela FedexService
+        $dadosProdutos = [];
+        foreach ($produtos as $produto) {
+            $dadosProdutos[] = [
+                'descricao' => $produto['descricao'] ?? $produto['nome'],
+                'peso' => $produto['peso'],
+                'quantidade' => $produto['quantidade'],
+                'valor_unitario' => $produto['valor_unitario'] ?? $produto['valor'] ?? 0,
+                'pais_origem' => $produto['pais_origem'] ?? 'BR',
+                'ncm' => $produto['ncm'] ?? $produto['codigo'] ?? '000000'
+            ];
+        }
+        
+        // Forçar simulação em ambiente de desenvolvimento
+        $forcarSimulacao = config('app.env') !== 'production' || $request->has('forcarSimulacao');
+        
+        try {
+            // Criar o envio usando o FedexService
+            $resultado = $this->fedexService->criarEnvio(
+                $dadosRemetente,
+                $dadosDestinatario,
+                $dadosPacote,
+                $dadosProdutos,
+                $request->servico_entrega,
+                $forcarSimulacao
+            );
+            
+            // Armazenar resultado na sessão para uso posterior
+            session(['dados_envio' => [
+                'remetente' => $dadosRemetente,
+                'destinatario' => $dadosDestinatario,
+                'pacote' => $dadosPacote,
+                'produtos' => $dadosProdutos,
+                'valorTotal' => $request->valor_total,
+                'pesoTotal' => $pesoTotal
+            ]]);
+            
+            session(['resultado_envio' => $resultado]);
+            
+            // Armazenar no cache por 24 horas
+            $hash = md5(json_encode($request->all()) . time());
+            Cache::put('envio_' . $hash, [
+                'dados' => session('dados_envio'),
+                'resultado' => $resultado
+            ], now()->addDay());
+            
+            // Se o envio falhou mas temos simulação, adicionar mensagem
+            if (isset($resultado['mensagem'])) {
+                $mensagem = 'Simulação gerada devido a: ' . $resultado['mensagem'];
+            } else {
+                $mensagem = $resultado['simulado'] 
+                    ? 'Simulação de envio gerada com sucesso. Em produção, este processo irá gerar uma etiqueta real da FedEx.' 
+                    : 'Envio processado com sucesso! Você pode imprimir a etiqueta e rastrear seu pacote.';
+            }
+            
+            return response()->json([
+                'success' => true,
+                'trackingNumber' => $resultado['trackingNumber'],
+                'shipmentId' => $resultado['shipmentId'],
+                'labelUrl' => $resultado['labelUrl'],
+                'servicoContratado' => $resultado['servicoContratado'],
+                'dataCriacao' => $resultado['dataCriacao'],
+                'simulado' => $resultado['simulado'],
+                'message' => $mensagem,
+                'hash' => $hash,
+                'nextStep' => 'etiqueta' // Direcionar para página de etiqueta
+            ]);
+            
+        } catch (\Exception $e) {
+            Log::error('Erro ao processar envio', [
+                'erro' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+            
+            return response()->json([
+                'success' => false,
+                'message' => 'Erro ao processar o envio: ' . $e->getMessage(),
+                'error_details' => [
+                    'message' => $e->getMessage(),
+                    'code' => $e->getCode(),
+                    'file' => $e->getFile(),
+                    'line' => $e->getLine(),
+                    'trace' => explode("\n", $e->getTraceAsString())
+                ]
+            ], 500);
+        }
     }
     
     /**

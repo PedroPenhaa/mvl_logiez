@@ -1084,4 +1084,296 @@ class FedexService
             ];
         }
     }
+
+    /**
+     * Cria um envio na FedEx e retorna os dados da remessa
+     * 
+     * @param array $dadosRemetente Dados do remetente
+     * @param array $dadosDestinatario Dados do destinatário
+     * @param array $dadosPacote Dados do pacote (dimensões, peso, etc)
+     * @param array $dadosProdutos Dados dos produtos para alfândega
+     * @param string $servicoEntrega Código do serviço de entrega (ex: FEDEX_INTERNATIONAL_PRIORITY)
+     * @param bool $forcarSimulacao Se true, força o uso da simulação em vez da API real
+     * @return array
+     */
+    public function criarEnvio($dadosRemetente, $dadosDestinatario, $dadosPacote, $dadosProdutos, $servicoEntrega = 'FEDEX_INTERNATIONAL_PRIORITY', $forcarSimulacao = false)
+    {
+        try {
+            // Log de dados que estão sendo enviados
+            Log::info('Dados de envio FedEx', [
+                'remetente' => $dadosRemetente,
+                'destinatario' => $dadosDestinatario,
+                'pacote' => $dadosPacote,
+                'produtos' => $dadosProdutos,
+                'servico' => $servicoEntrega
+            ]);
+            
+            // Obter token de autenticação
+            $accessToken = $this->getAuthToken();
+            
+            // Preparar requisição de criação de envio
+            $shipUrl = $this->apiUrl . '/ship/v1/shipments';
+            $transactionId = uniqid('logiez_ship_');
+            $shipDate = date('Y-m-d');
+            
+            // Construir conteúdo da requisição
+            $shipRequest = [
+                'requestedShipment' => [
+                    'shipper' => [
+                        'contact' => [
+                            'personName' => $dadosRemetente['nome'],
+                            'phoneNumber' => $dadosRemetente['telefone'],
+                            'emailAddress' => $dadosRemetente['email']
+                        ],
+                        'address' => [
+                            'streetLines' => [
+                                $dadosRemetente['endereco'],
+                                $dadosRemetente['complemento'] ?? ''
+                            ],
+                            'city' => $dadosRemetente['cidade'],
+                            'stateOrProvinceCode' => $dadosRemetente['estado'],
+                            'postalCode' => $dadosRemetente['cep'],
+                            'countryCode' => $dadosRemetente['pais'],
+                            'residential' => false
+                        ]
+                    ],
+                    'recipients' => [
+                        [
+                            'contact' => [
+                                'personName' => $dadosDestinatario['nome'],
+                                'phoneNumber' => $dadosDestinatario['telefone'],
+                                'emailAddress' => $dadosDestinatario['email']
+                            ],
+                            'address' => [
+                                'streetLines' => [
+                                    $dadosDestinatario['endereco'],
+                                    $dadosDestinatario['complemento'] ?? ''
+                                ],
+                                'city' => $dadosDestinatario['cidade'],
+                                'stateOrProvinceCode' => $dadosDestinatario['estado'],
+                                'postalCode' => $dadosDestinatario['cep'],
+                                'countryCode' => $dadosDestinatario['pais'],
+                                'residential' => false
+                            ]
+                        ]
+                    ],
+                    'shipDatestamp' => $shipDate,
+                    'serviceType' => $servicoEntrega,
+                    'packagingType' => 'YOUR_PACKAGING',
+                    'pickupType' => 'USE_SCHEDULED_PICKUP',
+                    'blockInsightVisibility' => false,
+                    'shippingChargesPayment' => [
+                        'paymentType' => 'SENDER',
+                        'payor' => [
+                            'responsibleParty' => [
+                                'accountNumber' => [
+                                    'value' => $this->shipperAccount
+                                ]
+                            ]
+                        ]
+                    ],
+                    'labelSpecification' => [
+                        'labelFormatType' => 'COMMON2D',
+                        'imageType' => 'PDF',
+                        'labelStockType' => 'PAPER_85X11_TOP_HALF_LABEL'
+                    ],
+                    'rateRequestType' => ['ACCOUNT', 'LIST'],
+                    'preferredCurrency' => 'USD',
+                    'totalPackageCount' => 1,
+                    'requestedPackageLineItems' => [
+                        [
+                            'weight' => [
+                                'units' => 'KG',
+                                'value' => $dadosPacote['peso']
+                            ],
+                            'dimensions' => [
+                                'length' => $dadosPacote['comprimento'],
+                                'width' => $dadosPacote['largura'],
+                                'height' => $dadosPacote['altura'],
+                                'units' => 'CM'
+                            ],
+                            'groupPackageCount' => 1
+                        ]
+                    ],
+                    'customsClearanceDetail' => [
+                        'dutiesPayment' => [
+                            'paymentType' => 'SENDER',
+                            'payor' => [
+                                'responsibleParty' => [
+                                    'accountNumber' => [
+                                        'value' => $this->shipperAccount
+                                    ]
+                                ]
+                            ]
+                        ],
+                        'commodities' => []
+                    ]
+                ],
+                'accountNumber' => [
+                    'value' => $this->shipperAccount
+                ],
+                'labelResponseOptions' => 'URL_ONLY'
+            ];
+            
+            // Adicionar produtos para alfândega
+            foreach ($dadosProdutos as $produto) {
+                $shipRequest['requestedShipment']['customsClearanceDetail']['commodities'][] = [
+                    'description' => $produto['descricao'],
+                    'weight' => [
+                        'units' => 'KG',
+                        'value' => $produto['peso']
+                    ],
+                    'quantity' => $produto['quantidade'],
+                    'quantityUnits' => 'PCS',
+                    'unitPrice' => [
+                        'amount' => $produto['valor_unitario'],
+                        'currency' => 'USD'
+                    ],
+                    'customsValue' => [
+                        'amount' => $produto['valor_unitario'] * $produto['quantidade'],
+                        'currency' => 'USD'
+                    ],
+                    'countryOfManufacture' => $produto['pais_origem'],
+                    'harmonizedCode' => $produto['ncm'] ?? '000000' // NCM ou código harmonizado
+                ];
+            }
+            
+            // Fazer a requisição
+            $shipCurl = curl_init();
+            curl_setopt_array($shipCurl, [
+                CURLOPT_URL => $shipUrl,
+                CURLOPT_RETURNTRANSFER => true,
+                CURLOPT_ENCODING => "",
+                CURLOPT_MAXREDIRS => 10,
+                CURLOPT_TIMEOUT => 30,
+                CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
+                CURLOPT_CUSTOMREQUEST => "POST",
+                CURLOPT_POSTFIELDS => json_encode($shipRequest),
+                CURLOPT_HTTPHEADER => [
+                    "Content-Type: application/json",
+                    "Accept: application/json",
+                    "Authorization: Bearer " . $accessToken,
+                    "X-locale: pt_BR",
+                    "x-customer-transaction-id: " . $transactionId
+                ],
+                CURLOPT_SSL_VERIFYPEER => false,
+            ]);
+            
+            $shipResponse = curl_exec($shipCurl);
+            $shipHttpCode = curl_getinfo($shipCurl, CURLINFO_HTTP_CODE);
+            $shipErr = curl_error($shipCurl);
+            
+            curl_close($shipCurl);
+            
+            // Fazer log da resposta em ambiente de desenvolvimento
+            if (config('app.debug')) {
+                Log::info('Resposta da API FedEx (Criação de Envio)', [
+                    'HTTP_Code' => $shipHttpCode,
+                    'Response' => $shipResponse ? substr($shipResponse, 0, 1000) . '...' : 'Vazia',
+                    'Erro' => $shipErr ?: 'Nenhum'
+                ]);
+            }
+            
+            if ($shipErr) {
+                throw new \Exception('Erro na requisição de envio: ' . $shipErr);
+            }
+            
+            if ($shipHttpCode != 200) {
+                throw new \Exception('Falha no envio. Código HTTP: ' . $shipHttpCode . '. Resposta: ' . $shipResponse);
+            }
+            
+            // Processar resposta
+            $shipData = json_decode($shipResponse, true);
+            
+            // Extrair informações relevantes
+            $trackingNumber = $shipData['output']['transactionShipments'][0]['masterTrackingNumber'] ?? null;
+            $shipmentId = $shipData['output']['transactionShipments'][0]['shipmentDocuments'][0]['shipmentId'] ?? null;
+            $labelUrl = $shipData['output']['transactionShipments'][0]['shipmentDocuments'][0]['url'] ?? null;
+            
+            // Estruturar resposta
+            $resultado = [
+                'success' => true,
+                'trackingNumber' => $trackingNumber,
+                'shipmentId' => $shipmentId,
+                'labelUrl' => $labelUrl,
+                'servicoContratado' => $servicoEntrega,
+                'dataCriacao' => date('Y-m-d H:i:s'),
+                'simulado' => false,
+                'detalhes' => $shipData
+            ];
+            
+            // Cache do resultado por 24 horas
+            if ($trackingNumber) {
+                Cache::put('fedex_envio_' . $trackingNumber, $resultado, now()->addDay());
+            }
+            
+            return $resultado;
+            
+        } catch (\Exception $e) {
+            Log::error('Erro ao criar envio FedEx', [
+                'erro' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+            
+            // Se forçar simulação está explicitamente definido como true, use simulação, 
+            // caso contrário, deixe o erro propagar
+            if ($forcarSimulacao === true) {
+                // Em caso de erro, retornar simulação com mensagem
+                $resultado = $this->simularCriacaoEnvio($dadosRemetente, $dadosDestinatario, $dadosPacote, $dadosProdutos, $servicoEntrega);
+                $resultado['mensagem'] = $e->getMessage();
+                
+                return $resultado;
+            } else {
+                // Se não estiver usando forçar simulação, propagar o erro
+                throw $e;
+            }
+        }
+    }
+    
+    /**
+     * Simula a criação de um envio para testes
+     */
+    private function simularCriacaoEnvio($dadosRemetente, $dadosDestinatario, $dadosPacote, $dadosProdutos, $servicoEntrega)
+    {
+        // Gerar número de rastreamento simulado
+        $prefixos = ['FEDX', '9205', '9612', '7781'];
+        $prefixo = $prefixos[array_rand($prefixos)];
+        $trackingNumber = $prefixo . rand(10000000, 99999999) . rand(10, 99);
+        
+        // Calcular peso total dos produtos
+        $pesoTotal = 0;
+        $valorTotal = 0;
+        
+        foreach ($dadosProdutos as $produto) {
+            $pesoTotal += $produto['peso'] * $produto['quantidade'];
+            $valorTotal += $produto['valor_unitario'] * $produto['quantidade'];
+        }
+        
+        // Simular URL da etiqueta (usando serviço público para gerar QR code com o número de rastreamento)
+        $labelUrl = 'https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=' . urlencode($trackingNumber);
+        
+        // Estruturar resposta simulada
+        $resultado = [
+            'success' => true,
+            'trackingNumber' => $trackingNumber,
+            'shipmentId' => 'SIM' . rand(1000000, 9999999),
+            'labelUrl' => $labelUrl,
+            'servicoContratado' => $servicoEntrega,
+            'dataCriacao' => date('Y-m-d H:i:s'),
+            'simulado' => true,
+            'detalhes' => [
+                'remetente' => $dadosRemetente,
+                'destinatario' => $dadosDestinatario,
+                'pacote' => $dadosPacote,
+                'produtos' => $dadosProdutos,
+                'valorDeclarado' => $valorTotal,
+                'pesoTotal' => $pesoTotal
+            ]
+        ];
+        
+        // Cache do resultado simulado por 24 horas
+        Cache::put('fedex_envio_' . $trackingNumber, $resultado, now()->addDay());
+        
+        return $resultado;
+    }
 } 
