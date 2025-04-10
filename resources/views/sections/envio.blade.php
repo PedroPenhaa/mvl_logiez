@@ -205,7 +205,7 @@
                         </div>
                         <div class="card-body">
                             <div class="mb-3">
-                                <label for="origem_nome" class="form-label required">Nome</label>
+                                <label for="origem_nome" class="form-label required">Descrição</label>
                                 <input type="text" class="form-control" id="origem_nome" name="origem_nome" required>
                             </div>
                             
@@ -263,7 +263,7 @@
                         </div>
                         <div class="card-body">
                             <div class="mb-3">
-                                <label for="destino_nome" class="form-label required">Nome</label>
+                                <label for="destino_nome" class="form-label required">Descrição</label>
                                 <input type="text" class="form-control" id="destino_nome" name="destino_nome" required>
                             </div>
                             
@@ -363,7 +363,29 @@
 <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
 
 <script>
-    $(document).ready(function() {
+    // Verificar se o jQuery está disponível
+    if (typeof jQuery === 'undefined') {
+        console.error('jQuery não está carregado. Carregando...');
+        
+        // Adicionar jQuery se não estiver disponível
+        var script = document.createElement('script');
+        script.src = 'https://code.jquery.com/jquery-3.6.4.min.js';
+        script.integrity = 'sha256-oP6HI9z1XaZNBrJURtCoUT5SUnxFr8s3BzRl+cbzUq8=';
+        script.crossOrigin = 'anonymous';
+        script.onload = function() {
+            console.log('jQuery carregado com sucesso. Inicializando...');
+            inicializarApp();
+        };
+        document.head.appendChild(script);
+    } else {
+        // jQuery já está carregado, inicializar normalmente
+        $(document).ready(function() {
+            inicializarApp();
+        });
+    }
+    
+    // Função para inicializar a aplicação
+    function inicializarApp() {
         console.log("Documento pronto, iniciando script");
         
         // Função para mostrar alertas
@@ -2048,5 +2070,209 @@
                 }
             }
         });
-    });
+
+        // Adicionar função para buscar CEP e preencher campos automaticamente
+        $(document).ready(function() {
+            // Função para mostrar alertas
+            function showAlert(message, type) {
+                const alertHtml = `
+                    <div class="alert alert-${type} alert-dismissible fade show" role="alert">
+                        ${message}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    </div>
+                `;
+                
+                // Verificar se já existe um container de alerta
+                if ($('#alert-container-cep').length === 0) {
+                    // Criar container de alerta antes do formulário
+                    $('.card-body:first').prepend('<div id="alert-container-cep"></div>');
+                }
+                
+                // Adicionar o alerta e rolar até ele
+                $('#alert-container-cep').html(alertHtml);
+                $('html, body').animate({
+                    scrollTop: $('#alert-container-cep').offset().top - 100
+                }, 500);
+                
+                // Auto-fechamento após 5 segundos para alertas
+                setTimeout(function() {
+                    $('.alert').alert('close');
+                }, 5000);
+            }
+            
+            // Máscara para o campo de CEP de origem
+            $('#origem_cep').on('input', function() {
+                // Remove caracteres não numéricos
+                let cep = $(this).val().replace(/\D/g, '');
+                
+                // Limita a 8 dígitos
+                if (cep.length > 8) {
+                    cep = cep.substring(0, 8);
+                }
+                
+                // Formata o CEP com hífen após 5 dígitos
+                if (cep.length > 5) {
+                    cep = cep.substring(0, 5) + '-' + cep.substring(5);
+                }
+                
+                // Atualiza o valor do campo
+                $(this).val(cep);
+                
+                // Se tiver 8 dígitos (sem contar o hífen), busca o CEP
+                if (cep.replace(/\D/g, '').length === 8) {
+                    buscarCEP(cep, 'origem');
+                }
+            });
+            
+            // Máscara para o campo de CEP de destino
+            $('#destino_cep').on('input', function() {
+                // Remove caracteres não numéricos
+                let cep = $(this).val().replace(/\D/g, '');
+                
+                // Limita a 8 dígitos
+                if (cep.length > 8) {
+                    cep = cep.substring(0, 8);
+                }
+                
+                // Formata o CEP com hífen após 5 dígitos
+                if (cep.length > 5) {
+                    cep = cep.substring(0, 5) + '-' + cep.substring(5);
+                }
+                
+                // Atualiza o valor do campo
+                $(this).val(cep);
+                
+                // Se tiver 8 dígitos (sem contar o hífen), busca o CEP
+                if (cep.replace(/\D/g, '').length === 8) {
+                    buscarCEP(cep, 'destino');
+                }
+            });
+            
+            // Função para buscar informações do CEP usando a API ViaCEP
+            function buscarCEP(cep, tipo) {
+                // Remove caracteres não numéricos
+                cep = cep.replace(/\D/g, '');
+                
+                // Verifica se o CEP tem 8 dígitos
+                if (cep.length !== 8) {
+                    return;
+                }
+                
+                // Define os campos com base no tipo (origem ou destino)
+                const campoEndereco = `#${tipo}_endereco`;
+                const campoCidade = `#${tipo}_cidade`;
+                const campoEstado = `#${tipo}_estado`;
+                const campoComplemento = `#${tipo}_complemento`;
+                const campoPais = `#${tipo}_pais`;
+                
+                // Mostra mensagem de carregamento
+                $(campoEndereco).attr('placeholder', 'Buscando CEP...');
+                
+                // Primeira tentativa: API ViaCEP com JSONP para evitar problemas de CORS
+                $.ajax({
+                    url: `https://viacep.com.br/ws/${cep}/json/?callback=?`,
+                    dataType: 'jsonp',
+                    timeout: 3000, // 3 segundos de timeout
+                    success: function(data) {
+                        if (!data.erro) {
+                            preencherCampos(data);
+                        } else {
+                            // Se a primeira API falhar, tentar a segunda
+                            tentarApiAlternativa();
+                        }
+                    },
+                    error: function(jqXHR, textStatus, errorThrown) {
+                        console.log('Erro na primeira tentativa:', textStatus, errorThrown);
+                        // Se a primeira API falhar, tentar a segunda
+                        tentarApiAlternativa();
+                    }
+                });
+                
+                // Função para preencher os campos com os dados do CEP
+                function preencherCampos(data) {
+                    console.log(`Dados do CEP (${tipo}):`, data);
+                    
+                    // Preenche os campos com os dados retornados
+                    $(campoEndereco).val(data.logradouro || '');
+                    $(campoCidade).val(data.localidade || data.cidade || '');
+                    $(campoEstado).val(data.uf || data.estado || '');
+                    
+                    // Se for um CEP brasileiro, seleciona Brasil no país
+                    if (tipo === 'destino') {
+                        // Verifica se Brasil está na lista
+                        if ($(campoPais).find('option[value="BR"]').length > 0) {
+                            $(campoPais).val('BR');
+                        }
+                    }
+                    
+                    // Se tiver complemento, preenche também
+                    if (data.complemento) {
+                        $(campoComplemento).val(data.complemento);
+                    }
+                    
+                    // Limpa o placeholder
+                    $(campoEndereco).attr('placeholder', '');
+                    
+                    console.log(`CEP (${tipo}) encontrado e preenchido com sucesso`);
+                }
+                
+                // Função para tentar uma API alternativa
+                function tentarApiAlternativa() {
+                    console.log('Tentando API alternativa para o CEP:', cep);
+                    
+                    // API alternativa: BrasilAPI
+                    $.ajax({
+                        url: `https://brasilapi.com.br/api/cep/v1/${cep}`,
+                        dataType: 'json',
+                        timeout: 3000, // 3 segundos de timeout
+                        success: function(data) {
+                            if (data && data.cep) {
+                                preencherCampos(data);
+                            } else {
+                                informarErro('CEP não encontrado');
+                            }
+                        },
+                        error: function(jqXHR, textStatus, errorThrown) {
+                            console.log('Erro na segunda tentativa:', textStatus, errorThrown);
+                            
+                            // Última tentativa: API PostalCode
+                            $.ajax({
+                                url: `https://ws.apicep.com/cep/${cep}.json`,
+                                dataType: 'json',
+                                timeout: 3000, // 3 segundos de timeout
+                                success: function(data) {
+                                    if (data && data.status === 200) {
+                                        preencherCampos(data);
+                                    } else {
+                                        informarErro('CEP não encontrado');
+                                    }
+                                },
+                                error: function(jqXHR, textStatus, errorThrown) {
+                                    console.log('Erro na terceira tentativa:', textStatus, errorThrown);
+                                    informarErro('Não foi possível consultar o CEP');
+                                }
+                            });
+                        }
+                    });
+                }
+                
+                // Função para informar erro
+                function informarErro(mensagem) {
+                    // Limpa os campos
+                    $(campoEndereco).val('');
+                    $(campoCidade).val('');
+                    $(campoEstado).val('');
+                    $(campoComplemento).val('');
+                    
+                    // Limpa o placeholder
+                    $(campoEndereco).attr('placeholder', '');
+                    
+                    console.error(`Erro ao consultar CEP (${tipo}):`, mensagem);
+                    
+                    // Alerta mais amigável
+                    showAlert(`<strong>Atenção:</strong> ${mensagem}. Por favor, preencha os dados manualmente.`, 'warning');
+                }
+            }
+        });
+    } // <- Fechamento da função inicializarApp
 </script> 
