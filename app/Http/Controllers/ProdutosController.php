@@ -339,4 +339,133 @@ class ProdutosController extends Controller
             ], 500);
         }
     }
+
+    /**
+     * Consulta a unidade tributária de um NCM no arquivo CSV
+     * 
+     * @param Request $request
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function consultarUnidadeTributaria(Request $request)
+    {
+        $ncm = $request->input('ncm');
+        
+        if (empty($ncm)) {
+            return response()->json([
+                'success' => false,
+                'error' => 'NCM não informado'
+            ], 400);
+        }
+        
+        try {
+            // Formatar o NCM: remover pontos e zeros à esquerda
+            $ncmFormatado = preg_replace('/^0+/', '', str_replace('.', '', $ncm));
+            
+            Log::info('Consultando unidade tributária', [
+                'ncm_original' => $ncm,
+                'ncm_formatado' => $ncmFormatado
+            ]);
+            
+            $caminhoArquivo = storage_path('app/Unidade_trib.csv');
+            
+            if (!file_exists($caminhoArquivo)) {
+                Log::error('Arquivo Unidade_trib.csv não encontrado', [
+                    'caminho' => $caminhoArquivo
+                ]);
+                
+                return response()->json([
+                    'success' => false,
+                    'error' => 'Arquivo de unidades não encontrado'
+                ], 404);
+            }
+            
+            // Verificar se o arquivo está acessível e ler as primeiras linhas para depuração
+            try {
+                $primeiraLinhas = [];
+                $handle = fopen($caminhoArquivo, 'r');
+                for ($i = 0; $i < 5; $i++) {
+                    if (($linha = fgetcsv($handle)) !== false) {
+                        $primeiraLinhas[] = $linha;
+                    }
+                }
+                fclose($handle);
+                
+                Log::debug('Primeiras linhas do arquivo CSV:', [
+                    'linhas' => $primeiraLinhas
+                ]);
+            } catch (\Exception $e) {
+                Log::error('Erro ao ler amostra do arquivo:', [
+                    'erro' => $e->getMessage()
+                ]);
+            }
+            
+            // Abrir o arquivo CSV
+            $arquivo = fopen($caminhoArquivo, 'r');
+            
+            // Pular a primeira linha (cabeçalho)
+            fgetcsv($arquivo, 0, ',');
+            
+            $unidade = null;
+            $nomeUnidade = null;
+            $linhasVerificadas = 0;
+            $linhasEncontradas = [];
+            
+            // Percorrer o arquivo linha por linha
+            while (($linha = fgetcsv($arquivo, 0, ',')) !== FALSE) {
+                $linhasVerificadas++;
+                
+                // Para depuração, salvar algumas linhas que contenham parte do NCM
+                if (strpos($linha[0], substr($ncmFormatado, 0, 3)) === 0 && count($linhasEncontradas) < 5) {
+                    $linhasEncontradas[] = $linha;
+                }
+                
+                // Verificar se o NCM da linha corresponde ao NCM da consulta formatado
+                if ($linha[0] == $ncmFormatado) {
+                    $unidade = $linha[1]; // Coluna 1 é a unidade (abreviatura)
+                    $nomeUnidade = $linha[2]; // Coluna 2 é o nome completo da unidade
+                    Log::info('Unidade encontrada', [
+                        'ncm' => $ncmFormatado,
+                        'unidade' => $unidade,
+                        'nome_unidade' => $nomeUnidade
+                    ]);
+                    break;
+                }
+            }
+            
+            // Fechar o arquivo
+            fclose($arquivo);
+            
+            if ($unidade) {
+                return response()->json([
+                    'success' => true,
+                    'unidade' => $unidade,
+                    'nome_unidade' => $nomeUnidade
+                ]);
+            } else {
+                Log::warning('Unidade não encontrada', [
+                    'ncm_original' => $ncm,
+                    'ncm_formatado' => $ncmFormatado,
+                    'linhas_verificadas' => $linhasVerificadas,
+                    'amostras_proximas' => $linhasEncontradas
+                ]);
+                
+                return response()->json([
+                    'success' => false,
+                    'error' => 'Unidade não encontrada para o NCM: ' . $ncm
+                ]);
+            }
+        } catch (\Exception $e) {
+            Log::error('Erro ao consultar unidade tributária', [
+                'ncm' => $ncm,
+                'mensagem' => $e->getMessage(),
+                'arquivo' => $e->getFile(),
+                'linha' => $e->getLine()
+            ]);
+            
+            return response()->json([
+                'success' => false,
+                'error' => 'Erro ao consultar unidade: ' . $e->getMessage()
+            ], 500);
+        }
+    }
 } 

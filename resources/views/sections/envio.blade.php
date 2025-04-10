@@ -102,9 +102,13 @@
                                         <span class="input-group-text">Quantidade</span>
                                         <input type="number" class="form-control" id="produto-quantidade" min="1" value="1">
                                     </div>
-                                    <div class="input-group">
+                                    <div class="input-group mb-2">
                                         <span class="input-group-text">Valor R$</span>
                                         <input type="number" class="form-control" id="produto-valor" min="0.01" step="0.01" value="0.00">
+                                    </div>
+                                    <div class="input-group">
+                                        <span class="input-group-text">Unidade</span>
+                                        <input type="text" class="form-control" id="produto-unidade" readonly>
                                     </div>
                                 </div>
                                 <div class="col-lg-3 col-md-3">
@@ -681,6 +685,27 @@
                 const valorSugerido = produtoSelecionado.valor || 10.00;
                 $('#produto-valor').val(valorSugerido.toFixed(2));
                 $('#produto-valor').select(); // Seleciona o texto para fácil edição
+                
+                // Buscar e preencher a unidade com base no NCM
+                console.log("Buscando unidade para o NCM:", ncm);
+                const ncmFormatado = formatarNCMParaBusca(ncm);
+                console.log("NCM formatado para busca de unidade:", ncmFormatado);
+                
+                buscarUnidadeTributaria(ncm)
+                    .done(function(response) {
+                        console.log("Resposta da busca de unidade:", response);
+                        if (response.success && response.unidade) {
+                            $('#produto-unidade').val(response.unidade);
+                            console.log("Unidade tributária encontrada:", response.unidade);
+                        } else {
+                            console.warn("Unidade não encontrada para o NCM:", ncm);
+                            $('#produto-unidade').val('');
+                        }
+                    })
+                    .fail(function(error) {
+                        console.error("Erro ao buscar unidade tributária:", error);
+                        $('#produto-unidade').val('');
+                    });
             });
             
             inicializandoSelect2 = false;
@@ -744,6 +769,25 @@
                                 
                                 // Atualizar apenas o campo NCM, mantendo a descrição do produto
                                 $('#busca-codigo').val(ncmExtraido);
+                                
+                                // Buscar a unidade tributária com base no NCM extraído
+                                const ncmFormatado = formatarNCMParaBusca(ncmExtraido);
+                                console.log("NCM formatado para busca de unidade:", ncmFormatado);
+                                buscarUnidadeTributaria(ncmExtraido)
+                                    .done(function(response) {
+                                        console.log("Resposta da busca de unidade:", response);
+                                        if (response.success && response.unidade) {
+                                            $('#produto-unidade').val(response.unidade);
+                                            console.log("Unidade tributária encontrada:", response.unidade);
+                                        } else {
+                                            console.warn("Unidade não encontrada para o NCM:", ncmExtraido);
+                                            $('#produto-unidade').val('');
+                                        }
+                                    })
+                                    .fail(function(error) {
+                                        console.error("Erro ao buscar unidade tributária:", error);
+                                        $('#produto-unidade').val('');
+                                    });
                                 
                                 // Buscar produtos pelo NCM extraído
                                 buscarProdutos({ codigo: ncmExtraido, descricao: buscaDescricao });
@@ -835,6 +879,35 @@
             }
             
             return ncm; // Retorna como está se não conseguir formatar
+        }
+        
+        // Função para formatar o NCM para busca no arquivo Unidade_trib.csv
+        function formatarNCMParaBusca(ncm) {
+            // Remover pontos se houver
+            let ncmLimpo = ncm.replace(/\./g, '');
+            
+            // Remover zeros à esquerda (mas manter os da direita)
+            ncmLimpo = ncmLimpo.replace(/^0+/, '');
+            
+            console.log("Formatando NCM para busca:", ncm, "->", ncmLimpo);
+            return ncmLimpo;
+        }
+        
+        // Função para buscar a unidade tributária correspondente ao NCM
+        function buscarUnidadeTributaria(ncm) {
+            if (!ncm) return $.Deferred().reject('NCM não informado').promise();
+            
+            // Formatar NCM para busca: sem pontos e sem zeros à esquerda
+            const ncmFormatado = formatarNCMParaBusca(ncm);
+            console.log("NCM formatado para busca:", ncmFormatado);
+            
+            // Fazer requisição AJAX para buscar a unidade no arquivo CSV
+            return $.ajax({
+                url: '{{ route("api.unidade-tributaria") }}',
+                method: 'GET',
+                data: { ncm: ncmFormatado },
+                dataType: 'json'
+            });
         }
         
         // Função para buscar produtos por NCM
@@ -1085,6 +1158,9 @@
             // Limpar a descrição do Gemini
             ultimaDescricaoGemini = '';
             
+            // Limpar o campo de unidade
+            $('#produto-unidade').val('');
+            
             // Destruir instância anterior de Select2
             if ($('#produto-select').hasClass('select2-hidden-accessible')) {
                 $('#produto-select').select2('destroy');
@@ -1187,6 +1263,7 @@
                                     <small class="text-muted">Ncm: ${produto.codigo || 'N/A'}</small><br>
                                     <small class="text-muted">Peso unitário: ${produto.peso} kg</small><br>
                                     <small class="text-muted">Valor unitário: R$ ${produto.valor.toFixed(2)} <span class="text-info">(informado pelo usuário)</span></small>
+                                    ${produto.unidade ? `<br><small class="text-muted">Unidade: ${produto.unidade}</small>` : ''}
                                 </p>
                                 <div class="d-flex justify-content-between align-items-center mt-3">
                                     <div class="btn-group" role="group">
@@ -1250,6 +1327,7 @@
                 const nome = produtoSelecionado.text;
                 const peso = produtoSelecionado.peso || 0.5;
                 const valorInformado = parseFloat($('#produto-valor').val());
+                const unidade = $('#produto-unidade').val();
                 
                 // Validar valor
                 if (isNaN(valorInformado) || valorInformado <= 0) {
@@ -1266,7 +1344,8 @@
                     nome: nome,
                     peso: peso,
                     valor: valorInformado,
-                    quantidade: quantidade
+                    quantidade: quantidade,
+                    unidade: unidade
                 };
                 
                 console.log("Produto a ser adicionado:", produto);
@@ -1288,6 +1367,7 @@
                 $('#produto-select').val(null).trigger('change');
                 $('#produto-quantidade').val(1);
                 $('#produto-valor').val(0.00);
+                $('#produto-unidade').val('');
                 
                 // Renderizar produtos e atualizar resumo
                 renderizarProdutos();

@@ -69,6 +69,9 @@ Route::prefix('api')->name('api.')->group(function () {
     // Consulta de NCM via Gemini
     Route::post('/consulta-gemini', [ProdutosController::class, 'consultarGemini'])->name('consulta.gemini');
     
+    // Consulta de unidade tributária por NCM
+    Route::get('/unidade-tributaria', [ProdutosController::class, 'consultarUnidadeTributaria'])->name('unidade-tributaria');
+    
     // Processamento de dados
     Route::post('/envio/processar', [SectionController::class, 'processarEnvio'])->name('envio.processar');
     Route::post('/pagamento/processar', [SectionController::class, 'processarPagamento'])->name('pagamento.processar');
