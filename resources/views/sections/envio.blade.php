@@ -331,27 +331,32 @@
                             <h5 class="mb-0"><i class="fas fa-shipping-fast me-2"></i> Serviço de Entrega FedEx</h5>
                         </div>
                         <div class="card-body">
-                            <div class="row">
-                                <div class="col-md-12 mb-3">
-                                    <label for="servico_entrega" class="form-label required">Serviço de Entrega</label>
-                                    <select class="form-select" id="servico_entrega" name="servico_entrega" required>
-                                        <option value="" disabled selected>Selecione o serviço</option>
-                                        <option value="FEDEX_INTERNATIONAL_PRIORITY">FedEx International Priority</option>
-                                        <option value="FEDEX_INTERNATIONAL_ECONOMY">FedEx International Economy</option>
-                                        <option value="INTERNATIONAL_PRIORITY_EXPRESS">International Priority Express</option>
-                                        <option value="INTERNATIONAL_PRIORITY">International Priority</option>
-                                        <option value="INTERNATIONAL_ECONOMY">International Economy</option>
-                                    </select>
-                                    <small class="text-muted">O serviço determina a velocidade de entrega e o preço</small>
+                            <div id="cotacao-loader" class="text-center my-4" style="display: none;">
+                                <div class="spinner-border text-primary" role="status">
+                                    <span class="visually-hidden">Carregando...</span>
+                                </div>
+                                <p>Calculando as melhores opções de envio...</p>
+                            </div>
+                            
+                            <div id="servicos-container">
+                                <div class="alert alert-info" id="servicos-info">
+                                    <i class="fas fa-info-circle me-2"></i> Preencha os dados de origem, destino e caixas, e clique em "Consultar Serviços" para visualizar as opções disponíveis.
+                                </div>
+                                
+                                <div id="servicos-lista" class="mt-3" style="display: none;">
+                                    <!-- Aqui serão exibidos os serviços disponíveis -->
                                 </div>
                             </div>
                         </div>
                     </div>
                 </div>
             </div>
-            
+
             <div class="text-center mt-4">
-                <button type="submit" class="btn btn-primary btn-lg" id="submit-button">
+                <button type="button" class="btn btn-primary btn-lg" id="consultar-servicos">
+                    <i class="fas fa-search me-2"></i> Consultar Serviços
+                </button>
+                <button type="submit" class="btn btn-success btn-lg" id="submit-button" style="display: none;">
                     <i class="fas fa-paper-plane me-2"></i> Processar Envio
                 </button>
             </div>
@@ -1868,6 +1873,175 @@
         // Inicializar os selects de países
         carregarPaises();
         
+        // Evento para consultar serviços de entrega
+        $('#consultar-servicos').on('click', function() {
+            // Validar se há produtos
+            if (produtos.length === 0) {
+                showAlert('Por favor, adicione pelo menos um produto para o envio.', 'warning');
+                return false;
+            }
+            
+            // Validar se há caixas
+            if (caixas.length === 0) {
+                showAlert('Por favor, adicione pelo menos uma caixa para o envio.', 'warning');
+                return false;
+            }
+            
+            // Validar campos de origem e destino
+            if (!$('#origem_nome').val() || !$('#origem_endereco').val() || !$('#origem_cidade').val() || 
+                !$('#origem_estado').val() || !$('#origem_cep').val() || !$('#origem_pais').val() || 
+                !$('#origem_telefone').val() || !$('#origem_email').val()) {
+                showAlert('Por favor, preencha todos os campos de origem.', 'warning');
+                return false;
+            }
+            
+            if (!$('#destino_nome').val() || !$('#destino_endereco').val() || !$('#destino_cidade').val() || 
+                !$('#destino_estado').val() || !$('#destino_cep').val() || !$('#destino_pais').val() || 
+                !$('#destino_telefone').val() || !$('#destino_email').val()) {
+                showAlert('Por favor, preencha todos os campos de destino.', 'warning');
+                return false;
+            }
+            
+            // Mostrar o loader e esconder os resultados anteriores
+            $('#cotacao-loader').show();
+            $('#servicos-lista').hide();
+            $('#servicos-info').hide();
+            
+            // Preparar dados para a cotação (usar as mesmas informações que serão usadas no envio)
+            const dadosCotacao = {
+                origem: $('#origem_cep').val(),
+                destino: $('#destino_cep').val(),
+                altura: caixas[0].altura,
+                largura: caixas[0].largura,
+                comprimento: caixas[0].comprimento,
+                peso: pesoTotal,
+                _token: $('input[name="_token"]').val()
+            };
+            
+            console.log('Consultando serviços com os dados:', dadosCotacao);
+            
+            // Fazer requisição para a API de cotação
+            $.ajax({
+                url: '/calcular-cotacao',
+                type: 'POST',
+                data: dadosCotacao,
+                success: function(response) {
+                    // Esconder o loader
+                    $('#cotacao-loader').hide();
+                    
+                    console.log('Resposta da cotação:', response);
+                    
+                    if (response.success) {
+                        // Exibir as opções de serviço
+                        exibirServicos(response);
+                    } else {
+                        // Mostrar erro
+                        showAlert('Erro ao consultar serviços: ' + (response.message || 'Tente novamente mais tarde.'), 'danger');
+                        $('#servicos-info').show();
+                    }
+                },
+                error: function(xhr) {
+                    $('#cotacao-loader').hide();
+                    
+                    console.error('Erro na requisição AJAX:', xhr);
+                    
+                    // Tentar extrair mensagem de erro
+                    let errorMessage = 'Erro ao consultar serviços. Tente novamente mais tarde.';
+                    try {
+                        const response = JSON.parse(xhr.responseText);
+                        errorMessage = response.message || errorMessage;
+                    } catch (e) {
+                        console.error('Erro ao parsear resposta:', e);
+                    }
+                    
+                    showAlert(errorMessage, 'danger');
+                    $('#servicos-info').show();
+                }
+            });
+        });
+        
+        // Função para exibir os serviços disponíveis
+        function exibirServicos(response) {
+            const servicos = response.cotacoesFedEx;
+            
+            // Verificar se existem serviços para exibir
+            if (!servicos || servicos.length === 0) {
+                $('#servicos-lista').html('<div class="alert alert-warning">Nenhum serviço disponível para as informações fornecidas.</div>');
+                $('#servicos-lista').show();
+                return;
+            }
+            
+            // Montar o HTML para mostrar os serviços disponíveis
+            let html = '<h4 class="mb-3">Opções de Serviço</h4>';
+            html += '<div class="table-responsive">';
+            html += '<table class="table table-striped table-hover">';
+            html += '<thead><tr>';
+            html += '<th>Serviço</th>';
+            html += '<th>Tempo de Entrega</th>';
+            html += '<th>Valor</th>';
+            html += '<th>Selecionar</th>';
+            html += '</tr></thead><tbody>';
+            
+            servicos.forEach(function(servico) {
+                html += '<tr>';
+                html += '<td>' + servico.servico + '</td>';
+                html += '<td>' + (servico.tempoEntrega || 'Consultar') + '</td>';
+                html += '<td class="fw-bold">' + servico.valorTotal + ' ' + servico.moeda + '</td>';
+                html += '<td><button type="button" class="btn btn-sm btn-primary selecionar-servico" data-servico="' + servico.servicoTipo + '" data-nome="' + servico.servico + '">Selecionar</button></td>';
+                html += '</tr>';
+            });
+            
+            html += '</tbody></table></div>';
+            
+            // Adicionar uma mensagem se for uma simulação
+            if (response.simulado) {
+                html += '<div class="alert alert-info mt-3">';
+                html += '<i class="fas fa-info-circle me-2"></i> ' + (response.mensagem || 'Cotação simulada para obter valores aproximados.');
+                html += '</div>';
+            }
+            
+            // Exibir os serviços
+            $('#servicos-lista').html(html).show();
+            
+            // Evento para quando um serviço é selecionado
+            $('.selecionar-servico').on('click', function() {
+                const servicoTipo = $(this).data('servico');
+                const servicoNome = $(this).data('nome');
+                
+                // Destacar o serviço selecionado
+                $('.selecionar-servico').removeClass('btn-success').addClass('btn-primary').text('Selecionar');
+                $(this).removeClass('btn-primary').addClass('btn-success').text('Selecionado');
+                
+                // Criar um campo oculto para armazenar o serviço selecionado
+                if ($('#servico_entrega').length) {
+                    $('#servico_entrega').val(servicoTipo);
+                } else {
+                    // Se não existir, criar o campo
+                    $('<input>').attr({
+                        type: 'hidden',
+                        id: 'servico_entrega',
+                        name: 'servico_entrega',
+                        value: servicoTipo
+                    }).appendTo('#envio-form');
+                }
+                
+                // Mostrar mensagem de confirmação
+                $('#servicos-lista').append(
+                    '<div class="alert alert-success mt-3">' +
+                    '<i class="fas fa-check-circle me-2"></i> Serviço <strong>' + servicoNome + '</strong> selecionado. Clique em "Processar Envio" para continuar.' +
+                    '</div>'
+                );
+                
+                // Mostrar o botão de processar envio
+                $('#submit-button').show();
+                
+                // Rolar até o botão
+                $('html, body').animate({
+                    scrollTop: $('#submit-button').offset().top - 100
+                }, 500);
+            });
+        }
+        
         // Evento de submissão do formulário
         $('#envio-form').on('submit', function(e) {
             e.preventDefault();
@@ -1942,101 +2116,43 @@
             $.ajax({
                 url: "{{ route('api.envio.processar') }}",
                 method: 'POST',
-                data: function() {
-                    // Atualizar produtos para garantir que tenham valor_unitario
-                    try {
-                        const produtosString = $('#produtos-json').val();
-                        if (produtosString) {
-                            const produtosObj = JSON.parse(produtosString);
-                            // Adicionar valor_unitario onde falta
-                            produtosObj.forEach(function(produto) {
-                                if (!produto.valor_unitario && produto.valor) {
-                                    produto.valor_unitario = produto.valor;
-                                }
-                            });
-                            // Atualizar o campo
-                            $('#produtos-json').val(JSON.stringify(produtosObj));
-                        }
-                    } catch (e) {
-                        console.error('Erro ao processar produtos:', e);
-                    }
-                    
-                    // Garantir que as dimensões e peso da caixa sejam definidos corretamente
-                    try {
-                        // Se temos caixas, use a primeira para as dimensões principais
-                        const caixasString = $('#caixas-json').val();
-                        if (caixasString) {
-                            const caixasObj = JSON.parse(caixasString);
-                            if (caixasObj && caixasObj.length > 0) {
-                                // Use as dimensões da primeira caixa
-                                const primeiraCaixa = caixasObj[0];
-                                $('#altura-hidden').val(primeiraCaixa.altura);
-                                $('#largura-hidden').val(primeiraCaixa.largura);
-                                $('#comprimento-hidden').val(primeiraCaixa.comprimento);
-                                $('#peso-caixa-hidden').val(primeiraCaixa.peso);
-                                
-                                console.log('Dimensões atualizadas:', {
-                                    altura: primeiraCaixa.altura,
-                                    largura: primeiraCaixa.largura,
-                                    comprimento: primeiraCaixa.comprimento,
-                                    peso: primeiraCaixa.peso
-                                });
-                            }
-                        }
-                    } catch (e) {
-                        console.error('Erro ao processar dimensões da caixa:', e);
-                    }
-                    
-                    // Retornar os dados serializados do form
-                    return $('#envio-form').serialize();
-                }(),
-                headers: {
-                    'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
-                },
+                data: $(this).serialize(),
                 beforeSend: function() {
-                    // Mostrar indicador de carregamento
-                    $('#submit-button').prop('disabled', true).html('<i class="fas fa-spinner fa-spin"></i> Processando...');
+                    // Desabilitar o botão e mostrar indicador de carregamento
+                    $('#submit-button').prop('disabled', true).html('<i class="fas fa-spinner fa-spin me-2"></i> Processando...');
                 },
                 success: function(response) {
-                    console.log('Resposta do servidor:', response);
-                    showAlert('Envio registrado com sucesso!', 'success');
-                    setTimeout(function() {
-                        loadSection('etiqueta'); // Mudado para etiqueta em vez de pagamento
-                    }, 1500);
+                    // Habilitar o botão novamente
+                    $('#submit-button').prop('disabled', false).html('<i class="fas fa-paper-plane me-2"></i> Processar Envio');
+                    
+                    if (response.success) {
+                        // Exibir mensagem de sucesso
+                        showAlert('Envio processado com sucesso! ' + response.message, 'success');
+                        
+                        // Redirecionar para a próxima etapa
+                        if (response.nextStep) {
+                            setTimeout(function() {
+                                window.location.href = '/' + response.nextStep + '?hash=' + response.hash;
+                            }, 2000);
+                        }
+                    } else {
+                        showAlert('Erro ao processar envio: ' + response.message, 'danger');
+                    }
                 },
                 error: function(xhr) {
-                    console.error('Erro ao processar envio:', xhr);
-                    console.error('Status:', xhr.status);
-                    console.error('Status Text:', xhr.statusText);
-                    console.error('Response Text:', xhr.responseText);
-                    
-                    let errorMsg = '<strong>Erro ao processar o envio.</strong><br>';
-                    
-                    // Se tivermos mensagens de validação, vamos exibi-las
-                    if (xhr.responseJSON && xhr.responseJSON.errors) {
-                        errorMsg += '<div class="mt-2"><strong>Erros de validação:</strong><ul>';
-                        $.each(xhr.responseJSON.errors, function(campo, erros) {
-                            errorMsg += '<li>' + campo + ': ' + erros[0] + '</li>';
-                        });
-                        errorMsg += '</ul></div>';
-                    }
-                    
-                    // Se houver mensagem específica
-                    if (xhr.responseJSON && xhr.responseJSON.message) {
-                        errorMsg += '<div class="mt-2"><strong>Mensagem da API:</strong><br>' + xhr.responseJSON.message + '</div>';
-                    }
-                    
-                    // Exibir resposta completa da API
-                    errorMsg += '<div class="mt-3"><strong>Resposta completa da API:</strong><br>';
-                    errorMsg += '<pre class="bg-light p-2 mt-2 small" style="max-height: 200px; overflow-y: auto;">' + 
-                                JSON.stringify(xhr.responseJSON || JSON.parse(xhr.responseText || '{}'), null, 2) + 
-                                '</pre></div>';
-                    
-                    showAlert(errorMsg, 'danger');
-                },
-                complete: function() {
-                    // Restaurar botão de envio
+                    // Habilitar o botão novamente
                     $('#submit-button').prop('disabled', false).html('<i class="fas fa-paper-plane me-2"></i> Processar Envio');
+                    
+                    // Exibir mensagem de erro
+                    let errorMessage = 'Erro ao processar envio. Tente novamente mais tarde.';
+                    try {
+                        const response = JSON.parse(xhr.responseText);
+                        errorMessage = response.message || errorMessage;
+                    } catch (e) {
+                        console.error('Erro ao parsear resposta:', e);
+                    }
+                    
+                    showAlert(errorMessage, 'danger');
                 }
             });
         });
