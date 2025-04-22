@@ -36,18 +36,25 @@ class FedexService
      * @return string Token de acesso
      */
     public function getAuthToken($forceRefresh = false) {
-        if (!$forceRefresh && Cache::has('fedex_token')) {
-            $token = Cache::get('fedex_token');
+        $cacheFile = storage_path('framework/cache/fedex_token.txt');
+        
+        if (!$forceRefresh && file_exists($cacheFile)) {
+            $cacheContent = json_decode(file_get_contents($cacheFile), true);
             
-            // Se estiver processando um código especial, fazer log
-            if (self::$trackingSpecialCode) {
-                Log::info('======= TOKEN FEDEX DO CACHE =======', [
-                    'Token' => substr($token, 0, 10) . '...' . substr($token, -10),
-                    'Usado_Para' => 'Rastreamento do código ' . self::$trackingSpecialCode
-                ]);
+            // Verificar se o token ainda é válido (não expirou)
+            if (isset($cacheContent['expires_at']) && $cacheContent['expires_at'] > time()) {
+                $token = $cacheContent['token'];
+                
+                // Se estiver processando um código especial, fazer log
+                if (self::$trackingSpecialCode) {
+                    Log::info('======= TOKEN FEDEX DO ARQUIVO DE CACHE =======', [
+                        'Token' => substr($token, 0, 10) . '...' . substr($token, -10),
+                        'Usado_Para' => 'Rastreamento do código ' . self::$trackingSpecialCode
+                    ]);
+                }
+                
+                return $token;
             }
-            
-            return $token;
         }
     
         $authUrl = $this->apiUrl . '/oauth/token';
@@ -86,16 +93,22 @@ class FedexService
         // Extrair tempo de expiração (geralmente 3600 segundos = 1 hora)
         $expiresIn = $data['expires_in'] ?? 3600;
         
-        // Armazenar no cache por um pouco menos que o tempo de expiração
-        $cacheMinutes = floor($expiresIn / 60) - 5; // 5 minutos de margem
-        Cache::put('fedex_token', $token, now()->addMinutes($cacheMinutes));
-        
-        // Armazenar detalhes adicionais para diagnóstico
-        Cache::put('fedex_token_details', [
+        // Armazenar em arquivo local
+        $cacheContent = [
+            'token' => $token,
             'expires_in' => $expiresIn,
-            'obtained_at' => now()->toDateTimeString(),
-            'expires_at' => now()->addSeconds($expiresIn)->toDateTimeString()
-        ], now()->addMinutes($cacheMinutes));
+            'obtained_at' => date('Y-m-d H:i:s'),
+            'expires_at' => time() + $expiresIn - 300 // 5 minutos de margem
+        ];
+        
+        // Criar diretório se não existir
+        $cacheDir = dirname($cacheFile);
+        if (!is_dir($cacheDir)) {
+            mkdir($cacheDir, 0755, true);
+        }
+        
+        // Salvar token em arquivo
+        file_put_contents($cacheFile, json_encode($cacheContent));
         
         // Se estiver processando um código especial, fazer log
         if (self::$trackingSpecialCode) {
@@ -362,20 +375,6 @@ class FedexService
         $pesoCubico = ($altura * $largura * $comprimento) / 5000;
         $pesoUtilizado = max($pesoCubico, $peso);
         
-        // Log dos dados de cotação
-        Log::info('Simulação de cotação', [
-            'origem' => $origem,
-            'destino' => $destino,
-            'dimensoes' => [
-                'altura' => $altura,
-                'largura' => $largura,
-                'comprimento' => $comprimento
-            ],
-            'peso_real' => $peso,
-            'peso_cubico' => $pesoCubico,
-            'peso_utilizado' => $pesoUtilizado
-        ]);
-        
         // Dados de países para personalizar a simulação
         $countryCodeOrigem = 'BR';
         $countryCodeDestino = 'US';
@@ -487,24 +486,6 @@ class FedexService
                 'dataEntrega' => date('Y-m-d', strtotime('+' . (8 + $prazoExtra) . ' days'))
             ];
         }
-        
-        // Verificação de segurança: se não retornou nenhuma cotação, adicione uma opção padrão
-        if (empty($cotacoes)) {
-            $cotacoes[] = [
-                'servico' => 'FedEx International Priority (Padrão)',
-                'servicoTipo' => 'INTERNATIONAL_PRIORITY',
-                'valorTotal' => number_format(150 * $fatorPais, 2, '.', ''),
-                'moeda' => 'USD',
-                'tempoEntrega' => (3 + $prazoExtra) . '-' . (5 + $prazoExtra) . ' dias úteis',
-                'dataEntrega' => date('Y-m-d', strtotime('+' . (4 + $prazoExtra) . ' days'))
-            ];
-        }
-        
-        // Log dos resultados da cotação
-        Log::info('Resultado da simulação de cotação', [
-            'cotacoes_count' => count($cotacoes),
-            'cotacoes' => $cotacoes
-        ]);
         
         // Adicionar informações de simulação
         return [

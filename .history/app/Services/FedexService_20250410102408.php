@@ -362,20 +362,6 @@ class FedexService
         $pesoCubico = ($altura * $largura * $comprimento) / 5000;
         $pesoUtilizado = max($pesoCubico, $peso);
         
-        // Log dos dados de cotação
-        Log::info('Simulação de cotação', [
-            'origem' => $origem,
-            'destino' => $destino,
-            'dimensoes' => [
-                'altura' => $altura,
-                'largura' => $largura,
-                'comprimento' => $comprimento
-            ],
-            'peso_real' => $peso,
-            'peso_cubico' => $pesoCubico,
-            'peso_utilizado' => $pesoUtilizado
-        ]);
-        
         // Dados de países para personalizar a simulação
         $countryCodeOrigem = 'BR';
         $countryCodeDestino = 'US';
@@ -487,24 +473,6 @@ class FedexService
                 'dataEntrega' => date('Y-m-d', strtotime('+' . (8 + $prazoExtra) . ' days'))
             ];
         }
-        
-        // Verificação de segurança: se não retornou nenhuma cotação, adicione uma opção padrão
-        if (empty($cotacoes)) {
-            $cotacoes[] = [
-                'servico' => 'FedEx International Priority (Padrão)',
-                'servicoTipo' => 'INTERNATIONAL_PRIORITY',
-                'valorTotal' => number_format(150 * $fatorPais, 2, '.', ''),
-                'moeda' => 'USD',
-                'tempoEntrega' => (3 + $prazoExtra) . '-' . (5 + $prazoExtra) . ' dias úteis',
-                'dataEntrega' => date('Y-m-d', strtotime('+' . (4 + $prazoExtra) . ' days'))
-            ];
-        }
-        
-        // Log dos resultados da cotação
-        Log::info('Resultado da simulação de cotação', [
-            'cotacoes_count' => count($cotacoes),
-            'cotacoes' => $cotacoes
-        ]);
         
         // Adicionar informações de simulação
         return [

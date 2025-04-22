@@ -191,7 +191,7 @@ $(document).ready(function() {
             $('#cotacao-loader').show();
             
             $.ajax({
-                url: $('#cotacao-form').attr('action'),
+                url: '/calcular-cotacao',
                 type: 'POST',
                 data: window.lastFormData,
                 headers: {

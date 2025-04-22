@@ -36,27 +36,54 @@ class FedexService
      * @return string Token de acesso
      */
     public function getAuthToken($forceRefresh = false) {
-        if (!$forceRefresh && Cache::has('fedex_token')) {
-            $token = Cache::get('fedex_token');
+        // Verificar se estamos usando um código de rastreamento especial
+        if (self::$trackingSpecialCode && isset(config('services.fedex.special_tracking')[self::$trackingSpecialCode])) {
+            // Usar credenciais específicas para este tracking number
+            $specialConfig = config('services.fedex.special_tracking')[self::$trackingSpecialCode];
+            $clientId = $specialConfig['client_id'] ?? $this->clientId;
+            $clientSecret = $specialConfig['client_secret'] ?? $this->clientSecret;
+            $apiUrl = $specialConfig['api_url'] ?? $this->apiUrl;
             
-            // Se estiver processando um código especial, fazer log
-            if (self::$trackingSpecialCode) {
-                Log::info('======= TOKEN FEDEX DO CACHE =======', [
-                    'Token' => substr($token, 0, 10) . '...' . substr($token, -10),
-                    'Usado_Para' => 'Rastreamento do código ' . self::$trackingSpecialCode
-                ]);
-            }
-            
-            return $token;
+            Log::info('======= USANDO CREDENCIAIS ESPECIAIS =======', [
+                'tracking_number' => self::$trackingSpecialCode,
+                'client_id' => $clientId,
+                'api_url' => $apiUrl
+            ]);
+        } else {
+            $clientId = $this->clientId;
+            $clientSecret = $this->clientSecret;
+            $apiUrl = $this->apiUrl;
         }
-    
-        $authUrl = $this->apiUrl . '/oauth/token';
+        
+        // Nome do arquivo para cache do token
+        $tokenCacheFile = storage_path('app/fedex_token.json');
+        
+        if (!$forceRefresh && file_exists($tokenCacheFile)) {
+            $tokenData = json_decode(file_get_contents($tokenCacheFile), true);
+            
+            // Verificar se token ainda é válido (expira em menos de 5 minutos)
+            if (isset($tokenData['expires_at']) && time() < strtotime($tokenData['expires_at']) - 300) {
+                $token = $tokenData['access_token'];
+                
+                // Se estiver processando um código especial, fazer log
+                if (self::$trackingSpecialCode) {
+                    Log::info('======= TOKEN FEDEX DO CACHE ARQUIVO =======', [
+                        'Token' => substr($token, 0, 10) . '...' . substr($token, -10),
+                        'Usado_Para' => 'Rastreamento do código ' . self::$trackingSpecialCode
+                    ]);
+                }
+                
+                return $token;
+            }
+        }
+
+        $authUrl = $apiUrl . '/oauth/token';
         
         // Preparar payload para a solicitação de token
         $tokenPayload = [
             'grant_type' => 'client_credentials',
-            'client_id' => $this->clientId,
-            'client_secret' => $this->clientSecret
+            'client_id' => $clientId,
+            'client_secret' => $clientSecret
         ];
         
         // Se estiver processando um código especial, fazer log
@@ -64,49 +91,51 @@ class FedexService
             Log::info('======= SOLICITAÇÃO DE TOKEN FEDEX =======', [
                 'URL' => $authUrl,
                 'Payload' => $tokenPayload,
-                'Client_ID' => $this->clientId,
-                'Client_Secret' => substr($this->clientSecret, 0, 5) . '...' . substr($this->clientSecret, -5),
+                'Client_ID' => $clientId,
+                'Client_Secret' => substr($clientSecret, 0, 5) . '...' . substr($clientSecret, -5),
                 'Usado_Para' => 'Rastreamento do código ' . self::$trackingSpecialCode
             ]);
         }
         
         $response = Http::asForm()->post($authUrl, $tokenPayload);
-    
+
         if ($response->failed()) {
             throw new \Exception('Falha na autenticação: ' . $response->body());
         }
-    
+
         $data = $response->json();
         $token = $data['access_token'] ?? null;
-    
+
         if (!$token) {
             throw new \Exception('Token não recebido');
         }
         
         // Extrair tempo de expiração (geralmente 3600 segundos = 1 hora)
         $expiresIn = $data['expires_in'] ?? 3600;
+        $expiresAt = date('Y-m-d H:i:s', time() + $expiresIn);
         
-        // Armazenar no cache por um pouco menos que o tempo de expiração
-        $cacheMinutes = floor($expiresIn / 60) - 5; // 5 minutos de margem
-        Cache::put('fedex_token', $token, now()->addMinutes($cacheMinutes));
-        
-        // Armazenar detalhes adicionais para diagnóstico
-        Cache::put('fedex_token_details', [
+        // Armazenar em arquivo
+        $tokenData = [
+            'access_token' => $token,
             'expires_in' => $expiresIn,
-            'obtained_at' => now()->toDateTimeString(),
-            'expires_at' => now()->addSeconds($expiresIn)->toDateTimeString()
-        ], now()->addMinutes($cacheMinutes));
+            'obtained_at' => date('Y-m-d H:i:s'),
+            'expires_at' => $expiresAt
+        ];
+        
+        // Salvar em arquivo
+        file_put_contents($tokenCacheFile, json_encode($tokenData));
         
         // Se estiver processando um código especial, fazer log
         if (self::$trackingSpecialCode) {
             Log::info('======= NOVO TOKEN FEDEX OBTIDO =======', [
                 'Token' => substr($token, 0, 10) . '...' . substr($token, -10),
                 'Expira_Em' => $expiresIn . ' segundos',
+                'Expira_Em_Data' => $expiresAt,
                 'Usado_Para' => 'Rastreamento do código ' . self::$trackingSpecialCode,
                 'Resposta_Completa' => $data
             ]);
         }
-    
+
         return $token;
     }
     
@@ -362,20 +391,6 @@ class FedexService
         $pesoCubico = ($altura * $largura * $comprimento) / 5000;
         $pesoUtilizado = max($pesoCubico, $peso);
         
-        // Log dos dados de cotação
-        Log::info('Simulação de cotação', [
-            'origem' => $origem,
-            'destino' => $destino,
-            'dimensoes' => [
-                'altura' => $altura,
-                'largura' => $largura,
-                'comprimento' => $comprimento
-            ],
-            'peso_real' => $peso,
-            'peso_cubico' => $pesoCubico,
-            'peso_utilizado' => $pesoUtilizado
-        ]);
-        
         // Dados de países para personalizar a simulação
         $countryCodeOrigem = 'BR';
         $countryCodeDestino = 'US';
@@ -487,24 +502,6 @@ class FedexService
                 'dataEntrega' => date('Y-m-d', strtotime('+' . (8 + $prazoExtra) . ' days'))
             ];
         }
-        
-        // Verificação de segurança: se não retornou nenhuma cotação, adicione uma opção padrão
-        if (empty($cotacoes)) {
-            $cotacoes[] = [
-                'servico' => 'FedEx International Priority (Padrão)',
-                'servicoTipo' => 'INTERNATIONAL_PRIORITY',
-                'valorTotal' => number_format(150 * $fatorPais, 2, '.', ''),
-                'moeda' => 'USD',
-                'tempoEntrega' => (3 + $prazoExtra) . '-' . (5 + $prazoExtra) . ' dias úteis',
-                'dataEntrega' => date('Y-m-d', strtotime('+' . (4 + $prazoExtra) . ' days'))
-            ];
-        }
-        
-        // Log dos resultados da cotação
-        Log::info('Resultado da simulação de cotação', [
-            'cotacoes_count' => count($cotacoes),
-            'cotacoes' => $cotacoes
-        ]);
         
         // Adicionar informações de simulação
         return [

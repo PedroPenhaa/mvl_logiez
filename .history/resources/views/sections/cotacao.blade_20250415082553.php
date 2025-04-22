@@ -3,7 +3,7 @@
     
     <div class="card shadow">
         <div class="card-body">
-            <form id="cotacao-form" method="POST" action="/calcular-cotacao">
+            <form id="cotacao-form" method="POST">
                 @csrf
                 
                 <div class="row mb-4">
@@ -153,7 +153,7 @@ $(document).ready(function() {
         
         // Enviar para o endpoint de cotação
         $.ajax({
-            url: $(this).attr('action'),
+            url: '/calcular-cotacao',
             type: 'POST',
             data: formData,
             headers: {
@@ -191,7 +191,7 @@ $(document).ready(function() {
             $('#cotacao-loader').show();
             
             $.ajax({
-                url: $('#cotacao-form').attr('action'),
+                url: '/calcular-cotacao',
                 type: 'POST',
                 data: window.lastFormData,
                 headers: {
@@ -235,7 +235,7 @@ $(document).ready(function() {
             var simulationData = window.lastFormData + '&forcarSimulacao=true';
             
             $.ajax({
-                url: $('#cotacao-form').attr('action'),
+                url: '/calcular-cotacao',
                 type: 'POST',
                 data: simulationData,
                 headers: {
