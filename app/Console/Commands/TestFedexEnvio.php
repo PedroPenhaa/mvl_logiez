@@ -315,6 +315,7 @@ class TestFedexEnvio extends Command
             
             curl_close($shipCurl);
             
+            dd($shipResponse);
             // Log da resposta detalhada para debug
             $this->info('Resposta da API - Status HTTP: ' . $shipHttpCode);
             if ($shipErr) {
