@@ -308,7 +308,8 @@ $(document).ready(function() {
                 html += '<thead><tr>';
                 html += '<th>Serviço</th>';
                 html += '<th>Tempo de Entrega</th>';
-                html += '<th>Valor</th>';
+                html += '<th>Valor (USD)</th>';
+                html += '<th>Valor (BRL)</th>';
                 html += '<th>Ação</th>';
                 html += '</tr></thead><tbody>';
                 
@@ -322,12 +323,21 @@ $(document).ready(function() {
                         html += 'Consultar';
                     }
                     html += '</td>';
-                    html += '<td class="fw-bold">' + cotacao.valorTotal + ' ' + cotacao.moeda + '</td>';
+                    html += '<td>' + cotacao.valorTotal + ' ' + cotacao.moeda + '</td>';
+                    html += '<td class="fw-bold text-success">R$ ' + (cotacao.valorTotalBRL || '-') + '</td>';
                     html += '<td><a href="/envio?servico=' + cotacao.servicoTipo + '&valor=' + cotacao.valorTotal + '" class="btn btn-sm btn-primary">Escolher</a></td>';
                     html += '</tr>';
                 });
                 
                 html += '</tbody></table></div>';
+                
+                // Exibir a cotação do dólar usada
+                if (response.cotacaoDolar) {
+                    html += '<div class="alert alert-info mt-3">';
+                    html += '<i class="fas fa-dollar-sign me-2"></i> Cotação do dólar utilizada: <strong>R$ ' + 
+                            response.cotacaoDolar.toFixed(2).replace('.', ',') + '</strong>';
+                    html += '</div>';
+                }
             } else {
                 html += '<div class="alert alert-warning">Nenhuma opção de envio encontrada para os parâmetros fornecidos.</div>';
             }

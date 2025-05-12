@@ -185,7 +185,35 @@ class SectionController extends Controller
         ]);
         
         try {
-            // Usar exatamente o mesmo código do command que está funcionando
+            // Verificar se é uma solicitação para forçar simulação
+            if ($request->has('forcarSimulacao') && $request->forcarSimulacao) {
+                $resultado = $this->fedexService->simularCotacao(
+                    $request->origem, 
+                    $request->destino,
+                    $request->altura, 
+                    $request->largura, 
+                    $request->comprimento, 
+                    $request->peso
+                );
+                
+                // Salvar cotação no cache e obter hash para recuperação posterior
+                $hash = $this->saveCotacaoToCache($request, $resultado);
+                
+                return response()->json([
+                    'success' => true,
+                    'pesoCubico' => $resultado['pesoCubico'],
+                    'pesoReal' => $resultado['pesoReal'],
+                    'pesoUtilizado' => $resultado['pesoUtilizado'],
+                    'cotacoesFedEx' => $resultado['cotacoesFedEx'],
+                    'mensagem' => $resultado['mensagem'],
+                    'simulado' => true,
+                    'dataConsulta' => $resultado['dataConsulta'],
+                    'cotacaoDolar' => $resultado['cotacaoDolar'] ?? null,
+                    'hash' => $hash
+                ]);
+            }
+                
+            // Código para API real
             // Usar as credenciais de teste fornecidas pelo usuário
             $apiUrl = "https://apis-sandbox.fedex.com";
             $clientId = "l7517499d73dc1470c8f56fe055c45113c";
@@ -203,34 +231,10 @@ class SectionController extends Controller
             // Cálculo do peso cúbico
             $pesoCubico = ($altura * $largura * $comprimento) / 5000;
             $pesoUtilizado = max($pesoCubico, $peso);
-
-            // Se forçar simulação, usar o método do FedexService
-            if ($request->has('forcarSimulacao') && $request->forcarSimulacao == 'true') {
-                $resultado = $this->fedexService->simularCotacao(
-                    $request->origem,
-                    $request->destino,
-                    $request->altura,
-                    $request->largura,
-                    $request->comprimento,
-                    $request->peso
-                );
-                
-                // Salvar a cotação no cache e gerar hash
-                $hash = $this->saveCotacaoToCache($request, $resultado);
-                
-                // Construir resposta
-                return response()->json([
-                    'success' => true,
-                    'pesoCubico' => $resultado['pesoCubico'],
-                    'pesoReal' => $resultado['pesoReal'],
-                    'pesoUtilizado' => $resultado['pesoUtilizado'],
-                    'cotacoesFedEx' => $resultado['cotacoesFedEx'],
-                    'mensagem' => $resultado['mensagem'] ?? null,
-                    'simulado' => $resultado['simulado'] ?? false,
-                    'dataConsulta' => $resultado['dataConsulta'],
-                    'hash' => $hash
-                ]);
-            }
+            
+            // Obter cotação do dólar atual
+            $cotacaoDolar = $this->obterCotacaoDolar();
+            $valorDolar = $cotacaoDolar['cotacao'] ?? 5.71; // Valor padrão caso a API falhe
 
             // 1. Autenticação - Fazer diretamente a requisição para obter o token
             $authUrl = $apiUrl . '/oauth/token';
@@ -469,101 +473,147 @@ class SectionController extends Controller
                 }
             }
 
+            // Converter valores USD para BRL
+            foreach ($cotacoes as $key => $cotacao) {
+                $valorUSD = floatval(str_replace(',', '', $cotacao['valorTotal']));
+                $valorBRL = $valorUSD * $valorDolar;
+                $cotacoes[$key]['valorTotalBRL'] = number_format($valorBRL, 2, ',', '.');
+            }
+            
             // Formatar resultados para serem compatíveis com o frontend
             $resultado = [
-                'success' => $rateHttpCode == 200,
+                'success' => true,
                 'pesoCubico' => round($pesoCubico, 2),
                 'pesoReal' => $peso,
                 'pesoUtilizado' => round($pesoUtilizado, 2),
                 'cotacoesFedEx' => $cotacoes,
                 'simulado' => false,
-                'dataConsulta' => date('Y-m-d H:i:s')
+                'dataConsulta' => date('Y-m-d H:i:s'),
+                'cotacaoDolar' => $valorDolar
             ];
-
-            // Tratar caso em que não há cotações disponíveis
-            if (empty($cotacoes) && $rateHttpCode == 200) {
-                // Usar simulação neste caso
-                $resultadoSimulado = $this->fedexService->simularCotacao(
-                    $request->origem,
-                    $request->destino,
-                    $request->altura,
-                    $request->largura,
-                    $request->comprimento,
-                    $request->peso
-                );
-                
-                $resultado = [
-                    'success' => true,
-                    'pesoCubico' => round($pesoCubico, 2),
-                    'pesoReal' => $peso,
-                    'pesoUtilizado' => round($pesoUtilizado, 2),
-                    'cotacoesFedEx' => $resultadoSimulado['cotacoesFedEx'],
-                    'simulado' => true,
-                    'mensagem' => 'Cotação simulada devido a erro na API: Falha na cotação. Código HTTP: ' . $rateHttpCode,
-                    'dataConsulta' => date('Y-m-d H:i:s')
-                ];
-            }
             
-            // Salvar a cotação no cache e gerar hash
+            // Salvar cotação no cache e obter hash para recuperação posterior
             $hash = $this->saveCotacaoToCache($request, $resultado);
-            
-            // Construir resposta
+                
             return response()->json([
                 'success' => true,
                 'pesoCubico' => $resultado['pesoCubico'],
                 'pesoReal' => $resultado['pesoReal'],
                 'pesoUtilizado' => $resultado['pesoUtilizado'],
                 'cotacoesFedEx' => $resultado['cotacoesFedEx'],
-                'mensagem' => $resultado['mensagem'] ?? null,
-                'simulado' => $resultado['simulado'] ?? false,
+                'simulado' => false,
                 'dataConsulta' => $resultado['dataConsulta'],
+                'cotacaoDolar' => $valorDolar,
                 'hash' => $hash
             ]);
-            
         } catch (\Exception $e) {
-            Log::error('Erro ao calcular cotação FedEx', [
-                'erro' => $e->getMessage(),
-                'trace' => $e->getTraceAsString()
-            ]);
+            // Verificar se é um erro específico da API da FedEx
+            $message = $e->getMessage();
             
-            // Em vez de retornar uma simulação automaticamente, retornamos o erro para o usuário decidir
-            if (strpos($e->getMessage(), '503') !== false) {
+            // Verificar se é o erro específico de serviço indisponível
+            if (strpos($message, 'Service unavailable') !== false || 
+                strpos($message, '503') !== false ||
+                strpos($message, 'indisponível') !== false) {
+                
+                Log::warning('API FedEx indisponível. Redirecionando para simulação.', [
+                    'error' => $message
+                ]);
+                
+                // Retornar código de erro específico para que o frontend possa tratar
                 return response()->json([
                     'success' => false,
                     'error_code' => 'fedex_unavailable',
-                    'message' => 'O serviço da FedEx está temporariamente indisponível. Deseja usar uma simulação de cotação?',
-                    'error_details' => $e->getMessage()
-                ], 200); // Retornamos 200 para que o AJAX processe normalmente
+                    'message' => 'Serviço da FedEx temporariamente indisponível. Você pode tentar novamente ou usar a simulação.'
+                ]);
             }
             
-            // Para outros erros, retornar a simulação automaticamente (mantendo o comportamento atual)
-            $resultado = $this->fedexService->simularCotacao(
-                $request->origem,
-                $request->destino,
-                $request->altura,
-                $request->largura,
-                $request->comprimento,
-                $request->peso
-            );
+            // Para outros erros, tentar simulação automaticamente
+            try {
+                Log::warning('Erro na API FedEx. Usando simulação como fallback.', [
+                    'error' => $message,
+                    'stacktrace' => $e->getTraceAsString()
+                ]);
+                
+                // Usar simulação como fallback
+                $resultado = $this->fedexService->simularCotacao(
+                    $request->origem, 
+                    $request->destino,
+                    $request->altura, 
+                    $request->largura, 
+                    $request->comprimento, 
+                    $request->peso
+                );
+                
+                // Adicionar mensagem específica
+                $resultado['mensagem'] = 'Cotação simulada devido a um erro na API FedEx: ' . $message;
+                
+                // Salvar cotação no cache e obter hash para recuperação posterior
+                $hash = $this->saveCotacaoToCache($request, $resultado);
+                
+                return response()->json([
+                    'success' => true,
+                    'pesoCubico' => $resultado['pesoCubico'],
+                    'pesoReal' => $resultado['pesoReal'],
+                    'pesoUtilizado' => $resultado['pesoUtilizado'],
+                    'cotacoesFedEx' => $resultado['cotacoesFedEx'],
+                    'mensagem' => $resultado['mensagem'],
+                    'simulado' => true,
+                    'dataConsulta' => $resultado['dataConsulta'],
+                    'cotacaoDolar' => $resultado['cotacaoDolar'] ?? null,
+                    'hash' => $hash
+                ]);
+            } catch (\Exception $simException) {
+                // Se mesmo a simulação falhar, registre e retorne erro
+                Log::error('Erro ao processar simulação de cotação: ' . $simException->getMessage());
+                
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Erro ao processar sua cotação: ' . $message,
+                    'error_details' => 'Falha também na simulação: ' . $simException->getMessage()
+                ], 500);
+            }
+        }
+    }
+    
+    /**
+     * Obtém a cotação atual do dólar usando a API AwesomeAPI
+     * 
+     * @return array Array com informações da cotação
+     */
+    private function obterCotacaoDolar()
+    {
+        try {
+            // URL da API AwesomeAPI para cotações
+            $response = \Illuminate\Support\Facades\Http::get("https://economia.awesomeapi.com.br/json/daily/USD-BRL/1");
             
-            // Salvar a cotação no cache e gerar hash
-            $hash = $this->saveCotacaoToCache($request, $resultado);
+            if ($response->successful()) {
+                $cotacao = $response->json();
+                
+                if (!empty($cotacao) && isset($cotacao[0])) {
+                    $dadosCotacao = $cotacao[0];
+                    
+                    return [
+                        'success' => true,
+                        'data' => date('d/m/Y', strtotime($dadosCotacao['create_date'])),
+                        'cotacao' => floatval($dadosCotacao['ask'])
+                    ];
+                }
+            }
             
-            // Configurar mensagem de erro
-            $resultado['mensagem'] = 'Cotação simulada devido a erro na API: ' . $e->getMessage();
-            
-            // Retornar simulação em caso de erro
-            return response()->json([
-                'success' => true,
-                'pesoCubico' => $resultado['pesoCubico'],
-                'pesoReal' => $resultado['pesoReal'],
-                'pesoUtilizado' => $resultado['pesoUtilizado'],
-                'cotacoesFedEx' => $resultado['cotacoesFedEx'],
-                'mensagem' => $resultado['mensagem'],
-                'simulado' => true,
-                'dataConsulta' => $resultado['dataConsulta'],
-                'hash' => $hash
-            ]);
+            // Valor padrão em caso de falha
+            Log::warning('Falha ao obter cotação do dólar. Usando valor padrão.');
+            return [
+                'success' => false,
+                'data' => date('d/m/Y'),
+                'cotacao' => 5.71
+            ];
+        } catch (\Exception $e) {
+            Log::error('Erro ao consultar cotação do dólar: ' . $e->getMessage());
+            return [
+                'success' => false,
+                'data' => date('d/m/Y'),
+                'cotacao' => 5.71
+            ];
         }
     }
     

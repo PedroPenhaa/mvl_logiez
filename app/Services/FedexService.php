@@ -346,56 +346,40 @@ class FedexService
     }
 
     /**
-     * Simula cotação de frete (usado enquanto resolve problemas de permissão na API)
+     * Simula uma cotação de envio FedEx
      * 
-     * @param string|array $origem CEP ou array com dados de origem
-     * @param string|array $destino CEP ou array com dados de destino
-     * @param float $altura Altura em cm
-     * @param float $largura Largura em cm
-     * @param float $comprimento Comprimento em cm
+     * @param string|array $origem CEP de origem ou array com ['postalCode' => '...', 'countryCode' => '...']
+     * @param string|array $destino CEP de destino ou array com ['postalCode' => '...', 'countryCode' => '...']
+     * @param float $altura Altura da embalagem em cm
+     * @param float $largura Largura da embalagem em cm
+     * @param float $comprimento Comprimento da embalagem em cm
      * @param float $peso Peso em kg
      * @return array
      */
     public function simularCotacao($origem, $destino, $altura, $largura, $comprimento, $peso)
     {
-        // Cálculo do peso cúbico (dimensional)
+        // Cálculo do peso cúbico (peso volumétrico)
         $pesoCubico = ($altura * $largura * $comprimento) / 5000;
         $pesoUtilizado = max($pesoCubico, $peso);
         
-        // Log dos dados de cotação
-        Log::info('Simulação de cotação', [
-            'origem' => $origem,
-            'destino' => $destino,
-            'dimensoes' => [
-                'altura' => $altura,
-                'largura' => $largura,
-                'comprimento' => $comprimento
-            ],
-            'peso_real' => $peso,
-            'peso_cubico' => $pesoCubico,
-            'peso_utilizado' => $pesoUtilizado
-        ]);
+        // Extrair códigos postais
+        $postalCodeOrigem = is_array($origem) ? ($origem['postalCode'] ?? $origem[0] ?? '') : $origem;
+        $postalCodeDestino = is_array($destino) ? ($destino['postalCode'] ?? $destino[0] ?? '') : $destino;
+        $countryCodeOrigem = is_array($origem) ? ($origem['countryCode'] ?? 'BR') : 'BR';
+        $countryCodeDestino = is_array($destino) ? ($destino['countryCode'] ?? 'US') : 'US';
         
-        // Dados de países para personalizar a simulação
-        $countryCodeOrigem = 'BR';
-        $countryCodeDestino = 'US';
+        // Obter a cotação atual do dólar
+        $cotacaoDolar = $this->obterCotacaoDolar();
+        $valorDolar = $cotacaoDolar['cotacao'] ?? 5.71; // Valor padrão caso a API falhe
         
-        if (is_array($origem) && isset($origem['countryCode'])) {
-            $countryCodeOrigem = $origem['countryCode'];
-        }
+        // Fatores de ajuste de preço e prazo com base no país de destino
+        $fatorPais = 1.0; // Fator padrão para Estados Unidos
+        $prazoExtra = 0;  // Dias extras para entrega
         
-        if (is_array($destino) && isset($destino['countryCode'])) {
-            $countryCodeDestino = $destino['countryCode'];
-        }
-        
-        // Fator de ajuste baseado na combinação de países
-        $fatorPais = 1.0;
-        $prazoExtra = 0;
-        
-        // Ajuste para envios internacionais específicos
+        // Ajustar fator de país e prazo adicional com base no país de destino
         if ($countryCodeOrigem != $countryCodeDestino) {
             // Europa
-            if (in_array($countryCodeDestino, ['DE', 'FR', 'ES', 'IT', 'GB', 'PT'])) {
+            if (in_array($countryCodeDestino, ['GB', 'DE', 'FR', 'IT', 'ES', 'PT'])) {
                 $fatorPais = 1.2; // Europa é mais cara que EUA
                 $prazoExtra = 1;  // +1 dia para Europa
             }
@@ -500,10 +484,18 @@ class FedexService
             ];
         }
         
+        // Converter valores USD para BRL
+        foreach ($cotacoes as $key => $cotacao) {
+            $valorUSD = floatval(str_replace(',', '', $cotacao['valorTotal']));
+            $valorBRL = $valorUSD * $valorDolar;
+            $cotacoes[$key]['valorTotalBRL'] = number_format($valorBRL, 2, ',', '.');
+        }
+        
         // Log dos resultados da cotação
         Log::info('Resultado da simulação de cotação', [
             'cotacoes_count' => count($cotacoes),
-            'cotacoes' => $cotacoes
+            'cotacoes' => $cotacoes,
+            'cotacao_dolar' => $valorDolar
         ]);
         
         // Adicionar informações de simulação
@@ -516,7 +508,50 @@ class FedexService
             'dataConsulta' => date('Y-m-d H:i:s'),
             'simulado' => true, // Indicar que é uma simulação
             'mensagem' => 'Cotação simulada devido a acesso limitado à API FedEx. Valores aproximados.',
+            'cotacaoDolar' => $valorDolar // Adiciona a cotação do dólar à resposta
         ];
+    }
+
+    /**
+     * Obtém a cotação atual do dólar usando a API AwesomeAPI
+     * 
+     * @return array Array com informações da cotação
+     */
+    private function obterCotacaoDolar()
+    {
+        try {
+            // URL da API AwesomeAPI para cotações
+            $response = Http::get("https://economia.awesomeapi.com.br/json/daily/USD-BRL/1");
+            
+            if ($response->successful()) {
+                $cotacao = $response->json();
+                
+                if (!empty($cotacao) && isset($cotacao[0])) {
+                    $dadosCotacao = $cotacao[0];
+                    
+                    return [
+                        'success' => true,
+                        'data' => date('d/m/Y', strtotime($dadosCotacao['create_date'])),
+                        'cotacao' => floatval($dadosCotacao['ask'])
+                    ];
+                }
+            }
+            
+            // Valor padrão em caso de falha
+            Log::warning('Falha ao obter cotação do dólar. Usando valor padrão.');
+            return [
+                'success' => false,
+                'data' => date('d/m/Y'),
+                'cotacao' => 5.71
+            ];
+        } catch (\Exception $e) {
+            Log::error('Erro ao consultar cotação do dólar: ' . $e->getMessage());
+            return [
+                'success' => false,
+                'data' => date('d/m/Y'),
+                'cotacao' => 5.71
+            ];
+        }
     }
 
     /**
