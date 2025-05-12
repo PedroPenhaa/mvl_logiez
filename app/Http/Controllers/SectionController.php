@@ -6,6 +6,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Cache;
 use App\Services\FedexService;
+use Illuminate\Support\Facades\DB;
 
 class SectionController extends Controller
 {
@@ -75,21 +76,94 @@ class SectionController extends Controller
     
     public function perfil()
     {
-        // Simulação de dados do usuário para o exemplo
-        $user = [
-            'nome' => 'João Silva',
-            'email' => 'joao.silva@exemplo.com',
-            'cpf' => '123.456.789-00',
-            'cidade' => 'São Paulo',
-            'estado' => 'SP',
-            'cep' => '01310-100',
-            'rua' => 'Avenida Paulista',
-            'numero' => '1000',
-            'complemento' => 'Apto 123',
-            'telefone' => '(11) 98765-4321'
+        // Verificar se o usuário está autenticado
+        if (!\Illuminate\Support\Facades\Auth::check()) {
+            $userData = [
+                'nome' => 'Usuário não autenticado',
+                'email' => '',
+                'cpf' => '',
+                'telefone' => '',
+                'rua' => '',
+                'numero' => '',
+                'complemento' => '',
+                'cidade' => '',
+                'estado' => '',
+                'cep' => ''
+            ];
+            
+            return view('sections.perfil', [
+                'usuario' => $userData,
+                'shipments' => collect([])
+            ]);
+        }
+        
+        // Obter o usuário autenticado
+        $user = \Illuminate\Support\Facades\Auth::user();
+        
+        // Tentar carregar o perfil do usuário se existir
+        $userProfile = $user->profile ?? null;
+        
+        // Extrair CPF do campo company_name temporariamente
+        $cpf = 'Não informado';
+        if ($userProfile && !empty($userProfile->company_name) && strpos($userProfile->company_name, 'CPF:') === 0) {
+            $cpf = substr($userProfile->company_name, 4); // Remover o prefixo 'CPF:'
+        }
+        
+        // Analisar o endereço se estiver em formato combinado
+        $rua = '';
+        $numero = '';
+        $complemento = '';
+        
+        if ($userProfile && !empty($userProfile->address)) {
+            // Tentar extrair número e complemento do endereço
+            $endereco = $userProfile->address;
+            $partes = explode(',', $endereco, 2);
+            
+            if (count($partes) > 1) {
+                $rua = trim($partes[0]);
+                $restante = trim($partes[1]);
+                
+                // Verificar se há complemento
+                $partes_complemento = explode('-', $restante, 2);
+                if (count($partes_complemento) > 1) {
+                    $numero = trim($partes_complemento[0]);
+                    $complemento = trim($partes_complemento[1]);
+                } else {
+                    $numero = $restante;
+                }
+            } else {
+                $rua = $endereco;
+            }
+        }
+        
+        // Formatar os dados do usuário para exibição
+        $userData = [
+            'nome' => $user->name,
+            'email' => $user->email,
+            'cpf' => $cpf,
+            'telefone' => $userProfile->phone ?? 'Não informado',
+            'rua' => $rua,
+            'numero' => $numero,
+            'complemento' => $complemento,
+            'cidade' => $userProfile->city ?? 'Não informado',
+            'estado' => $userProfile->state ?? 'Não informado',
+            'cep' => $userProfile->zip_code ?? 'Não informado',
+            'data_cadastro' => $user->created_at ? $user->created_at->format('d/m/Y') : 'Não informado'
         ];
         
-        return view('sections.perfil', ['usuario' => $user]);
+        // Verificar se a classe Shipment existe antes de consultar
+        $shipments = collect([]);
+        if (class_exists('\\App\\Models\\Shipment')) {
+            $shipments = \App\Models\Shipment::where('user_id', $user->id)
+                                           ->orderBy('created_at', 'desc')
+                                           ->take(5)
+                                           ->get();
+        }
+        
+        return view('sections.perfil', [
+            'usuario' => $userData,
+            'shipments' => $shipments
+        ]);
     }
 
     /**
@@ -141,25 +215,8 @@ class SectionController extends Controller
                     $request->peso
                 );
                 
-                // Gerar um hash para recuperar a cotação posteriormente (para o PDF)
-                $hash = md5(uniqid('fedex_quote_') . time());
-                
-                // Armazenar dados da cotação no cache para recuperação futura
-                $dados = [
-                    'origem_cep' => $request->origem,
-                    'origem_pais' => 'BR',
-                    'destino_cep' => $request->destino,
-                    'destino_pais' => 'US',
-                    'altura' => $request->altura,
-                    'largura' => $request->largura,
-                    'comprimento' => $request->comprimento,
-                    'peso' => $request->peso
-                ];
-                
-                Cache::put('cotacao_' . $hash, [
-                    'dados' => $dados,
-                    'resultado' => $resultado
-                ], now()->addDays(7)); // Armazenar por 7 dias
+                // Salvar a cotação no cache e gerar hash
+                $hash = $this->saveCotacaoToCache($request, $resultado);
                 
                 // Construir resposta
                 return response()->json([
@@ -447,25 +504,8 @@ class SectionController extends Controller
                 ];
             }
             
-            // Gerar um hash para recuperar a cotação posteriormente (para o PDF)
-            $hash = md5(uniqid('fedex_quote_') . time());
-            
-            // Armazenar dados da cotação no cache para recuperação futura
-            $dados = [
-                'origem_cep' => $request->origem,
-                'origem_pais' => 'BR',
-                'destino_cep' => $request->destino,
-                'destino_pais' => 'US',
-                'altura' => $request->altura,
-                'largura' => $request->largura,
-                'comprimento' => $request->comprimento,
-                'peso' => $request->peso
-            ];
-            
-            Cache::put('cotacao_' . $hash, [
-                'dados' => $dados,
-                'resultado' => $resultado
-            ], now()->addDays(7)); // Armazenar por 7 dias
+            // Salvar a cotação no cache e gerar hash
+            $hash = $this->saveCotacaoToCache($request, $resultado);
             
             // Construir resposta
             return response()->json([
@@ -506,25 +546,8 @@ class SectionController extends Controller
                 $request->peso
             );
             
-            // Gerar um hash para recuperar a cotação posteriormente (para o PDF)
-            $hash = md5(uniqid('fedex_quote_') . time());
-            
-            // Armazenar dados da cotação no cache para recuperação futura
-            $dados = [
-                'origem_cep' => $request->origem,
-                'origem_pais' => 'BR',
-                'destino_cep' => $request->destino,
-                'destino_pais' => 'US',
-                'altura' => $request->altura,
-                'largura' => $request->largura,
-                'comprimento' => $request->comprimento,
-                'peso' => $request->peso
-            ];
-            
-            Cache::put('cotacao_' . $hash, [
-                'dados' => $dados,
-                'resultado' => $resultado
-            ], now()->addDays(7)); // Armazenar por 7 dias
+            // Salvar a cotação no cache e gerar hash
+            $hash = $this->saveCotacaoToCache($request, $resultado);
             
             // Configurar mensagem de erro
             $resultado['mensagem'] = 'Cotação simulada devido a erro na API: ' . $e->getMessage();
@@ -542,6 +565,110 @@ class SectionController extends Controller
                 'hash' => $hash
             ]);
         }
+    }
+    
+    /**
+     * Salva uma cotação no cache e retorna o hash para recuperá-la.
+     *
+     * @param  \Illuminate\Http\Request  $request
+     * @param  array  $resultado
+     * @return string
+     */
+    private function saveCotacaoToCache(Request $request, array $resultado)
+    {
+        // Criar identificador baseado nos parâmetros da cotação (determinístico)
+        $paramsKey = $request->origem . 
+                    $request->destino . 
+                    $request->altura . 
+                    $request->largura . 
+                    $request->comprimento . 
+                    $request->peso;
+        
+        // Gerar um hash determinístico para a cotação
+        $hash = md5($paramsKey . date('Y-m-d')); // Hash baseado nos parâmetros + data atual
+        $cacheKey = 'cotacao_' . $hash;
+        
+        // Verificar se já existe uma cotação recente com os mesmos parâmetros
+        $existingCotacao = DB::table('cache')
+            ->where('key', $cacheKey)
+            ->where('expiration', '>', time())
+            ->first();
+            
+        if ($existingCotacao) {
+            // Se já existe uma cotação com os mesmos parâmetros e ainda válida, retorna o hash existente
+            Log::info('Cotação com mesmos parâmetros já existe no cache, reutilizando hash', [
+                'hash' => $hash,
+                'parâmetros' => [
+                    'origem' => $request->origem,
+                    'destino' => $request->destino,
+                    'dimensões' => $request->altura . 'x' . $request->largura . 'x' . $request->comprimento,
+                    'peso' => $request->peso
+                ]
+            ]);
+            
+            return $hash;
+        }
+        
+        // Armazenar dados da cotação no banco de dados
+        $dados = [
+            'origem_cep' => $request->origem,
+            'origem_pais' => 'BR',
+            'destino_cep' => $request->destino,
+            'destino_pais' => 'US',
+            'altura' => $request->altura,
+            'largura' => $request->largura,
+            'comprimento' => $request->comprimento,
+            'peso' => $request->peso
+        ];
+        
+        // Armazenar diretamente na tabela cache
+        $expiration = now()->addDays(7)->timestamp;
+        $userId = \Illuminate\Support\Facades\Auth::check() ? \Illuminate\Support\Facades\Auth::id() : null;
+        $value = serialize([
+            'dados' => $dados,
+            'resultado' => $resultado
+        ]);
+        
+        try {
+            // Verificar novamente se já existe (verificação de concorrência)
+            $exists = DB::table('cache')->where('key', $cacheKey)->exists();
+            
+            if (!$exists) {
+                DB::table('cache')->insert([
+                    'key' => $cacheKey,
+                    'value' => $value,
+                    'expiration' => $expiration,
+                    'user_id' => $userId,
+                    'type' => 'cotacao',
+                    'origem' => $request->origem,
+                    'destino' => $request->destino,
+                    'altura' => $request->altura,
+                    'largura' => $request->largura,
+                    'comprimento' => $request->comprimento,
+                    'peso' => $request->peso,
+                    'created_at' => now()
+                ]);
+                
+                Log::info('Nova cotação salva no cache', [
+                    'hash' => $hash,
+                    'parâmetros' => [
+                        'origem' => $request->origem,
+                        'destino' => $request->destino,
+                        'dimensões' => $request->altura . 'x' . $request->largura . 'x' . $request->comprimento,
+                        'peso' => $request->peso
+                    ]
+                ]);
+            } else {
+                Log::info('Cotação já foi inserida por outra thread, ignorando inserção duplicada', [
+                    'hash' => $hash
+                ]);
+            }
+        } catch (\Exception $e) {
+            // Log o erro mas não interrompa o fluxo
+            Log::error('Erro ao salvar cotação no cache: ' . $e->getMessage());
+        }
+        
+        return $hash;
     }
     
     /**
@@ -995,13 +1122,84 @@ class SectionController extends Controller
             'cep' => 'required|string|max:10',
         ]);
         
-        // Em produção, aqui seria feita a atualização no banco de dados
+        // Verificar se o usuário está autenticado
+        if (!\Illuminate\Support\Facades\Auth::check()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Usuário não autenticado',
+            ], 401);
+        }
         
-        return response()->json([
-            'success' => true,
-            'message' => 'Perfil atualizado com sucesso',
-            'usuario' => $request->all()
-        ]);
+        // Obter o usuário autenticado
+        $user = \Illuminate\Support\Facades\Auth::user();
+        
+        try {
+            // Atualizar apenas os campos que existem na tabela users (name e email)
+            $user->name = $request->nome;
+            $user->email = $request->email;
+            $user->save();
+            
+            // Verificar se o usuário tem um perfil, se não tiver, criar um
+            $userProfile = $user->profile;
+            if (!$userProfile) {
+                $userProfile = new \App\Models\UserProfile();
+                $userProfile->user_id = $user->id;
+            }
+            
+            // Construir endereço completo
+            $endereco = $request->rua;
+            if ($request->numero) {
+                $endereco .= ', ' . $request->numero;
+            }
+            if ($request->complemento) {
+                $endereco .= ' - ' . $request->complemento;
+            }
+            
+            // Como não temos uma coluna específica para CPF,
+            // vamos armazenar temporariamente no campo company_name
+            // Nota: Esta é uma solução temporária até que a estrutura do banco seja atualizada
+            $userProfile->company_name = 'CPF:' . $request->cpf;
+            
+            // Atualizar o perfil com as informações usando os campos existentes na tabela
+            $userProfile->phone = $request->telefone;
+            $userProfile->address = $endereco;
+            $userProfile->city = $request->cidade;
+            $userProfile->state = $request->estado;
+            $userProfile->zip_code = $request->cep;
+            $userProfile->country = 'BR';
+            $userProfile->save();
+            
+            // Formatar dados para retorno
+            $userData = [
+                'nome' => $user->name,
+                'email' => $user->email,
+                'cpf' => $request->cpf,
+                'telefone' => $userProfile->phone,
+                'rua' => $request->rua,
+                'numero' => $request->numero,
+                'complemento' => $request->complemento,
+                'cidade' => $userProfile->city,
+                'estado' => $userProfile->state,
+                'cep' => $userProfile->zip_code,
+                'data_cadastro' => $user->created_at ? $user->created_at->format('d/m/Y') : 'Não informado'
+            ];
+            
+            return response()->json([
+                'success' => true,
+                'message' => 'Perfil atualizado com sucesso',
+                'usuario' => $userData
+            ]);
+            
+        } catch (\Exception $e) {
+            // Registrar o erro no log
+            \Illuminate\Support\Facades\Log::error('Erro ao atualizar perfil: ' . $e->getMessage());
+            
+            return response()->json([
+                'success' => false,
+                'message' => 'Erro ao atualizar o perfil. Por favor, tente novamente.',
+                'error' => $e->getMessage()
+            ], 500);
+        }
     }
 
     public function getSection($section)
@@ -1022,5 +1220,30 @@ class SectionController extends Controller
         
         // Retorna a view da seção solicitada para outras seções
         return view('sections.' . $section);
+    }
+
+    /**
+     * Recupera uma cotação do cache pelo hash.
+     *
+     * @param  string  $hash
+     * @return array|null
+     */
+    public function getCotacaoFromCache($hash)
+    {
+        try {
+            $key = 'cotacao_' . $hash;
+            $cached = DB::table('cache')
+                ->where('key', $key)
+                ->where('expiration', '>', time())
+                ->first();
+                
+            if ($cached) {
+                return unserialize($cached->value);
+            }
+        } catch (\Exception $e) {
+            Log::error('Erro ao recuperar cotação do cache: ' . $e->getMessage());
+        }
+        
+        return null;
     }
 } 

@@ -223,7 +223,7 @@
                 </form>
                 
                 <div class="register-footer">
-                    <p>Já tem uma conta? <a href="{{ route('login.form') }}">Faça login</a></p>
+                    <p>Já tem uma conta? <a href="{{ route('login') }}">Faça login</a></p>
                 </div>
                 
                 <div class="separator">

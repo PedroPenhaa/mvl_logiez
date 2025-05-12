@@ -248,17 +248,40 @@
         }
         
         .alert-danger {
-            background-color: #fff0f3;
-            border-color: #ffccd5;
-            color: #e11d48;
+            background-color: #fdf2f2;
+            border-color: #fecaca;
+            color: #ef4444;
+            padding: 0.75rem 1rem;
             border-radius: var(--border-radius);
-            padding: 1rem;
             margin-bottom: 1.5rem;
+            font-size: 0.95rem;
+            box-shadow: 0 2px 5px rgba(239, 68, 68, 0.1);
+            border-left: 4px solid #ef4444;
+            animation: fadeIn 0.5s ease-out;
         }
         
-        .alert-danger ul {
-            padding-left: 1.5rem;
-            margin-bottom: 0;
+        .alert-success {
+            background-color: #f0fdf4;
+            border-color: #bbf7d0;
+            color: #22c55e;
+            padding: 0.75rem 1rem;
+            border-radius: var(--border-radius);
+            margin-bottom: 1.5rem;
+            font-size: 0.95rem;
+            box-shadow: 0 2px 5px rgba(34, 197, 94, 0.1);
+            border-left: 4px solid #22c55e;
+            animation: fadeIn 0.5s ease-out;
+        }
+        
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
         }
         
         /* Media Queries para Responsividade */
@@ -361,6 +384,29 @@
                     </div>
                 @endif
                 
+                @if (session('login_error'))
+                    <div class="alert alert-danger" role="alert">
+                        <div class="d-flex align-items-center">
+                            <i class="fas fa-exclamation-triangle me-2" style="font-size: 1.2rem;"></i>
+                            <h5 class="mb-0 fw-bold">Erro de autenticação</h5>
+                        </div>
+                        <hr class="my-2">
+                        <p class="mb-0">{{ session('login_error') }}</p>
+                        <p class="mt-1 mb-0 small text-muted">Verifique suas credenciais e tente novamente.</p>
+                    </div>
+                @endif
+                
+                @if (session('success'))
+                    <div class="alert alert-success" role="alert">
+                        <div class="d-flex align-items-center">
+                            <i class="fas fa-check-circle me-2" style="font-size: 1.2rem;"></i>
+                            <h5 class="mb-0 fw-bold">Sucesso!</h5>
+                        </div>
+                        <hr class="my-2">
+                        <p class="mb-0">{{ session('success') }}</p>
+                    </div>
+                @endif
+                
                 <form action="{{ route('login') }}" method="POST">
                     @csrf
                     
@@ -394,8 +440,7 @@
                         </label>
                     </div>
                     
-                    <!-- Botão que redireciona diretamente para o dashboard sem validação -->
-                    <a href="{{ route('dashboard') }}" class="btn btn-primary w-100">Entrar</a>
+                    <button type="submit" class="btn btn-primary w-100">Entrar</button>
                 </form>
                 
                 <div class="separator">

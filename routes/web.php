@@ -24,11 +24,11 @@ use App\Http\Controllers\Auth\SocialAuthController;
 */
 
 // Rotas de autenticação
-Route::get('/login', [LoginController::class, 'showLoginForm'])->name('login');
-Route::post('/login', [LoginController::class, 'login']);
-Route::post('/logout', [LoginController::class, 'logout'])->name('logout');
-Route::get('/register', [HomeController::class, 'register'])->name('register.form');
-Route::post('/register', [HomeController::class, 'storeUser'])->name('register.store');
+Route::get('/login', [AuthController::class, 'showLoginForm'])->name('login');
+Route::post('/login', [AuthController::class, 'login']);
+Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
+Route::get('/register', [AuthController::class, 'showRegisterForm'])->name('register.form');
+Route::post('/register', [AuthController::class, 'register'])->name('register.store');
 
 // Rotas para autenticação social
 Route::get('/auth/{provider}/redirect', [SocialAuthController::class, 'redirect'])->name('social.redirect');
@@ -36,8 +36,8 @@ Route::get('/auth/{provider}/callback', [SocialAuthController::class, 'callback'
 Route::get('/auth/user-data', [SocialAuthController::class, 'showUserData'])->name('social.userData');
 Route::post('/auth/complete-profile', [SocialAuthController::class, 'completeProfile'])->name('social.completeProfile');
 
-// Rotas protegidas por autenticação (temporariamente sem verificação)
-Route::middleware('web')->group(function () {
+// Rotas protegidas por autenticação
+Route::middleware('auth')->group(function () {
     Route::get('/dashboard', function() {
         return view('dashboard', [
             'dashboardContent' => view('sections.dashboard')->render()
@@ -131,14 +131,19 @@ Route::get('/test-fedex-auth', function() {
 })->name('api.fedex.auth');
 
 // Rota para exportar cotação em PDF
-Route::get('/exportar-cotacao-pdf', function (Illuminate\Http\Request $request) {
+Route::get('/exportar-cotacao-pdf', function (Illuminate\Http\Request $request, App\Http\Controllers\SectionController $sectionController) {
     $hash = $request->query('hash');
     
-    if (!$hash || !\Illuminate\Support\Facades\Cache::has('cotacao_' . $hash)) {
+    if (!$hash) {
         return redirect('/cotacao')->with('error', 'Cotação não encontrada ou expirada');
     }
     
-    $cotacaoData = \Illuminate\Support\Facades\Cache::get('cotacao_' . $hash);
+    $cotacaoData = $sectionController->getCotacaoFromCache($hash);
+    
+    if (!$cotacaoData) {
+        return redirect('/cotacao')->with('error', 'Cotação não encontrada ou expirada');
+    }
+    
     $dados = $cotacaoData['dados'];
     $resultado = $cotacaoData['resultado'];
     

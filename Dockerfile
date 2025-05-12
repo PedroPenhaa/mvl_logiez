@@ -12,6 +12,7 @@ RUN apt-get update && apt-get install -y \
     git \
     nginx \
     supervisor \
+    default-mysql-client \
     && docker-php-ext-install pdo pdo_mysql gd
 
 # Instala o Composer
@@ -34,7 +35,12 @@ COPY supervisord.conf /etc/supervisord.conf
 # Criar script de inicialização
 RUN echo '#!/bin/bash\n\
 echo "Aguardando o banco de dados..."\n\
-sleep 10\n\
+while ! mysql -h 127.0.0.1 -u root -padmin123 -e "SELECT 1;" >/dev/null 2>&1; do\n\
+  echo "Banco de dados ainda não está pronto..."\n\
+  sleep 2\n\
+done\n\
+echo "Banco de dados está pronto!"\n\
+composer install --no-interaction --prefer-dist --optimize-autoloader\n\
 php artisan cache:clear\n\
 php artisan config:clear\n\
 php artisan route:clear\n\
