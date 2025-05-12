@@ -261,10 +261,13 @@
                 <span class="menu-text">Meu Perfil</span>
             </div>
             
-            <a href="{{ route('logout') }}" class="menu-item">
-                <i class="fas fa-sign-out-alt"></i>
-                <span class="menu-text">Sair</span>
-            </a>
+            <form action="{{ route('logout') }}" method="POST" style="margin:0;padding:0;">
+                @csrf
+                <button type="submit" class="menu-item" style="background:none;border:none;width:100%;text-align:left;color:inherit;">
+                    <i class="fas fa-sign-out-alt"></i>
+                    <span class="menu-text">Sair</span>
+                </button>
+            </form>
         </nav>
     </div>
     
