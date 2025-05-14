@@ -38,7 +38,32 @@ class SectionController extends Controller
     
     public function pagamento()
     {
-        return view('sections.pagamento');
+        // Verificar se o usuário está autenticado
+        if (!\Illuminate\Support\Facades\Auth::check()) {
+            return view('sections.pagamento', [
+                'pendingPayments' => collect([]),
+                'completedPayments' => collect([]),
+                'cancelledPayments' => collect([])
+            ]);
+        }
+
+        // Usar o mesmo código do PaymentController index, mas só renderizar a view
+        $pendingPayments = \App\Models\Payment::where('user_id', \Illuminate\Support\Facades\Auth::id())
+            ->where('status', 'pending')
+            ->orderBy('created_at', 'desc')
+            ->get();
+            
+        $completedPayments = \App\Models\Payment::where('user_id', \Illuminate\Support\Facades\Auth::id())
+            ->where('status', 'completed')
+            ->orderBy('created_at', 'desc')
+            ->get();
+            
+        $cancelledPayments = \App\Models\Payment::where('user_id', \Illuminate\Support\Facades\Auth::id())
+            ->where('status', 'cancelled')
+            ->orderBy('created_at', 'desc')
+            ->get();
+
+        return view('sections.pagamento', compact('pendingPayments', 'completedPayments', 'cancelledPayments'));
     }
     
     public function etiqueta(Request $request)
@@ -922,39 +947,8 @@ class SectionController extends Controller
      */
     public function processarPagamento(Request $request)
     {
-        // Validação depende do método de pagamento
-        $request->validate([
-            'metodo' => 'required|in:cartao,boleto,pix',
-            'valorTotal' => 'required|numeric',
-            'codigoEnvio' => 'required|string',
-        ]);
-        
-        // Validação específica para cartão de crédito
-        if ($request->metodo === 'cartao') {
-            $request->validate([
-                'cartao_numero' => 'required|string',
-                'cartao_nome' => 'required|string',
-                'cartao_validade' => 'required|string',
-                'cartao_cvv' => 'required|string',
-                'cartao_parcelas' => 'required|integer|min:1|max:12',
-            ]);
-        }
-        
-        // Simulação de processamento de pagamento
-        // Em produção, aqui seria feita a integração com gateway de pagamento
-        
-        // Gerar código de transação
-        $codigoTransacao = 'TRX' . rand(10000000, 99999999);
-        
-        return response()->json([
-            'success' => true,
-            'codigoTransacao' => $codigoTransacao,
-            'codigoEnvio' => $request->codigoEnvio,
-            'valorPago' => $request->valorTotal,
-            'metodoPagamento' => $request->metodo,
-            'message' => 'Pagamento processado com sucesso.',
-            'nextStep' => 'etiqueta'
-        ]);
+        // Redirecionar para o novo controlador de pagamentos
+        return app()->make(\App\Http\Controllers\PaymentController::class)->process($request);
     }
     
     /**

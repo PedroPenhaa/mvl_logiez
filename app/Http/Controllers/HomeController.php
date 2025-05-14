@@ -4,6 +4,9 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use App\Models\Shipment;
+use App\Models\Payment;
+use App\Models\User;
 
 class HomeController extends Controller
 {
@@ -181,5 +184,43 @@ class HomeController extends Controller
         session(['authenticated' => true]);
 
         return redirect()->route('dashboard')->with('success', 'Conta criada com sucesso!');
+    }
+
+    /**
+     * Exibe o dashboard do usuário com resumo de serviços.
+     *
+     * @return \Illuminate\Contracts\View\View
+     */
+    public function dashboard()
+    {
+        // Verificar se o usuário está autenticado
+        if (!Auth::check()) {
+            return redirect()->route('login');
+        }
+        
+        // Obter últimos 5 envios do usuário
+        $shipments = \App\Models\Shipment::where('user_id', Auth::id())
+            ->orderBy('created_at', 'desc')
+            ->take(5)
+            ->get();
+        
+        // Obter últimos 3 pagamentos pendentes
+        $pendingPayments = \App\Models\Payment::where('user_id', Auth::id())
+            ->where('status', 'pending')
+            ->orderBy('created_at', 'desc')
+            ->take(3)
+            ->get();
+        
+        // Obter últimos 3 pagamentos concluídos
+        $completedPayments = \App\Models\Payment::where('user_id', Auth::id())
+            ->where('status', 'completed')
+            ->orderBy('created_at', 'desc')
+            ->take(3)
+            ->get();
+        
+        // Retornar a view com os dados
+        return view('dashboard', [
+            'dashboardContent' => view('sections.dashboard_resumo', compact('shipments', 'pendingPayments', 'completedPayments'))->render()
+        ]);
     }
 } 

@@ -655,6 +655,7 @@ class EnvioController extends Controller
 
             // Salvar o pagamento no banco de dados
             $payment = new \App\Models\Payment();
+            $payment->user_id = Auth::id(); // Garantir que o pagamento esteja vinculado ao usuário logado
             $payment->shipment_id = $shipment->id;
             $payment->payment_method = $paymentMethod;
             $payment->amount = $paymentValue;
@@ -663,6 +664,13 @@ class EnvioController extends Controller
             $payment->barcode = $paymentInfoForSession['barCode'] ?? null;
             $payment->qrcode = $paymentInfoForSession['qrCode'] ?? null;
             $payment->status = $responseData['status'] ?? 'PENDING';
+            $payment->payer_name = Auth::user()->name ?? $customerName;
+            $payment->payer_email = Auth::user()->email ?? $customerEmail;
+            $payment->payer_document = $cpfLimpo;
+            $payment->currency = 'BRL';
+            $payment->payment_gateway = 'asaas';
+            $payment->due_date = now()->addDays(3);
+            $payment->gateway_response = json_encode($responseData);
             $payment->save();
 
             // Retornar os dados do pagamento

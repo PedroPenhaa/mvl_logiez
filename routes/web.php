@@ -14,6 +14,7 @@ use App\Http\Controllers\Auth\SocialAuthController;
 use App\Http\Controllers\EnvioController;
 use App\Http\Controllers\WebhookController;
 use Illuminate\Support\Facades\Log;
+use App\Http\Controllers\PaymentController;
 
 /*
 |--------------------------------------------------------------------------
@@ -39,13 +40,21 @@ Route::get('/auth/{provider}/callback', [SocialAuthController::class, 'callback'
 Route::get('/auth/user-data', [SocialAuthController::class, 'showUserData'])->name('social.userData');
 Route::post('/auth/complete-profile', [SocialAuthController::class, 'completeProfile'])->name('social.completeProfile');
 
+// Rotas para pagamentos - Protegidas por autenticação
+Route::middleware('auth')->group(function () {
+    Route::get('/pagamentos', [PaymentController::class, 'index'])->name('payments.index');
+    // Rotas específicas primeiro
+    Route::get('/pagamentos/pix/{transactionId}', [PaymentController::class, 'showPix'])->name('payments.pix');
+    Route::get('/pagamentos/boleto/{transactionId}', [PaymentController::class, 'showBoleto'])->name('payments.boleto');
+    Route::get('/pagamentos/simular-callback/{transactionId}', [PaymentController::class, 'simulateCallback'])->name('payments.simulate.callback');
+    // Rota genérica por último
+    Route::get('/pagamentos/{id}', [PaymentController::class, 'show'])->name('payments.show');
+    Route::post('/pagamentos/processar', [PaymentController::class, 'process'])->name('payments.process');
+});
+
 // Rotas protegidas por autenticação
 Route::middleware('auth')->group(function () {
-    Route::get('/dashboard', function() {
-        return view('dashboard', [
-            'dashboardContent' => view('sections.dashboard')->render()
-        ]);
-    })->name('dashboard');
+    Route::get('/dashboard', [App\Http\Controllers\HomeController::class, 'dashboard'])->name('dashboard');
 });
 
 // Rota padrão - redireciona para a página welcome
