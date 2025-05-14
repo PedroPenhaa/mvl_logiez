@@ -836,7 +836,7 @@
                 const ncm = produtoSelecionado.codigo || produtoSelecionado.id;
                 const descricao = produtoSelecionado.text.split(' (NCM:')[0]; // Extrair apenas a descrição
                 
-                // Atualizar também o campo de NCM para mostrar o código do produto selecionado
+                // Atualizar o campo NCM para mostrar o código do produto selecionado
                 $('#busca-codigo').val(ncm);
                 
                 // Mostrar uma mensagem informativa sobre o produto selecionado
@@ -847,26 +847,59 @@
                 $('#produto-valor').val(valorSugerido.toFixed(2));
                 $('#produto-valor').select(); // Seleciona o texto para fácil edição
                 
-                // Buscar e preencher a unidade com base no NCM
-                console.log("Buscando unidade para o NCM:", ncm);
-                const ncmFormatado = formatarNCMParaBusca(ncm);
-                console.log("NCM formatado para busca de unidade:", ncmFormatado);
+                // Se já temos uma unidade no campo, não sobrescrever
+                const unidadeAtual = $('#produto-unidade').val();
                 
-                buscarUnidadeTributaria(ncm)
-                    .done(function(response) {
-                        console.log("Resposta da busca de unidade:", response);
-                        if (response.success && response.unidade) {
-                            $('#produto-unidade').val(response.unidade);
-                            console.log("Unidade tributária encontrada:", response.unidade);
-                        } else {
-                            console.warn("Unidade não encontrada para o NCM:", ncm);
-                            $('#produto-unidade').val('');
-                        }
-                    })
-                    .fail(function(error) {
-                        console.error("Erro ao buscar unidade tributária:", error);
-                        $('#produto-unidade').val('');
-                    });
+                if (!unidadeAtual) {
+                    console.log("Unidade não preenchida. Buscando unidade para o NCM:", ncm);
+                    
+                    // Buscar a unidade tributária com base no NCM extraído
+                    const ncmFormatado = formatarNCMParaBusca(ncm);
+                    console.log("NCM formatado para busca de unidade:", ncmFormatado);
+                    
+                    buscarUnidadeTributaria(ncm)
+                        .done(function(response) {
+                            console.log("Resposta da busca de unidade:", response);
+                            if (response.success && response.unidade) {
+                                // Validar que a unidade é UN ou KG, caso contrário, usar UN como padrão
+                                const unidadeNormalizada = (response.unidade === 'KG' || response.unidade === 'UN') 
+                                    ? response.unidade 
+                                    : 'UN';
+                                
+                                $('#produto-unidade').val(unidadeNormalizada);
+                                console.log("Unidade tributária encontrada e normalizada:", unidadeNormalizada);
+                            } else {
+                                console.warn("Unidade não encontrada para o NCM:", ncm);
+                                // Verificar se o nome do produto tem relação com produtos que geralmente são KG
+                                const textoLowerCase = descricao.toLowerCase();
+                                const produtosEmKG = [
+                                    'café', 'cafe', 'açúcar', 'acucar', 'arroz', 'feijão', 'feijao', 'farinha',
+                                    'grão', 'grao', 'grãos', 'graos', 'semente', 'sementes', 'cereal', 'cereais',
+                                    'frutas', 'fruta', 'legume', 'legumes', 'verdura', 'verduras', 'carne',
+                                    'pó', 'po', 'chá', 'cha', 'erva', 'tempero', 'especiaria', 'chocolate',
+                                    'cacau', 'sal', 'açúcar', 'granel', 'peso', 'quilograma', 'quilo'
+                                ];
+                                
+                                let ehKG = false;
+                                for (const produto of produtosEmKG) {
+                                    if (textoLowerCase.includes(produto)) {
+                                        ehKG = true;
+                                        break;
+                                    }
+                                }
+                                
+                                // Definir a unidade com base na detecção
+                                $('#produto-unidade').val(ehKG ? 'KG' : 'UN');
+                                console.log(`Unidade inferida pelo nome do produto: ${ehKG ? 'KG' : 'UN'}`);
+                            }
+                        })
+                        .fail(function(error) {
+                            console.error("Erro ao buscar unidade tributária:", error);
+                            $('#produto-unidade').val('UN'); // Valor padrão em caso de erro
+                        });
+                } else {
+                    console.log("Mantendo unidade já preenchida:", unidadeAtual);
+                }
             });
             
             inicializandoSelect2 = false;
@@ -895,7 +928,7 @@
             
             // Se tiver uma descrição de produto e não tiver um NCM, consultar o Gemini
             if (buscaDescricao && !buscaNCM) {
-                $('#select-status').text('Consultando IA para identificar NCM...');
+                $('#select-status').text('Consultando IA para identificar NCM e unidade...');
                 
                 // Mostrar indicador de carregamento
                 $('#busca-descricao').addClass('loading');
@@ -918,37 +951,21 @@
                         if (response.success) {
                             console.log("Consulta bem-sucedida. Resposta do Gemini:", response.resultado);
                         
-                            // Extrair o NCM da resposta
+                            // Extrair o NCM e a unidade da resposta
                             const ncmExtraido = extrairNCM(response.resultado);
+                            const unidadeExtraida = extrairUnidade(response.resultado);
                             
                             // Armazenar a descrição completa do Gemini
                             ultimaDescricaoGemini = response.resultado;
                             
                             if (ncmExtraido) {
                                 console.log("NCM extraído:", ncmExtraido);
-                                $('#select-status').text('NCM identificado: ' + ncmExtraido + '. Buscando produtos...');
+                                console.log("Unidade extraída:", unidadeExtraida);
+                                $('#select-status').text('NCM identificado: ' + ncmExtraido + '. Unidade: ' + unidadeExtraida + '. Buscando produtos...');
                                 
-                                // Atualizar apenas o campo NCM, mantendo a descrição do produto
+                                // Atualizar o campo NCM e unidade
                                 $('#busca-codigo').val(ncmExtraido);
-                                
-                                // Buscar a unidade tributária com base no NCM extraído
-                                const ncmFormatado = formatarNCMParaBusca(ncmExtraido);
-                                console.log("NCM formatado para busca de unidade:", ncmFormatado);
-                                buscarUnidadeTributaria(ncmExtraido)
-                                    .done(function(response) {
-                                        console.log("Resposta da busca de unidade:", response);
-                                        if (response.success && response.unidade) {
-                                            $('#produto-unidade').val(response.unidade);
-                                            console.log("Unidade tributária encontrada:", response.unidade);
-                                        } else {
-                                            console.warn("Unidade não encontrada para o NCM:", ncmExtraido);
-                                            $('#produto-unidade').val('');
-                                        }
-                                    })
-                                    .fail(function(error) {
-                                        console.error("Erro ao buscar unidade tributária:", error);
-                                        $('#produto-unidade').val('');
-                                    });
+                                $('#produto-unidade').val(unidadeExtraida);
                                 
                                 // Buscar produtos pelo NCM extraído
                                 buscarProdutos({ codigo: ncmExtraido, descricao: buscaDescricao });
@@ -1040,6 +1057,85 @@
             }
             
             return ncm; // Retorna como está se não conseguir formatar
+        }
+        
+        // Nova função para extrair a unidade da resposta do Gemini
+        function extrairUnidade(texto) {
+            console.log("Extraindo unidade do texto:", texto);
+            
+            // Lista de produtos comumente vendidos em KG
+            const produtosEmKG = [
+                'café', 'cafe', 'açúcar', 'acucar', 'arroz', 'feijão', 'feijao', 'farinha',
+                'grão', 'grao', 'grãos', 'graos', 'semente', 'sementes', 'cereal', 'cereais',
+                'frutas', 'fruta', 'legume', 'legumes', 'verdura', 'verduras', 'carne',
+                'pó', 'po', 'chá', 'cha', 'erva', 'tempero', 'especiaria', 'chocolate',
+                'cacau', 'sal', 'açúcar', 'granel', 'peso', 'quilograma', 'quilo',
+                'soja', 'milho', 'trigo', 'aveia', 'cevada', 'centeio'
+            ];
+            
+            // Verificar se o texto menciona explicitamente algum produto que é vendido por KG
+            const textoLowerCase = texto.toLowerCase();
+            for (const produto of produtosEmKG) {
+                if (textoLowerCase.includes(produto)) {
+                    console.log(`Produto "${produto}" encontrado no texto, atribuindo unidade KG`);
+                    return "KG";
+                }
+            }
+            
+            // Padrões para encontrar a unidade na resposta (UN ou KG)
+            const padroes = [
+                /unidade[:\s]*(?:é|e|do produto)?[:\s]*([UNKGunkg]{2})/i, // "unidade é: UN" ou "unidade: KG"
+                /unidade[:\s]*(?:de|de medida|tributária)?[:\s]*([UNKGunkg]{2})/i, // "unidade de medida: UN"
+                /produto[^.]*?medido em\s+([UNKGunkg]{2})/i, // "produto é medido em KG"
+                /vendido\s+(?:em|por)\s+([UNKGunkg]{2})/i, // "vendido em UN" ou "vendido por KG"
+                /([UNKGunkg]{2})\s+[-–]\s+[UNKGunkg]/i, // "UN - Unidade" ou "KG - Quilograma"
+                /comercializado\s+(?:em|por)\s+([UNKGunkg]{2})/i, // "comercializado em KG"
+                /(?:peso|massa)[^.]*?(?:em|por)\s+([UNKGunkg]{2})/i, // "peso em KG"
+            ];
+            
+            for (const padrao of padroes) {
+                const match = texto.match(padrao);
+                if (match && match[1]) {
+                    const unidade = match[1].toUpperCase();
+                    console.log("Unidade encontrada com padrão:", padrao.toString(), unidade);
+                    return unidade === "UN" || unidade === "KG" ? unidade : "UN"; // Padrão para UN se não for KG
+                }
+            }
+            
+            // Se não encontrou nenhum padrão específico, verificar menções gerais
+            if (textoLowerCase.includes('quilograma') || 
+                textoLowerCase.includes('quilo') || 
+                textoLowerCase.includes('kg') || 
+                textoLowerCase.includes('kilo') || 
+                textoLowerCase.includes('kilogramas') ||
+                textoLowerCase.includes('quilos') ||
+                textoLowerCase.includes('peso') || 
+                textoLowerCase.includes('pesado') ||
+                textoLowerCase.includes('pesar') ||
+                textoLowerCase.includes('gramas') ||
+                textoLowerCase.includes('granel') ||
+                textoLowerCase.includes('a peso')) {
+                console.log("Unidade KG inferida pelo contexto");
+                return "KG";
+            }
+            
+            // Verificar se há menções a unidades ou contagem
+            if (textoLowerCase.includes('unidade') || 
+                textoLowerCase.includes('unidades') || 
+                textoLowerCase.includes('peça') || 
+                textoLowerCase.includes('peças') ||
+                textoLowerCase.includes('unitário') ||
+                textoLowerCase.includes('por peça') ||
+                textoLowerCase.includes('por unidade') ||
+                textoLowerCase.includes('cada um') ||
+                textoLowerCase.includes('individuais')) {
+                console.log("Unidade UN inferida pelo contexto");
+                return "UN";
+            }
+            
+            // Se não encontrou nenhuma menção a peso, assume que é unidade
+            console.log("Unidade padrão UN assumida");
+            return "UN";
         }
         
         // Função para formatar o NCM para busca no arquivo Unidade_trib.csv
@@ -1146,6 +1242,12 @@
                         // Mostrar quantos produtos foram encontrados e o NCM identificado
                         if (searchParams.codigo) {
                             $('#select-status').html('<strong>' + data.produtos.length + ' produtos encontrados</strong> com NCM: ' + searchParams.codigo);
+                            
+                            // Selecionar automaticamente o primeiro produto da lista se houver apenas um
+                            if (data.produtos.length === 1) {
+                                $('#produto-select').val(data.produtos[0].codigo).trigger('change');
+                                console.log("Produto único selecionado automaticamente:", data.produtos[0]);
+                            }
                         } else {
                             $('#select-status').text(data.produtos.length + ' produtos encontrados');
                         }
@@ -1255,7 +1357,7 @@
                                 $(option).data('valor', 10); // Valor padrão
                                 
                                 $('#produto-select').append(option);
-                                $('#produto-select').trigger('change');
+                                $('#produto-select').val(searchParams.codigo).trigger('change');
                                 
                                 // Mostrar mensagem informativa
                                 $('#select-status').html('<strong>Produto criado com descrição do Gemini</strong> - NCM: ' + searchParams.codigo);
@@ -1283,11 +1385,12 @@
         $('#busca-descricao, #busca-codigo').on('input', function() {
             clearTimeout(timer);
             
-            // Se o campo de busca por descrição estiver vazio, limpar os resultados
+            // Se o campo de busca por descrição estiver vazio, limpar os resultados e o campo NCM
             if ($('#busca-descricao').val() === '') {
-                console.log("Campo de busca vazio, limpando resultados");
+                console.log("Campo de busca vazio, limpando resultados e NCM");
                 $('#busca-codigo').val(''); // Limpar também o campo de NCM
                 $('#select-status').text('Digite um produto para buscar');
+                $('#produto-unidade').val(''); // Limpar também a unidade
                 
                 // Limpar a lista de produtos no select
                 const defaultOption = $('#produto-select option[value=""]').clone();
@@ -1309,18 +1412,16 @@
         
         // Evento do botão de limpar busca
         $('#limpar-busca').on('click', function() {
-            console.log("Limpando campo de busca");
+            console.log("Limpando campo de busca e NCM");
             
             // Limpar os campos de entrada
             $('#busca-descricao').val('').focus();
-            $('#busca-codigo').val('');
+            $('#busca-codigo').val(''); // Limpar o campo de NCM
+            $('#produto-unidade').val(''); // Limpar também a unidade
             $('#select-status').text('Digite um produto para buscar');
             
             // Limpar a descrição do Gemini
             ultimaDescricaoGemini = '';
-            
-            // Limpar o campo de unidade
-            $('#produto-unidade').val('');
             
             // Destruir instância anterior de Select2
             if ($('#produto-select').hasClass('select2-hidden-accessible')) {
@@ -1340,9 +1441,6 @@
             // Também limpar os valores dos campos relacionados
             $('#produto-valor').val('0.00');
             $('#produto-quantidade').val('1');
-            
-            // Buscar os 100 produtos iniciais
-            buscarProdutos({});
         });
         
         // Evento do botão de recarregar produtos
@@ -1499,7 +1597,8 @@
                 
                 const quantidade = parseInt($('#produto-quantidade').val());
                 
-                const produto = {
+                // Armazenar o produto em uma variável global para uso após a confirmação
+                produtoEmConfirmacao = {
                     id: id,
                     codigo: codigo,
                     nome: nome,
@@ -1509,35 +1608,89 @@
                     unidade: unidade
                 };
                 
-                console.log("Produto a ser adicionado:", produto);
+                console.log("Produto a ser confirmado:", produtoEmConfirmacao);
                 
-                // Verificar se o produto já existe
-                const existingIndex = produtos.findIndex(p => p.id === id);
+                // Preencher as informações no modal
+                $('#modal-produto-nome').text(nome.split(' (NCM:')[0]); // Remover a parte do NCM do nome
+                $('#modal-produto-ncm').text(codigo);
+                $('#modal-produto-valor').text('R$ ' + valorInformado.toFixed(2));
+                $('#modal-produto-unidade').text(unidade || 'Não especificada');
+                $('#modal-produto-quantidade').text(quantidade);
+                $('#modal-produto-total').text('R$ ' + (valorInformado * quantidade).toFixed(2));
                 
-                if (existingIndex !== -1) {
-                    // Se existir, atualiza a quantidade
-                    produtos[existingIndex].quantidade += quantidade;
-                    console.log("Atualizada quantidade do produto existente:", produtos[existingIndex]);
-                } else {
-                    // Se não existir, adiciona
-                    produtos.push(produto);
-                    console.log("Novo produto adicionado:", produto);
-                }
-                
-                // Limpar a seleção e resetar a quantidade
-                $('#produto-select').val(null).trigger('change');
-                $('#produto-quantidade').val(1);
-                $('#produto-valor').val(0.00);
-                $('#produto-unidade').val('');
-                
-                // Renderizar produtos e atualizar resumo
-                renderizarProdutos();
-                atualizarResumo();
+                // Exibir o modal
+                const modal = new bootstrap.Modal(document.getElementById('confirmarProdutoModal'));
+                modal.show();
             } else {
                 // Se não houver produto selecionado
                 alert('Por favor, selecione um produto antes de adicionar.');
             }
         });
+        
+        // Evento para confirmar a adição do produto
+        $('#confirmarProdutoBtn').on('click', function() {
+            if (produtoEmConfirmacao) {
+                // Verificar se o produto já existe
+                const existingIndex = produtos.findIndex(p => p.id === produtoEmConfirmacao.id);
+                
+                if (existingIndex !== -1) {
+                    // Se existir, atualiza a quantidade
+                    produtos[existingIndex].quantidade += produtoEmConfirmacao.quantidade;
+                    console.log("Atualizada quantidade do produto existente:", produtos[existingIndex]);
+                } else {
+                    // Se não existir, adiciona
+                    produtos.push(produtoEmConfirmacao);
+                    console.log("Novo produto adicionado:", produtoEmConfirmacao);
+                }
+                
+                // Limpar completamente todos os campos de produto
+                limparCamposProduto();
+                
+                // Renderizar produtos e atualizar resumo
+                renderizarProdutos();
+                atualizarResumo();
+                
+                // Fechar o modal
+                bootstrap.Modal.getInstance(document.getElementById('confirmarProdutoModal')).hide();
+                
+                // Limpar o produto em confirmação
+                produtoEmConfirmacao = null;
+            }
+        });
+        
+        // Evento para editar o produto
+        $('#editarProdutoBtn').on('click', function() {
+            // Apenas fechar o modal para edição
+            bootstrap.Modal.getInstance(document.getElementById('confirmarProdutoModal')).hide();
+            // Os dados permanecem nos campos para edição
+        });
+        
+        // Evento para cancelar a adição do produto
+        $('#cancelarProdutoBtn').on('click', function() {
+            // Limpar todos os campos de produto
+            limparCamposProduto();
+            
+            // Limpar o produto em confirmação
+            produtoEmConfirmacao = null;
+        });
+        
+        // Função para limpar completamente todos os campos de produto
+        function limparCamposProduto() {
+            // Limpar a seleção do produto
+            $('#produto-select').val(null).trigger('change');
+            
+            // Limpar busca por descrição e código
+            $('#busca-descricao').val('');
+            $('#busca-codigo').val(''); // Garantir que o NCM seja limpo
+            
+            // Limpar campos de quantidade, valor e unidade
+            $('#produto-quantidade').val(1);
+            $('#produto-valor').val(0.00);
+            $('#produto-unidade').val('');
+            
+            // Limpar mensagem de status
+            $('#select-status').text('Digite um produto para buscar');
+        }
         
         // Renderizar as caixas adicionadas
         function renderizarCaixas() {
@@ -2817,3 +2970,62 @@ if (appEnvironment === "local" || isUserAdmin) {
     document.getElementById('debug-logs-section').classList.remove('hidden');
 }
 </script>
+
+<!-- Modal de Confirmação de Produto -->
+<div class="modal fade" id="confirmarProdutoModal" tabindex="-1" aria-labelledby="confirmarProdutoModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title" id="confirmarProdutoModalLabel"><i class="fas fa-check-circle me-2"></i>Confirmar Adição de Produto</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Fechar"></button>
+            </div>
+            <div class="modal-body">
+                <div class="alert alert-info mb-3">
+                    <i class="fas fa-info-circle me-2"></i> Verifique as informações abaixo antes de confirmar a adição do produto.
+                </div>
+                <div class="table-responsive">
+                    <table class="table table-bordered table-hover">
+                        <tbody>
+                            <tr class="bg-light">
+                                <th width="30%" class="align-middle"><i class="fas fa-box me-2"></i>Produto:</th>
+                                <td id="modal-produto-nome" class="fw-bold"></td>
+                            </tr>
+                            <tr>
+                                <th class="align-middle"><i class="fas fa-barcode me-2"></i>NCM:</th>
+                                <td id="modal-produto-ncm"></td>
+                            </tr>
+                            <tr>
+                                <th class="align-middle"><i class="fas fa-dollar-sign me-2"></i>Valor:</th>
+                                <td id="modal-produto-valor" class="text-success fw-bold"></td>
+                            </tr>
+                            <tr>
+                                <th class="align-middle"><i class="fas fa-balance-scale me-2"></i>Unidade:</th>
+                                <td id="modal-produto-unidade"></td>
+                            </tr>
+                            <tr>
+                                <th class="align-middle"><i class="fas fa-sort-amount-up me-2"></i>Quantidade:</th>
+                                <td id="modal-produto-quantidade"></td>
+                            </tr>
+                            <tr class="bg-light">
+                                <th class="align-middle"><i class="fas fa-calculator me-2"></i>Total:</th>
+                                <td id="modal-produto-total" class="text-success fw-bold"></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal" id="cancelarProdutoBtn">
+                    <i class="fas fa-times me-2"></i>Cancelar
+                </button>
+                <button type="button" class="btn btn-outline-primary" id="editarProdutoBtn">
+                    <i class="fas fa-edit me-2"></i>Editar
+                </button>
+                <button type="button" class="btn btn-success" id="confirmarProdutoBtn">
+                    <i class="fas fa-check me-2"></i>Confirmar
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
