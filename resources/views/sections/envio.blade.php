@@ -352,6 +352,140 @@
                 </div>
             </div>
 
+            <!-- 5. Métodos de Pagamento (Nova Seção) -->
+            <div class="row mb-4" id="pagamento-section" style="display: none;">
+                <div class="col-12">
+                    <div class="card border-light">
+                        <div class="card-header bg-light">
+                            <h5 class="mb-0"><i class="fas fa-credit-card me-2"></i> Método de Pagamento</h5>
+                        </div>
+                        <div class="card-body">
+                            <input type="hidden" name="payment_method" id="payment_method">
+                            <input type="hidden" name="payment_currency" id="payment_currency" value="BRL">
+                            <input type="hidden" name="payment_amount" id="payment_amount">
+                            
+                            <div class="row">
+                                <div class="col-md-4 mb-3">
+                                    <div class="card h-100 payment-method-card" data-method="boleto">
+                                        <div class="card-body text-center">
+                                            <i class="fas fa-barcode fa-3x text-primary mb-3"></i>
+                                            <h5 class="card-title">Boleto Bancário</h5>
+                                            <p class="card-text">Pague em qualquer banco ou casa lotérica até a data de vencimento.</p>
+                                            <p class="text-muted small">Prazo de compensação: 1-3 dias úteis</p>
+                                        </div>
+                                        <div class="card-footer bg-transparent border-top-0 text-center">
+                                            <button type="button" class="btn btn-outline-primary select-payment-method" data-method="boleto">Selecionar</button>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="col-md-4 mb-3">
+                                    <div class="card h-100 payment-method-card" data-method="pix">
+                                        <div class="card-body text-center">
+                                            <i class="fas fa-qrcode fa-3x text-primary mb-3"></i>
+                                            <h5 class="card-title">Pix</h5>
+                                            <p class="card-text">Pagamento instantâneo usando QR Code ou chave Pix.</p>
+                                            <p class="text-muted small">Confirmação imediata</p>
+                                        </div>
+                                        <div class="card-footer bg-transparent border-top-0 text-center">
+                                            <button type="button" class="btn btn-outline-primary select-payment-method" data-method="pix">Selecionar</button>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="col-md-4 mb-3">
+                                    <div class="card h-100 payment-method-card" data-method="credit_card">
+                                        <div class="card-body text-center">
+                                            <i class="fas fa-credit-card fa-3x text-primary mb-3"></i>
+                                            <h5 class="card-title">Cartão de Crédito</h5>
+                                            <p class="card-text">Pagamento seguro com seu cartão de crédito.</p>
+                                            <p class="text-muted small">Confirmação em poucos segundos</p>
+                                        </div>
+                                        <div class="card-footer bg-transparent border-top-0 text-center">
+                                            <button type="button" class="btn btn-outline-primary select-payment-method" data-method="credit_card">Selecionar</button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Área para formulário de cartão de crédito (aparece apenas quando cartão for selecionado) -->
+                            <div id="credit-card-form" class="mt-4" style="display: none;">
+                                <h4 class="mb-3">Dados do Cartão</h4>
+                                <div class="row">
+                                    <div class="col-md-6 mb-3">
+                                        <label for="card_name" class="form-label">Nome no Cartão</label>
+                                        <input type="text" class="form-control" id="card_name" name="card_name" placeholder="Nome como aparece no cartão">
+                                    </div>
+                                    <div class="col-md-6 mb-3">
+                                        <label for="card_number" class="form-label">Número do Cartão</label>
+                                        <input type="text" class="form-control" id="card_number" name="card_number" placeholder="1234 5678 9012 3456">
+                                    </div>
+                                </div>
+                                <div class="row">
+                                    <div class="col-md-4 mb-3">
+                                        <label for="card_expiry_month" class="form-label">Mês de Validade</label>
+                                        <select class="form-select" id="card_expiry_month" name="card_expiry_month">
+                                            <option value="">Mês</option>
+                                            @for ($i = 1; $i <= 12; $i++)
+                                                <option value="{{ sprintf('%02d', $i) }}">{{ sprintf('%02d', $i) }}</option>
+                                            @endfor
+                                        </select>
+                                    </div>
+                                    <div class="col-md-4 mb-3">
+                                        <label for="card_expiry_year" class="form-label">Ano de Validade</label>
+                                        <select class="form-select" id="card_expiry_year" name="card_expiry_year">
+                                            <option value="">Ano</option>
+                                            @for ($i = date('Y'); $i <= date('Y') + 10; $i++)
+                                                <option value="{{ $i }}">{{ $i }}</option>
+                                            @endfor
+                                        </select>
+                                    </div>
+                                    <div class="col-md-4 mb-3">
+                                        <label for="card_cvv" class="form-label">CVV</label>
+                                        <input type="text" class="form-control" id="card_cvv" name="card_cvv" placeholder="123">
+                                    </div>
+                                </div>
+                                <div class="row">
+                                    <div class="col-md-6 mb-3">
+                                        <label for="card_cpf" class="form-label">CPF do Titular</label>
+                                        <input type="text" class="form-control" id="card_cpf" name="card_cpf" placeholder="123.456.789-00">
+                                    </div>
+                                    <div class="col-md-6 mb-3">
+                                        <label for="installments" class="form-label">Parcelas</label>
+                                        <select class="form-select" id="installments" name="installments">
+                                            <option value="1">À vista</option>
+                                            <option value="2">2x sem juros</option>
+                                            <option value="3">3x sem juros</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Área para resumo do pagamento -->
+                            <div id="payment-summary" class="mt-4 p-3 bg-light rounded" style="display: none;">
+                                <h4 class="mb-3">Resumo do Pagamento</h4>
+                                <div class="d-flex justify-content-between">
+                                    <span>Serviço de Envio:</span>
+                                    <span id="payment-service-name">-</span>
+                                </div>
+                                <div class="d-flex justify-content-between">
+                                    <span>Valor do Envio:</span>
+                                    <span id="payment-service-value">-</span>
+                                </div>
+                                <div class="d-flex justify-content-between">
+                                    <span>Método de Pagamento:</span>
+                                    <span id="payment-method-name">-</span>
+                                </div>
+                                <div class="d-flex justify-content-between mt-2">
+                                    <strong>Total a Pagar:</strong>
+                                    <strong id="payment-total-value">-</strong>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
             <div class="text-center mt-4">
                 <button type="button" class="btn btn-primary btn-lg" id="consultar-servicos">
                     <i class="fas fa-search me-2"></i> Consultar Serviços
@@ -1978,16 +2112,26 @@
             html += '<thead><tr>';
             html += '<th>Serviço</th>';
             html += '<th>Tempo de Entrega</th>';
-            html += '<th>Valor</th>';
+            html += '<th>Valor (USD)</th>';
+            html += '<th>Valor (BRL)</th>';
             html += '<th>Selecionar</th>';
             html += '</tr></thead><tbody>';
             
             servicos.forEach(function(servico) {
+                // Processar o valor em BRL
+                const valorBRL = servico.valorTotalBRL || 'N/A';
+                
                 html += '<tr>';
                 html += '<td>' + servico.servico + '</td>';
                 html += '<td>' + (servico.tempoEntrega || 'Consultar') + '</td>';
-                html += '<td class="fw-bold">' + servico.valorTotal + ' ' + servico.moeda + '</td>';
-                html += '<td><button type="button" class="btn btn-sm btn-primary selecionar-servico" data-servico="' + servico.servicoTipo + '" data-nome="' + servico.servico + '">Selecionar</button></td>';
+                html += '<td>' + servico.valorTotal + ' ' + servico.moeda + '</td>';
+                html += '<td>R$ ' + valorBRL + '</td>';
+                html += '<td><button type="button" class="btn btn-sm btn-primary selecionar-servico" ' +
+                        'data-servico="' + servico.servicoTipo + '" ' +
+                        'data-nome="' + servico.servico + '" ' +
+                        'data-valor-usd="' + servico.valorTotal + '" ' +
+                        'data-valor-brl="' + valorBRL + '" ' +
+                        'data-moeda="' + servico.moeda + '">Selecionar</button></td>';
                 html += '</tr>';
             });
             
@@ -2007,6 +2151,9 @@
             $('.selecionar-servico').on('click', function() {
                 const servicoTipo = $(this).data('servico');
                 const servicoNome = $(this).data('nome');
+                const valorUSD = $(this).data('valor-usd');
+                const valorBRL = $(this).data('valor-brl');
+                const moeda = $(this).data('moeda');
                 
                 // Destacar o serviço selecionado
                 $('.selecionar-servico').removeClass('btn-success').addClass('btn-primary').text('Selecionar');
@@ -2028,19 +2175,101 @@
                 // Mostrar mensagem de confirmação
                 $('#servicos-lista').append(
                     '<div class="alert alert-success mt-3">' +
-                    '<i class="fas fa-check-circle me-2"></i> Serviço <strong>' + servicoNome + '</strong> selecionado. Clique em "Processar Envio" para continuar.' +
+                    '<i class="fas fa-check-circle me-2"></i> Serviço <strong>' + servicoNome + '</strong> selecionado. Continue para selecionar o método de pagamento.' +
                     '</div>'
                 );
                 
-                // Mostrar o botão de processar envio
-                $('#submit-button').show();
+                // Mostrar a seção de métodos de pagamento
+                $('#pagamento-section').show();
                 
-                // Rolar até o botão
+                // Preencher os valores de pagamento
+                // Limpar o valor BRL, removendo "R$", espaços e convertendo vírgula para ponto
+                const valorNumerico = valorBRL.replace(/[^\d,]/g, '').replace(',', '.');
+                $('#payment_amount').val(valorNumerico);
+                
+                // Atualizar o resumo do pagamento
+                $('#payment-service-name').text(servicoNome);
+                $('#payment-service-value').text('R$ ' + valorBRL);
+                
+                // Rolar até a seção de pagamento
                 $('html, body').animate({
-                    scrollTop: $('#submit-button').offset().top - 100
+                    scrollTop: $('#pagamento-section').offset().top - 100
                 }, 500);
             });
         }
+        
+        // Eventos para seleção de método de pagamento
+        $(document).on('click', '.select-payment-method', function() {
+            const method = $(this).data('method');
+            
+            // Destacar o método selecionado
+            $('.payment-method-card').removeClass('border-primary');
+            $('.select-payment-method').removeClass('btn-primary').addClass('btn-outline-primary');
+            
+            $(this).closest('.payment-method-card').addClass('border-primary');
+            $(this).removeClass('btn-outline-primary').addClass('btn-primary');
+            
+            // Armazenar o método selecionado
+            $('#payment_method').val(method);
+            
+            // Mostrar formulário específico de acordo com o método
+            if (method === 'credit_card') {
+                $('#credit-card-form').show();
+            } else {
+                $('#credit-card-form').hide();
+            }
+            
+            // Atualizar o nome do método de pagamento no resumo
+            let paymentMethodName = 'Desconhecido';
+            if (method === 'boleto') paymentMethodName = 'Boleto Bancário';
+            if (method === 'pix') paymentMethodName = 'Pix';
+            if (method === 'credit_card') paymentMethodName = 'Cartão de Crédito';
+            
+            $('#payment-method-name').text(paymentMethodName);
+            
+            // Mostrar o resumo do pagamento e o botão de envio
+            $('#payment-summary').show();
+            $('#payment-total-value').text($('#payment-service-value').text());
+            $('#submit-button').show();
+        });
+        
+        // Formatar campos de cartão de crédito
+        $('#card_number').on('input', function() {
+            let value = $(this).val().replace(/\D/g, '');
+            let formattedValue = '';
+            
+            for (let i = 0; i < value.length; i++) {
+                if (i > 0 && i % 4 === 0) {
+                    formattedValue += ' ';
+                }
+                formattedValue += value[i];
+            }
+            
+            $(this).val(formattedValue);
+        });
+        
+        $('#card_cvv').on('input', function() {
+            let value = $(this).val().replace(/\D/g, '');
+            if (value.length > 4) value = value.substring(0, 4);
+            $(this).val(value);
+        });
+        
+        $('#card_cpf').on('input', function() {
+            let value = $(this).val().replace(/\D/g, '');
+            let formattedValue = '';
+            
+            if (value.length <= 3) {
+                formattedValue = value;
+            } else if (value.length <= 6) {
+                formattedValue = value.substring(0, 3) + '.' + value.substring(3);
+            } else if (value.length <= 9) {
+                formattedValue = value.substring(0, 3) + '.' + value.substring(3, 6) + '.' + value.substring(6);
+            } else {
+                formattedValue = value.substring(0, 3) + '.' + value.substring(3, 6) + '.' + value.substring(6, 9) + '-' + value.substring(9, 11);
+            }
+            
+            $(this).val(formattedValue);
+        });
         
         // Evento de submissão do formulário
         $('#envio-form').on('submit', function(e) {
@@ -2097,6 +2326,22 @@
                 return false;
             }
             
+            // Verificar o método de pagamento
+            if (!$('#payment_method').val()) {
+                showAlert('Por favor, selecione um método de pagamento.', 'warning');
+                return false;
+            }
+            
+            // Validar campos do cartão de crédito se for o método selecionado
+            if ($('#payment_method').val() === 'credit_card') {
+                if (!$('#card_name').val() || !$('#card_number').val() || 
+                    !$('#card_expiry_month').val() || !$('#card_expiry_year').val() || 
+                    !$('#card_cvv').val() || !$('#card_cpf').val()) {
+                    showAlert('Por favor, preencha todos os dados do cartão de crédito.', 'warning');
+                    return false;
+                }
+            }
+            
             // Log para debug
             console.log('Enviando dados:', {
                 produtos: JSON.parse($('#produtos-json').val() || '[]'),
@@ -2109,7 +2354,9 @@
                     comprimento: $('#comprimento-hidden').val(),
                     pesoCaixa: $('#peso-caixa-hidden').val()
                 },
-                servicoEntrega: $('#servico_entrega').val()
+                servicoEntrega: $('#servico_entrega').val(),
+                metodoPagamento: $('#payment_method').val(),
+                valorPagamento: $('#payment_amount').val()
             });
             
             // Se passou pela validação, enviar o formulário via AJAX
@@ -2120,6 +2367,10 @@
                 beforeSend: function() {
                     // Desabilitar o botão e mostrar indicador de carregamento
                     $('#submit-button').prop('disabled', true).html('<i class="fas fa-spinner fa-spin me-2"></i> Processando...');
+                    
+                    // Log para verificar o valor do payment_amount
+                    console.log('Valor do payment_amount:', $('#payment_amount').val());
+                    console.log('Tipo do payment_amount:', typeof $('#payment_amount').val());
                 },
                 success: function(response) {
                     // Habilitar o botão novamente
@@ -2392,3 +2643,177 @@
         });
     } // <- Fechamento da função inicializarApp
 </script> 
+
+<!-- Seção para exibir logs de depuração -->
+<div id="debug-logs-section" class="mt-5 mb-3 bg-gray-100 rounded-md p-4 hidden">
+    <h3 class="text-lg font-semibold mb-2 flex items-center">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+        </svg>
+        Logs de Depuração
+        <button id="toggle-logs" class="ml-2 text-xs text-blue-600 hover:text-blue-800">Ocultar</button>
+    </h3>
+    <div id="logs-container" class="bg-gray-900 text-green-400 p-4 rounded-md font-mono text-sm overflow-auto" style="max-height: 400px;">
+        <div id="logs-content"></div>
+    </div>
+</div>
+
+<!-- Script para mostrar a seção de logs e renderizar os logs JavaScript -->
+<script>
+// Função para adicionar os logs à seção de depuração
+function renderLogs(logs) {
+    const logsContainer = document.getElementById('logs-content');
+    if (!logsContainer) return;
+    
+    // Limpar o conteúdo anterior
+    logsContainer.innerHTML = '';
+    
+    // Criar um elemento para injetar os scripts
+    const scriptContainer = document.createElement('div');
+    scriptContainer.style.display = 'none';
+    document.body.appendChild(scriptContainer);
+    
+    // Adicionar cada script ao container
+    logs.forEach(logScript => {
+        const scriptElement = document.createElement('script');
+        scriptElement.innerHTML = logScript.replace(/<script>/g, '').replace(/<\/script>/g, '');
+        scriptContainer.appendChild(scriptElement);
+    });
+    
+    // Remover o container de scripts após execução
+    setTimeout(() => {
+        document.body.removeChild(scriptContainer);
+    }, 100);
+    
+    // Adicionar mensagem informativa
+    const infoMessage = document.createElement('div');
+    infoMessage.textContent = 'Os logs foram enviados para o console do navegador. Pressione F12 para abrir as Ferramentas de Desenvolvedor e veja a aba "Console".';
+    infoMessage.className = 'text-white bg-blue-600 p-2 rounded-md mb-2';
+    logsContainer.appendChild(infoMessage);
+}
+
+// Função para mostrar/ocultar a seção de logs
+document.getElementById('toggle-logs').addEventListener('click', function() {
+    const logsContainer = document.getElementById('logs-container');
+    const isHidden = logsContainer.classList.contains('hidden');
+    
+    if (isHidden) {
+        logsContainer.classList.remove('hidden');
+        this.textContent = 'Ocultar';
+    } else {
+        logsContainer.classList.add('hidden');
+        this.textContent = 'Mostrar';
+    }
+});
+
+// Adicionar ao código existente que processa o formulário
+document.getElementById('form-envio').addEventListener('submit', function(e) {
+    e.preventDefault();
+    
+    // Verificar se o serviço foi selecionado
+    if (!servicoSelecionado) {
+        alert('Por favor, selecione um serviço de entrega.');
+        return false;
+    }
+    
+    // Verificar se o método de pagamento foi selecionado
+    if (!document.querySelector('input[name="payment_method"]:checked')) {
+        alert('Por favor, selecione um método de pagamento.');
+        return false;
+    }
+    
+    // Mostrar loading
+    document.getElementById('btn-submit').disabled = true;
+    document.getElementById('btn-submit').textContent = 'Processando...';
+    document.getElementById('loading-overlay').classList.remove('hidden');
+    
+    // Obter dados do formulário
+    const formData = new FormData(this);
+    
+    // Enviar requisição para processar o envio
+    fetch('{{ route("api.envio.processar") }}', {
+        method: 'POST',
+        body: formData,
+        headers: {
+            'X-CSRF-TOKEN': '{{ csrf_token() }}'
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        // Ocultar loading
+        document.getElementById('loading-overlay').classList.add('hidden');
+        
+        // Renderizar logs se disponíveis
+        if (data.logs && data.logs.length > 0) {
+            document.getElementById('debug-logs-section').classList.remove('hidden');
+            renderLogs(data.logs);
+        }
+        
+        if (data.success) {
+            // Mostrar mensagem de sucesso
+            Swal.fire({
+                title: 'Sucesso!',
+                text: data.message,
+                icon: 'success',
+                confirmButtonText: 'Ver rastreamento'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    // Redirecionar para a página de rastreamento
+                    window.location.href = '{{ route("rastreamento") }}?tracking=' + data.shipment.tracking_number;
+                }
+            });
+        } else {
+            // Mostrar mensagem de erro
+            Swal.fire({
+                title: 'Erro!',
+                text: data.message,
+                icon: 'error',
+                confirmButtonText: 'OK'
+            });
+            
+            // Reativar botão de envio
+            document.getElementById('btn-submit').disabled = false;
+            document.getElementById('btn-submit').textContent = 'Finalizar Envio';
+        }
+    })
+    .catch(error => {
+        // Ocultar loading
+        document.getElementById('loading-overlay').classList.add('hidden');
+        
+        // Mostrar erro
+        Swal.fire({
+            title: 'Erro!',
+            text: 'Ocorreu um erro ao processar o envio. Por favor, tente novamente.',
+            icon: 'error',
+            confirmButtonText: 'OK'
+        });
+        
+        // Reativar botão de envio
+        document.getElementById('btn-submit').disabled = false;
+        document.getElementById('btn-submit').textContent = 'Finalizar Envio';
+        
+        console.error('Erro:', error);
+    });
+});
+
+// Verificar se estamos em ambiente de desenvolvimento
+const isDev = {{ app()->environment('local') ? 'true' : 'false' }};
+const isAdmin = {{ auth()->check() && auth()->user()->is_admin ? 'true' : 'false' }};
+
+// Mostrar seção de logs apenas em desenvolvimento ou para administradores
+if (isDev || isAdmin) {
+    document.getElementById('debug-logs-section').classList.remove('hidden');
+}
+</script> 
+
+<!-- Script para verificar ambiente e perfil do usuário -->
+<script>
+// Definição de variáveis de ambiente fornecidas pelo backend
+var appEnvironment = "{{ app()->environment() }}";
+var isUserAdmin = {{ auth()->check() && auth()->user()->is_admin ? 'true' : 'false' }};
+
+// Verificar se estamos em ambiente de desenvolvimento ou se o usuário é admin
+if (appEnvironment === "local" || isUserAdmin) {
+    document.getElementById('debug-logs-section').classList.remove('hidden');
+}
+</script>

@@ -1165,16 +1165,82 @@ class FedexService
      */
     public function criarEnvio($dadosRemetente, $dadosDestinatario, $dadosPacote, $dadosProdutos, $servicoEntrega = 'FEDEX_INTERNATIONAL_PRIORITY', $forcarSimulacao = false)
     {
+        // Log dos dados recebidos para debug
+        Log::info('FedexService::criarEnvio - Dados recebidos:', [
+            'remetente' => $dadosRemetente,
+            'destinatario' => $dadosDestinatario,
+            'pacote' => $dadosPacote,
+            'produtos' => $dadosProdutos,
+            'servicoEntrega' => $servicoEntrega,
+            'forcarSimulacao' => $forcarSimulacao
+        ]);
+        
+        // Verificar campos obrigatórios
+        $camposObrigatoriosRemetente = ['name', 'phone', 'email', 'address', 'city', 'state', 'postalCode', 'country'];
+        $camposObrigatoriosDestinatario = ['name', 'phone', 'email', 'address', 'city', 'state', 'postalCode', 'country'];
+        $camposObrigatoriosPacote = ['height', 'width', 'length', 'weight'];
+        
+        // Verificar campos do remetente
+        foreach ($camposObrigatoriosRemetente as $campo) {
+            if (!isset($dadosRemetente[$campo]) || empty($dadosRemetente[$campo])) {
+                $mensagemErro = "Campo obrigatório não encontrado no remetente: {$campo}";
+                Log::error('FedexService::criarEnvio - ' . $mensagemErro, [
+                    'dados_remetente' => $dadosRemetente
+                ]);
+                throw new \Exception($mensagemErro);
+            }
+        }
+        
+        // Verificar campos do destinatário
+        foreach ($camposObrigatoriosDestinatario as $campo) {
+            if (!isset($dadosDestinatario[$campo]) || empty($dadosDestinatario[$campo])) {
+                $mensagemErro = "Campo obrigatório não encontrado no destinatário: {$campo}";
+                Log::error('FedexService::criarEnvio - ' . $mensagemErro, [
+                    'dados_destinatario' => $dadosDestinatario
+                ]);
+                throw new \Exception($mensagemErro);
+            }
+        }
+        
+        // Verificar campos do pacote
+        foreach ($camposObrigatoriosPacote as $campo) {
+            if (!isset($dadosPacote[$campo]) || empty($dadosPacote[$campo])) {
+                $mensagemErro = "Campo obrigatório não encontrado no pacote: {$campo}";
+                Log::error('FedexService::criarEnvio - ' . $mensagemErro, [
+                    'dados_pacote' => $dadosPacote
+                ]);
+                throw new \Exception($mensagemErro);
+            }
+        }
+        
+        // Verificar se temos produtos
+        if (empty($dadosProdutos)) {
+            $mensagemErro = "Lista de produtos vazia";
+            Log::error('FedexService::criarEnvio - ' . $mensagemErro);
+            throw new \Exception($mensagemErro);
+        }
+        
+        // Verificar campos de cada produto
+        foreach ($dadosProdutos as $index => $produto) {
+            $camposObrigatoriosProduto = ['description', 'quantity', 'unitPrice', 'weight', 'countryOfOrigin'];
+            foreach ($camposObrigatoriosProduto as $campo) {
+                if (!isset($produto[$campo])) {
+                    $mensagemErro = "Campo obrigatório não encontrado no produto {$index}: {$campo}";
+                    Log::error('FedexService::criarEnvio - ' . $mensagemErro, [
+                        'produto' => $produto
+                    ]);
+                    throw new \Exception($mensagemErro);
+                }
+            }
+        }
+        
+        // Verificar se devemos usar a simulação
+        if ($forcarSimulacao || config('app.env') !== 'production') {
+            Log::info('Usando simulação para criação de envio FedEx');
+            return $this->simularCriacaoEnvio($dadosRemetente, $dadosDestinatario, $dadosPacote, $dadosProdutos, $servicoEntrega);
+        }
+        
         try {
-            // Log de dados que estão sendo enviados
-            Log::info('Dados de envio FedEx', [
-                'remetente' => $dadosRemetente,
-                'destinatario' => $dadosDestinatario,
-                'pacote' => $dadosPacote,
-                'produtos' => $dadosProdutos,
-                'servico' => $servicoEntrega
-            ]);
-            
             // Obter token de autenticação
             $accessToken = $this->getAuthToken();
             
@@ -1188,38 +1254,38 @@ class FedexService
                 'requestedShipment' => [
                     'shipper' => [
                         'contact' => [
-                            'personName' => $dadosRemetente['nome'],
-                            'phoneNumber' => $dadosRemetente['telefone'],
+                            'personName' => $dadosRemetente['name'],
+                            'phoneNumber' => $dadosRemetente['phone'],
                             'emailAddress' => $dadosRemetente['email']
                         ],
                         'address' => [
                             'streetLines' => [
-                                $dadosRemetente['endereco'],
-                                $dadosRemetente['complemento'] ?? ''
+                                $dadosRemetente['address'],
+                                $dadosRemetente['complement'] ?? ''
                             ],
-                            'city' => $dadosRemetente['cidade'],
-                            'stateOrProvinceCode' => $dadosRemetente['estado'],
-                            'postalCode' => $dadosRemetente['cep'],
-                            'countryCode' => $dadosRemetente['pais'],
+                            'city' => $dadosRemetente['city'],
+                            'stateOrProvinceCode' => $dadosRemetente['state'],
+                            'postalCode' => $dadosRemetente['postalCode'],
+                            'countryCode' => $dadosRemetente['country'],
                             'residential' => false
                         ]
                     ],
                     'recipients' => [
                         [
                             'contact' => [
-                                'personName' => $dadosDestinatario['nome'],
-                                'phoneNumber' => $dadosDestinatario['telefone'],
+                                'personName' => $dadosDestinatario['name'],
+                                'phoneNumber' => $dadosDestinatario['phone'],
                                 'emailAddress' => $dadosDestinatario['email']
                             ],
                             'address' => [
                                 'streetLines' => [
-                                    $dadosDestinatario['endereco'],
-                                    $dadosDestinatario['complemento'] ?? ''
+                                    $dadosDestinatario['address'],
+                                    $dadosDestinatario['complement'] ?? ''
                                 ],
-                                'city' => $dadosDestinatario['cidade'],
-                                'stateOrProvinceCode' => $dadosDestinatario['estado'],
-                                'postalCode' => $dadosDestinatario['cep'],
-                                'countryCode' => $dadosDestinatario['pais'],
+                                'city' => $dadosDestinatario['city'],
+                                'stateOrProvinceCode' => $dadosDestinatario['state'],
+                                'postalCode' => $dadosDestinatario['postalCode'],
+                                'countryCode' => $dadosDestinatario['country'],
                                 'residential' => false
                             ]
                         ]
@@ -1285,23 +1351,23 @@ class FedexService
             // Adicionar produtos para alfândega
             foreach ($dadosProdutos as $produto) {
                 $shipRequest['requestedShipment']['customsClearanceDetail']['commodities'][] = [
-                    'description' => $produto['descricao'],
+                    'description' => $produto['description'],
                     'weight' => [
                         'units' => 'KG',
-                        'value' => $produto['peso']
+                        'value' => $produto['weight']
                     ],
-                    'quantity' => $produto['quantidade'],
+                    'quantity' => $produto['quantity'],
                     'quantityUnits' => 'PCS',
                     'unitPrice' => [
-                        'amount' => $produto['valor_unitario'],
+                        'amount' => $produto['unitPrice'],
                         'currency' => 'USD'
                     ],
                     'customsValue' => [
-                        'amount' => $produto['valor_unitario'] * $produto['quantidade'],
+                        'amount' => $produto['unitPrice'] * $produto['quantity'],
                         'currency' => 'USD'
                     ],
-                    'countryOfManufacture' => $produto['pais_origem'],
-                    'harmonizedCode' => $produto['ncm'] ?? '000000' // NCM ou código harmonizado
+                    'countryOfManufacture' => $produto['countryOfOrigin'],
+                    'harmonizedCode' => $produto['harmonizedCode'] ?? '000000' // NCM ou código harmonizado
                 ];
             }
             
@@ -1402,6 +1468,14 @@ class FedexService
      */
     private function simularCriacaoEnvio($dadosRemetente, $dadosDestinatario, $dadosPacote, $dadosProdutos, $servicoEntrega)
     {
+        Log::info('FedexService::simularCriacaoEnvio - Simulando criação de envio', [
+            'remetente' => $dadosRemetente,
+            'destinatario' => $dadosDestinatario,
+            'pacote' => $dadosPacote,
+            'produtos_count' => count($dadosProdutos),
+            'servico' => $servicoEntrega
+        ]);
+        
         // Gerar número de rastreamento simulado
         $prefixos = ['FEDX', '9205', '9612', '7781'];
         $prefixo = $prefixos[array_rand($prefixos)];
@@ -1412,8 +1486,8 @@ class FedexService
         $valorTotal = 0;
         
         foreach ($dadosProdutos as $produto) {
-            $pesoTotal += $produto['peso'] * $produto['quantidade'];
-            $valorTotal += $produto['valor_unitario'] * $produto['quantidade'];
+            $pesoTotal += $produto['weight'] * $produto['quantity'];
+            $valorTotal += $produto['unitPrice'] * $produto['quantity'];
         }
         
         // Simular URL da etiqueta (usando serviço público para gerar QR code com o número de rastreamento)

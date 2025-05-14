@@ -1,66 +1,138 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# Logiez - Sistema de Logística e Entregas
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+## Sobre o Projeto
 
-## About Laravel
+Logiez é um sistema de logística e entregas que permite o envio de pacotes, gerenciamento de pagamentos e rastreamento de encomendas. O sistema integra-se com a FedEx para envio e rastreamento, e com o gateway de pagamentos Asaas para processamento de pagamentos.
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+## Funcionalidades Implementadas
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+### Envio de Pacotes
+- Cálculo de cotações de frete baseado em peso e dimensões
+- Conversão automática de USD para BRL nas cotações da FedEx
+- Seleção de serviços de entrega com diferentes prazos e valores
+- Integração com API FedEx para processamento de envios
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+### Pagamentos
+- Integração com o gateway Asaas
+- Múltiplos métodos de pagamento (boleto, pix, cartão de crédito)
+- Persistência do status de pagamento
+- Atualização automática do status de pagamento através de comando `app:atualizar-status-pagamentos`
 
-## Learning Laravel
+### Rastreamento
+- Interface amigável para rastreamento de pacotes
+- Visualização do histórico de eventos de rastreamento
+- Simulação de rastreamento para ambiente de desenvolvimento
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework.
+### Depuração
+- Logs detalhados para frontend e backend
+- Controle de exibição de logs baseado no perfil do usuário e ambiente
+- Registro de todas as comunicações com APIs externas
 
-You may also try the [Laravel Bootcamp](https://bootcamp.laravel.com), where you will be guided through building a modern Laravel application from scratch.
+## Estrutura de Dados
 
-If you don't feel like reading, [Laracasts](https://laracasts.com) can help. Laracasts contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+### Shipment
+Tabela responsável pelo armazenamento dos envios, com os seguintes campos principais:
+- `user_id`: ID do usuário que criou o envio
+- `tracking_number`: Número de rastreamento
+- `carrier`: Transportadora utilizada
+- `service_code`: Código do serviço de entrega
+- `status`: Status atual do envio
+- `total_price`: Valor total do envio em BRL
+- `package_weight`: Peso do pacote
+- `package_length`, `package_width`, `package_height`: Dimensões
 
-## Laravel Sponsors
+### Payment
+Tabela responsável pelo armazenamento dos pagamentos, com os campos:
+- `user_id`: ID do usuário
+- `shipment_id`: ID do envio
+- `transaction_id`: ID da transação no gateway
+- `payment_method`: Método de pagamento (boleto, pix, credit_card)
+- `amount`: Valor do pagamento
+- `currency`: Moeda (BRL)
+- `status`: Status do pagamento (pending, processing, paid, failed, canceled)
+- `payment_date`: Data de pagamento
+- `due_date`: Data de vencimento para boletos
+- `payer_name`: Nome do pagador
+- `payer_document`: Documento do pagador (CPF/CNPJ)
+- `invoice_url`: URL para visualização/impressão do boleto
+- `barcode`: Código de barras do boleto
+- `payment_link`: Link de pagamento
+- `gateway_response`: Resposta completa do gateway
 
-We would like to extend our thanks to the following sponsors for funding Laravel development. If you are interested in becoming a sponsor, please visit the [Laravel Partners program](https://partners.laravel.com).
+## Configuração do Ambiente
 
-### Premium Partners
+### Requisitos
+- PHP 8.0+
+- Composer
+- MySQL/MariaDB 5.7+
+- Node.js 14+ e NPM
 
-- **[Vehikl](https://vehikl.com/)**
-- **[Tighten Co.](https://tighten.co)**
-- **[WebReinvent](https://webreinvent.com/)**
-- **[Kirschbaum Development Group](https://kirschbaumdevelopment.com)**
-- **[64 Robots](https://64robots.com)**
-- **[Curotec](https://www.curotec.com/services/technologies/laravel/)**
-- **[Cyber-Duck](https://cyber-duck.co.uk)**
-- **[DevSquad](https://devsquad.com/hire-laravel-developers)**
-- **[Jump24](https://jump24.co.uk)**
-- **[Redberry](https://redberry.international/laravel/)**
-- **[Active Logic](https://activelogic.com)**
-- **[byte5](https://byte5.de)**
-- **[OP.GG](https://op.gg)**
+### Variáveis de Ambiente
+Configure seu arquivo `.env` com as seguintes variáveis:
 
-## Contributing
+```
+# Configuração da FedEx
+FEDEX_API_KEY=sua_chave_api
+FEDEX_SECRET=seu_segredo
+FEDEX_ACCOUNT_NUMBER=seu_numero_de_conta
+FEDEX_METER_NUMBER=seu_numero_de_medidor
+FEDEX_TEST_MODE=true
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+# Configuração do Asaas
+ASAAS_API_TOKEN=seu_token_api
+ASAAS_SANDBOX=true
 
-## Code of Conduct
+# Configuração de conversão de moeda
+CURRENCY_API_KEY=sua_chave_api_conversao
+```
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+### Comandos de Atualização
+Foi implementado um comando para atualização automática do status dos pagamentos:
 
-## Security Vulnerabilities
+```bash
+php artisan app:atualizar-status-pagamentos
+```
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+Este comando deve ser programado para execução periódica através do Cron:
 
-## License
+```
+* * * * * cd /caminho/para/seu/projeto && php artisan schedule:run >> /dev/null 2>&1
+```
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+## Depuração e Logs
+
+O sistema implementa logs detalhados em vários níveis:
+
+1. Logs de Sistema: Disponíveis em `storage/logs/laravel.log`
+2. Logs de Frontend: Disponíveis no console do navegador e na seção de depuração da interface
+3. Logs de API: Todas as chamadas e respostas de APIs estão disponíveis nos logs
+
+Para acessar os logs na interface, é necessário ser administrador ou estar em ambiente de desenvolvimento.
+
+## Integrações
+
+### FedEx
+O sistema se integra com a FedEx para:
+- Obter cotações de envio
+- Processar envios
+- Rastrear pacotes
+
+### Asaas
+A integração com o Asaas permite:
+- Processamento de pagamentos via boleto
+- Processamento de pagamentos via PIX
+- Processamento de pagamentos via cartão de crédito
+- Verificação do status de pagamentos
+
+## Contribuição
+
+Para contribuir com o projeto:
+1. Faça um fork do repositório
+2. Crie uma branch para sua feature (`git checkout -b feature/minha-feature`)
+3. Commit suas mudanças (`git commit -m 'Adicionar minha feature'`)
+4. Push para a branch (`git push origin feature/minha-feature`)
+5. Abra um Pull Request
+
+## Licença
+
+Este projeto está licenciado sob a licença MIT - veja o arquivo LICENSE para mais detalhes.

@@ -150,6 +150,20 @@
     </div>
 </div>
 
+<!-- Seção para exibir logs de depuração -->
+<div id="debug-logs-section" class="mt-5 mb-3 bg-gray-100 rounded-md p-4 hidden">
+    <h3 class="text-lg font-semibold mb-2 flex items-center">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+        </svg>
+        Logs de Rastreamento
+        <button id="toggle-logs" class="ml-2 text-xs text-blue-600 hover:text-blue-800">Ocultar</button>
+    </h3>
+    <div id="logs-container" class="bg-gray-900 text-green-400 p-4 rounded-md font-mono text-sm overflow-auto" style="max-height: 400px;">
+        <div id="logs-content"></div>
+    </div>
+</div>
+
 <style>
     /* Estilos para responsividade da timeline */
     .timeline-container {
@@ -705,106 +719,43 @@
         // Variáveis globais para armazenar o código de rastreamento
         let codigoRastreamento = '';
         
-        // Processar formulário de rastreamento via AJAX
-        $('#rastreamento-form').on('submit', function(e) {
-            e.preventDefault();
+        // Função para formatar data (YYYY-MM-DD para DD/MM/YYYY)
+        function formatarData(dataString) {
+            if (!dataString) return '';
             
-            // Armazenar o código de rastreamento
-            codigoRastreamento = $('#codigo_rastreamento').val().trim();
-            
-            // Esconder mensagens de erro e sucesso anteriores
-            $('#rastreamento-error').hide();
-            $('#rastreamento-success').hide();
-            
-            // Mostrar loader e esconder resultados anteriores
-            $('#rastreamento-loader').show();
-            $('#rastreamento-resultado').hide();
-            
-            // Enviar solicitação AJAX para a API
-            enviarSolicitacaoRastreamento(false);
-        });
-        
-        // Função para enviar a solicitação AJAX de rastreamento
-        function enviarSolicitacaoRastreamento(forcarSimulacao) {
-            $.ajax({
-                url: '{{ route("api.rastreamento.buscar") }}',
-                method: 'POST',
-                data: {
-                    _token: '{{ csrf_token() }}',
-                    codigo_rastreamento: codigoRastreamento,
-                    forcarSimulacao: forcarSimulacao
-                },
-                dataType: 'json',
-                success: function(response) {
-                    if (response.success) {
-                        // Esconder loader e mostrar mensagem de sucesso
-                        $('#rastreamento-loader').hide().css('display', 'none !important');
-                        $('#rastreamento-success').show();
-                        
-                        // Preencher dados do resultado
-                        mostrarResultadoRastreamento(response);
-                    } else {
-                        // Esconder loader e mensagem de sucesso
-                        $('#rastreamento-loader').hide();
-                        $('#rastreamento-success').hide();
-                        
-                        // Verificar se é o código especial
-                        if (codigoRastreamento === '794616896420') {
-                            console.log('Código de rastreamento especial detectado: ' + codigoRastreamento);
-                            // Tentar forçar simulação automaticamente para esse código
-                            enviarSolicitacaoRastreamento(true);
-                            return;
-                        }
-                        
-                        // Verificar código de erro para decidir o que mostrar
-                        if (response.error_code === 'fedex_unavailable' || response.error_code === 'fedex_api_error') {
-                            // Mostrar modal perguntando sobre simulação
-                            $('#simulacao-error-message').text(response.message);
-                            const simulacaoModal = new bootstrap.Modal(document.getElementById('simulacaoModal'));
-                            simulacaoModal.show();
-                        } else {
-                            // Mostrar mensagem de erro padrão
-                            $('#rastreamento-error').show();
-                            $('#rastreamento-error-message').text(response.message || 'Não foi possível obter informações de rastreamento.');
-                        }
-                    }
-                },
-                error: function(xhr) {
-                    // Esconder loader e mensagem de sucesso
-                    $('#rastreamento-loader').hide();
-                    $('#rastreamento-success').hide();
-                    
-                    let errorMsg = 'Erro ao processar a solicitação.';
-                    if (xhr.responseJSON && xhr.responseJSON.message) {
-                        errorMsg = xhr.responseJSON.message;
-                    }
-                    
-                    $('#rastreamento-error').show();
-                    $('#rastreamento-error-message').text(errorMsg);
-                },
-                complete: function() {
-                    // Esconder o loader como garantia adicional
-                    $('#rastreamento-loader').hide().css('display', 'none !important');
+            // Tentar converter o formato YYYY-MM-DD para DD/MM/YYYY
+            try {
+                const partes = dataString.split('-');
+                if (partes.length === 3) {
+                    return `${partes[2]}/${partes[1]}/${partes[0]}`;
                 }
-            });
+                return dataString;
+            } catch (e) {
+                return dataString;
+            }
         }
         
-        // Botão para usar simulação
-        $('#btn-usar-simulacao').on('click', function() {
-            // Fechar o modal
-            const simulacaoModal = bootstrap.Modal.getInstance(document.getElementById('simulacaoModal'));
-            simulacaoModal.hide();
+        // Função para formatar data e hora
+        function formatarDataHora(data, hora) {
+            if (!data) return '';
             
-            // Esconder mensagens de erro e sucesso
-            $('#rastreamento-error').hide();
-            $('#rastreamento-success').hide();
+            let dataFormatada = formatarData(data);
             
-            // Mostrar loader novamente
-            $('#rastreamento-loader').show();
+            if (hora) {
+                // Tentar formatar a hora (HH:MM:SS para HH:MM)
+                try {
+                    const partesHora = hora.split(':');
+                    if (partesHora.length >= 2) {
+                        return `${dataFormatada} ${partesHora[0]}:${partesHora[1]}`;
+                    }
+                    return `${dataFormatada} ${hora}`;
+                } catch (e) {
+                    return `${dataFormatada} ${hora}`;
+                }
+            }
             
-            // Enviar solicitação com flag para forçar simulação
-            enviarSolicitacaoRastreamento(true);
-        });
+            return dataFormatada;
+        }
         
         // Função para mostrar os resultados do rastreamento
         function mostrarResultadoRastreamento(response) {
@@ -872,73 +823,6 @@
                 $('#rastreamento-success').fadeOut('slow');
             }, 3000);
         }
-        
-        // Botão para solicitar comprovante de entrega
-        $('#btn-solicitar-comprovante').on('click', function() {
-            const trackingNumber = $('#rastreamento-codigo').text();
-            if (!trackingNumber) return;
-            
-            // Mostrar modal
-            const comprovanteModal = new bootstrap.Modal(document.getElementById('comprovanteModal'));
-            comprovanteModal.show();
-            
-            // Preparar modal
-            $('#comprovante-loader').show();
-            $('#comprovante-error').hide();
-            $('#comprovante-content').hide();
-            
-            // Solicitar comprovante
-            $.ajax({
-                url: '{{ route("api.rastreamento.comprovante") }}',
-                method: 'POST',
-                data: {
-                    _token: '{{ csrf_token() }}',
-                    codigo_rastreamento: trackingNumber,
-                    formato: 'PDF'
-                },
-                dataType: 'json',
-                success: function(response) {
-                    if (response.success) {
-                        // Base64 para URL
-                        const base64Data = response.document;
-                        const documentFormat = response.documentFormat.toLowerCase();
-                        
-                        // Criar URL para o documento
-                        const documentUrl = 'data:application/' + documentFormat + ';base64,' + base64Data;
-                        
-                        // Exibir no iframe
-                        $('#comprovante-iframe').attr('src', documentUrl);
-                        $('#comprovante-content').show();
-                        
-                        // Configurar botão de download
-                        $('#btn-download-comprovante').off('click').on('click', function() {
-                            const a = document.createElement('a');
-                            a.href = documentUrl;
-                            a.download = 'Comprovante_Entrega_' + trackingNumber + '.' + documentFormat;
-                            document.body.appendChild(a);
-                            a.click();
-                            document.body.removeChild(a);
-                        });
-                    } else {
-                        // Exibir erro
-                        $('#comprovante-error').show();
-                        $('#comprovante-error-message').text(response.mensagem || 'Não foi possível obter o comprovante de entrega.');
-                    }
-                },
-                error: function(xhr) {
-                    let errorMsg = 'Erro ao solicitar comprovante de entrega.';
-                    if (xhr.responseJSON && xhr.responseJSON.mensagem) {
-                        errorMsg = xhr.responseJSON.mensagem;
-                    }
-                    
-                    $('#comprovante-error').show();
-                    $('#comprovante-error-message').text(errorMsg);
-                },
-                complete: function() {
-                    $('#comprovante-loader').hide();
-                }
-            });
-        });
         
         // Função para preencher a timeline
         function preencherTimeline(eventos) {
@@ -1073,42 +957,351 @@
             });
         }
         
-        // Função para formatar data (YYYY-MM-DD para DD/MM/YYYY)
-        function formatarData(dataString) {
-            if (!dataString) return '';
-            
-            // Tentar converter o formato YYYY-MM-DD para DD/MM/YYYY
-            try {
-                const partes = dataString.split('-');
-                if (partes.length === 3) {
-                    return `${partes[2]}/${partes[1]}/${partes[0]}`;
+        // Função para enviar a solicitação AJAX de rastreamento
+        function enviarSolicitacaoRastreamento(forcarSimulacao) {
+            $.ajax({
+                url: '{{ route("api.rastreamento.buscar") }}',
+                method: 'POST',
+                data: {
+                    _token: '{{ csrf_token() }}',
+                    codigo_rastreamento: codigoRastreamento,
+                    forcarSimulacao: forcarSimulacao
+                },
+                dataType: 'json',
+                success: function(response) {
+                    if (response.success) {
+                        // Esconder loader e mostrar mensagem de sucesso
+                        $('#rastreamento-loader').hide().css('display', 'none !important');
+                        $('#rastreamento-success').show();
+                        
+                        // Preencher dados do resultado
+                        mostrarResultadoRastreamento(response);
+                    } else {
+                        // Esconder loader e mensagem de sucesso
+                        $('#rastreamento-loader').hide();
+                        $('#rastreamento-success').hide();
+                        
+                        // Verificar se é o código especial
+                        if (codigoRastreamento === '794616896420') {
+                            console.log('Código de rastreamento especial detectado: ' + codigoRastreamento);
+                            // Tentar forçar simulação automaticamente para esse código
+                            enviarSolicitacaoRastreamento(true);
+                            return;
+                        }
+                        
+                        // Verificar código de erro para decidir o que mostrar
+                        if (response.error_code === 'fedex_unavailable' || response.error_code === 'fedex_api_error') {
+                            // Mostrar modal perguntando sobre simulação
+                            $('#simulacao-error-message').text(response.message);
+                            const simulacaoModal = new bootstrap.Modal(document.getElementById('simulacaoModal'));
+                            simulacaoModal.show();
+                        } else {
+                            // Mostrar mensagem de erro padrão
+                            $('#rastreamento-error').show();
+                            $('#rastreamento-error-message').text(response.message || 'Não foi possível obter informações de rastreamento.');
+                        }
+                    }
+                },
+                error: function(xhr) {
+                    // Esconder loader e mensagem de sucesso
+                    $('#rastreamento-loader').hide();
+                    $('#rastreamento-success').hide();
+                    
+                    let errorMsg = 'Erro ao processar a solicitação.';
+                    if (xhr.responseJSON && xhr.responseJSON.message) {
+                        errorMsg = xhr.responseJSON.message;
+                    }
+                    
+                    $('#rastreamento-error').show();
+                    $('#rastreamento-error-message').text(errorMsg);
+                },
+                complete: function() {
+                    // Esconder o loader como garantia adicional
+                    $('#rastreamento-loader').hide().css('display', 'none !important');
                 }
-                return dataString;
-            } catch (e) {
-                return dataString;
-            }
+            });
         }
         
-        // Função para formatar data e hora
-        function formatarDataHora(data, hora) {
-            if (!data) return '';
-            
-            let dataFormatada = formatarData(data);
-            
-            if (hora) {
-                // Tentar formatar a hora (HH:MM:SS para HH:MM)
-                try {
-                    const partesHora = hora.split(':');
-                    if (partesHora.length >= 2) {
-                        return `${dataFormatada} ${partesHora[0]}:${partesHora[1]}`;
-                    }
-                    return `${dataFormatada} ${hora}`;
-                } catch (e) {
-                    return `${dataFormatada} ${hora}`;
-                }
-            }
-            
-            return dataFormatada;
+        // Função para obter parâmetros da URL
+        function getParameterByName(name, url = window.location.href) {
+            name = name.replace(/[\[\]]/g, '\\$&');
+            var regex = new RegExp('[?&]' + name + '(=([^&#]*)|&|#|$)'),
+                results = regex.exec(url);
+            if (!results) return null;
+            if (!results[2]) return '';
+            return decodeURIComponent(results[2].replace(/\+/g, ' '));
         }
+        
+        // Verificar se existe o parâmetro hash na URL
+        const hashParam = getParameterByName('hash');
+        if (hashParam) {
+            console.log('Hash de rastreamento detectado na URL:', hashParam);
+            // Preencher o campo com o hash e disparar a busca automaticamente
+            $('#codigo_rastreamento').val(hashParam);
+            codigoRastreamento = hashParam;
+            
+            // Mostrar loader e esconder resultados anteriores
+            $('#rastreamento-error').hide();
+            $('#rastreamento-success').hide();
+            $('#rastreamento-loader').show();
+            $('#rastreamento-resultado').hide();
+            
+            // Enviar solicitação AJAX para a API
+            setTimeout(() => {
+                enviarSolicitacaoRastreamento(false);
+            }, 500); // Pequeno delay para garantir que os elementos estejam prontos
+        }
+        
+        // Processar formulário de rastreamento via AJAX
+        $('#rastreamento-form').on('submit', function(e) {
+            e.preventDefault();
+            
+            // Armazenar o código de rastreamento
+            codigoRastreamento = $('#codigo_rastreamento').val().trim();
+            
+            // Esconder mensagens de erro e sucesso anteriores
+            $('#rastreamento-error').hide();
+            $('#rastreamento-success').hide();
+            
+            // Mostrar loader e esconder resultados anteriores
+            $('#rastreamento-loader').show();
+            $('#rastreamento-resultado').hide();
+            
+            // Enviar solicitação AJAX para a API
+            enviarSolicitacaoRastreamento(false);
+        });
+        
+        // Botão para usar simulação
+        $('#btn-usar-simulacao').on('click', function() {
+            // Fechar o modal
+            const simulacaoModal = bootstrap.Modal.getInstance(document.getElementById('simulacaoModal'));
+            simulacaoModal.hide();
+            
+            // Esconder mensagens de erro e sucesso
+            $('#rastreamento-error').hide();
+            $('#rastreamento-success').hide();
+            
+            // Mostrar loader novamente
+            $('#rastreamento-loader').show();
+            
+            // Enviar solicitação com flag para forçar simulação
+            enviarSolicitacaoRastreamento(true);
+        });
+        
+        // Botão para solicitar comprovante de entrega
+        $('#btn-solicitar-comprovante').on('click', function() {
+            const trackingNumber = $('#rastreamento-codigo').text();
+            if (!trackingNumber) return;
+            
+            // Mostrar modal
+            const comprovanteModal = new bootstrap.Modal(document.getElementById('comprovanteModal'));
+            comprovanteModal.show();
+            
+            // Preparar modal
+            $('#comprovante-loader').show();
+            $('#comprovante-error').hide();
+            $('#comprovante-content').hide();
+            
+            // Solicitar comprovante
+            $.ajax({
+                url: '{{ route("api.rastreamento.comprovante") }}',
+                method: 'POST',
+                data: {
+                    _token: '{{ csrf_token() }}',
+                    codigo_rastreamento: trackingNumber,
+                    formato: 'PDF'
+                },
+                dataType: 'json',
+                success: function(response) {
+                    if (response.success) {
+                        // Base64 para URL
+                        const base64Data = response.document;
+                        const documentFormat = response.documentFormat.toLowerCase();
+                        
+                        // Criar URL para o documento
+                        const documentUrl = 'data:application/' + documentFormat + ';base64,' + base64Data;
+                        
+                        // Exibir no iframe
+                        $('#comprovante-iframe').attr('src', documentUrl);
+                        $('#comprovante-content').show();
+                        
+                        // Configurar botão de download
+                        $('#btn-download-comprovante').off('click').on('click', function() {
+                            const a = document.createElement('a');
+                            a.href = documentUrl;
+                            a.download = 'Comprovante_Entrega_' + trackingNumber + '.' + documentFormat;
+                            document.body.appendChild(a);
+                            a.click();
+                            document.body.removeChild(a);
+                        });
+                    } else {
+                        // Exibir erro
+                        $('#comprovante-error').show();
+                        $('#comprovante-error-message').text(response.mensagem || 'Não foi possível obter o comprovante de entrega.');
+                    }
+                },
+                error: function(xhr) {
+                    let errorMsg = 'Erro ao solicitar comprovante de entrega.';
+                    if (xhr.responseJSON && xhr.responseJSON.mensagem) {
+                        errorMsg = xhr.responseJSON.mensagem;
+                    }
+                    
+                    $('#comprovante-error').show();
+                    $('#comprovante-error-message').text(errorMsg);
+                },
+                complete: function() {
+                    $('#comprovante-loader').hide();
+                }
+            });
+        });
     });
+</script>
+
+<!-- Script para mostrar a seção de logs e renderizar os logs JavaScript -->
+<script>
+// Variáveis para armazenar logs
+var trackingLogs = [];
+
+// Função para adicionar log ao array e ao console
+function addLog(type, message, data) {
+    const logEntry = {
+        type: type,
+        message: message,
+        data: data,
+        timestamp: new Date().toISOString()
+    };
+    
+    trackingLogs.push(logEntry);
+    
+    // Log no console do navegador
+    if (type === 'error') {
+        console.error(message, data);
+    } else if (type === 'warn') {
+        console.warn(message, data);
+    } else {
+        console.log(message, data);
+    }
+    
+    // Atualizar a exibição de logs
+    updateLogsDisplay();
+}
+
+// Função para atualizar a exibição de logs
+function updateLogsDisplay() {
+    const logsContainer = document.getElementById('logs-content');
+    if (!logsContainer) return;
+    
+    // Limpar o conteúdo anterior
+    logsContainer.innerHTML = '';
+    
+    // Adicionar cada log ao container
+    trackingLogs.forEach(log => {
+        const logElement = document.createElement('div');
+        logElement.className = 'mb-2 pb-2 border-b border-gray-700';
+        
+        const header = document.createElement('div');
+        header.className = `flex items-center ${log.type === 'error' ? 'text-red-500' : (log.type === 'warn' ? 'text-yellow-500' : 'text-green-400')}`;
+        
+        const timestamp = document.createElement('span');
+        timestamp.className = 'text-xs text-gray-500 mr-2';
+        timestamp.textContent = new Date(log.timestamp).toLocaleTimeString();
+        
+        const typeLabel = document.createElement('span');
+        typeLabel.className = 'text-xs font-bold mr-2';
+        typeLabel.textContent = log.type.toUpperCase();
+        
+        const message = document.createElement('span');
+        message.textContent = log.message;
+        
+        header.appendChild(timestamp);
+        header.appendChild(typeLabel);
+        header.appendChild(message);
+        logElement.appendChild(header);
+        
+        if (log.data) {
+            const dataContainer = document.createElement('pre');
+            dataContainer.className = 'mt-1 text-xs text-white bg-gray-800 p-2 rounded overflow-auto';
+            dataContainer.style.maxHeight = '100px';
+            dataContainer.textContent = typeof log.data === 'object' ? JSON.stringify(log.data, null, 2) : log.data;
+            logElement.appendChild(dataContainer);
+        }
+        
+        logsContainer.appendChild(logElement);
+    });
+}
+
+// Função para mostrar/ocultar a seção de logs
+document.getElementById('toggle-logs').addEventListener('click', function() {
+    const logsContainer = document.getElementById('logs-container');
+    const isHidden = logsContainer.classList.contains('hidden');
+    
+    if (isHidden) {
+        logsContainer.classList.remove('hidden');
+        this.textContent = 'Ocultar';
+    } else {
+        logsContainer.classList.add('hidden');
+        this.textContent = 'Mostrar';
+    }
+});
+
+// Sobrescrever a função original de enviar solicitação AJAX para adicionar logs
+const originalEnviarSolicitacao = enviarSolicitacaoRastreamento;
+enviarSolicitacaoRastreamento = function(forcarSimulacao) {
+    addLog('info', 'Iniciando solicitação de rastreamento', { 
+        codigo: codigoRastreamento,
+        forcarSimulacao: forcarSimulacao 
+    });
+    
+    // Sobrescrever método Ajax para logar
+    const originalAjax = $.ajax;
+    $.ajax = function(settings) {
+        addLog('info', 'Enviando requisição AJAX', {
+            url: settings.url,
+            method: settings.type,
+            data: settings.data
+        });
+        
+        // Armazenar os callbacks originais
+        const originalSuccess = settings.success;
+        const originalError = settings.error;
+        
+        // Sobrescrever callbacks
+        settings.success = function(response) {
+            addLog('info', 'Resposta AJAX recebida com sucesso', response);
+            if (originalSuccess) originalSuccess(response);
+        };
+        
+        settings.error = function(xhr, status, error) {
+            addLog('error', 'Erro na requisição AJAX', {
+                status: status,
+                error: error,
+                responseText: xhr.responseText
+            });
+            if (originalError) originalError(xhr, status, error);
+        };
+        
+        return originalAjax.apply($, arguments);
+    };
+    
+    // Chamar função original
+    const result = originalEnviarSolicitacao(forcarSimulacao);
+    
+    // Restaurar método Ajax original
+    $.ajax = originalAjax;
+    
+    return result;
+};
+
+// Script para verificar ambiente e perfil do usuário
+var appEnvironment = "{{ app()->environment() }}";
+var isUserAdmin = {{ auth()->check() && auth()->user()->is_admin ? 'true' : 'false' }};
+
+// Verificar se estamos em ambiente de desenvolvimento ou se o usuário é admin
+if (appEnvironment === "local" || isUserAdmin) {
+    document.getElementById('debug-logs-section').classList.remove('hidden');
+    addLog('info', 'Modo de depuração ativado', { 
+        ambiente: appEnvironment, 
+        admin: isUserAdmin 
+    });
+}
 </script> 

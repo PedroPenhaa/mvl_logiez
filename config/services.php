@@ -71,4 +71,12 @@ return [
         'redirect' => env('APPLE_REDIRECT_URI', '/auth/apple/callback'),
     ],
 
+    /*
+     * Configurações para integrações com APIs de serviços.
+     */
+    'asaas' => [
+        'token' => env('ASAAS_API_TOKEN', '$aact_hmlg_000MzkwODA2MWY2OGM3MWRlMDU2NWM3MzJlNzZmNGZhZGY6Ojk5YWQxY2M2LTg1ODUtNDA2YS04ZWRlLTAzNTY5NDRmYmM2Mjo6JGFhY2hfYTI0ZmIzYjUtMWRiOS00MmJiLWI1MjItYjk1ZWRjNTQxYjI5'),
+        'sandbox' => env('ASAAS_SANDBOX', true),
+    ],
+
 ];

@@ -110,4 +110,12 @@ class Shipment extends Model
     {
         return $this->hasMany(TrackingEvent::class);
     }
+
+    /**
+     * Get the payments for the shipment.
+     */
+    public function payments()
+    {
+        return $this->hasMany(Payment::class);
+    }
 } 
