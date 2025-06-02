@@ -2533,6 +2533,51 @@
                         // Exibir mensagem de sucesso
                         showAlert('Envio processado com sucesso! ' + response.message, 'success');
                         
+                        // GERAR PDF COM OS DADOS RETORNADOS PELA API FEDEX
+                        if (response.fedexData || response.dadosFedex || response) {
+                            // Carregar jsPDF dinamicamente se não estiver presente
+                            function gerarPDFComDadosFedex(dados) {
+                                if (typeof window.jspdf === 'undefined' && typeof window.jsPDF === 'undefined') {
+                                    var script = document.createElement('script');
+                                    script.src = 'https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js';
+                                    script.onload = function() {
+                                        gerarPDFComDadosFedex(dados);
+                                    };
+                                    document.head.appendChild(script);
+                                    return;
+                                }
+                                // jsPDF pode estar em window.jspdf.jsPDF ou window.jsPDF
+                                var jsPDF = window.jspdf ? window.jspdf.jsPDF : window.jsPDF;
+                                var doc = new jsPDF();
+                                let y = 10;
+                                doc.setFontSize(16);
+                                doc.text('Dados do Envio - FedEx', 10, y);
+                                y += 10;
+                                doc.setFontSize(10);
+                                function printObj(obj, indent = 0) {
+                                    for (const key in obj) {
+                                        if (!obj.hasOwnProperty(key)) continue;
+                                        let value = obj[key];
+                                        let line = ' '.repeat(indent * 2) + key + ': ';
+                                        if (typeof value === 'object' && value !== null) {
+                                            doc.text(line, 10, y);
+                                            y += 6;
+                                            printObj(value, indent + 1);
+                                        } else {
+                                            line += String(value);
+                                            doc.text(line, 10, y);
+                                            y += 6;
+                                            if (y > 280) { doc.addPage(); y = 10; }
+                                        }
+                                    }
+                                }
+                                printObj(dados);
+                                doc.save('dados_envio_fedex.pdf');
+                            }
+                            // Tenta pegar o objeto de dados retornados
+                            let dadosFedex = response.fedexData || response.dadosFedex || response;
+                            gerarPDFComDadosFedex(dadosFedex);
+                        }
                         // Redirecionar para a próxima etapa
                         if (response.nextStep) {
                             setTimeout(function() {
