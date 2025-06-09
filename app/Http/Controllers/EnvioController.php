@@ -575,7 +575,12 @@ class EnvioController extends Controller
                 ];
 
                 // Número de parcelas (default: 1 - à vista)
-                $paymentData['installmentCount'] = $request->installments ?? 1;
+                $parcelas = (int)($request->installments ?? 1);
+                if ($parcelas > 1) {
+                    $paymentData['installmentCount'] = $parcelas;
+                    $paymentData['installmentValue'] = (float)($request->installment_value ?? 0);
+                }
+                // Para 1x, NÃO envie installmentCount nem installmentValue!
             }
             
             // Log de debug dos dados do pagamento (removendo dados sensíveis)
@@ -1250,6 +1255,94 @@ class EnvioController extends Controller
             return response()->json([
                 'success' => false,
                 'message' => 'Erro ao obter detalhes do envio: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Processa todos os pagamentos confirmados (CONFIRMED) e envia para a FedEx
+     * Atualiza o status do shipment e salva os dados de rastreamento
+     * Somente para pagamentos com payment_gateway 'asaas' e que ainda não foram enviados
+     */
+    public function processarEnviosPagosFedex(Request $request)
+    {
+        $resultados = [];
+        try {
+            // Buscar todos os pagamentos confirmados e não processados
+            $pagamentos = \DB::table('payments')
+                ->where('status', 'CONFIRMED')
+                ->where('payment_gateway', 'asaas')
+                ->get();
+
+            foreach ($pagamentos as $pagamento) {
+                // Buscar o shipment correspondente
+                $shipment = \App\Models\Shipment::find($pagamento->shipment_id);
+                if (!$shipment) {
+                    $resultados[] = [
+                        'payment_id' => $pagamento->id,
+                        'shipment_id' => $pagamento->shipment_id,
+                        'status' => 'erro',
+                        'mensagem' => 'Shipment não encontrado'
+                    ];
+                    continue;
+                }
+                // Só processa se ainda não foi criado na FedEx
+                if ($shipment->status === 'created' && $shipment->tracking_number) {
+                    $resultados[] = [
+                        'payment_id' => $pagamento->id,
+                        'shipment_id' => $shipment->id,
+                        'status' => 'ignorado',
+                        'mensagem' => 'Já processado na FedEx',
+                        'tracking_number' => $shipment->tracking_number
+                    ];
+                    continue;
+                }
+                // Processar envio na FedEx
+                $respostaFedex = $this->processarEnvioFedex($shipment);
+                if ($respostaFedex['success']) {
+                    $shipment->tracking_number = $respostaFedex['tracking_number'];
+                    $shipment->shipment_id = $respostaFedex['shipment_id'];
+                    $shipment->shipping_label_url = $respostaFedex['label_url'] ?? null;
+                    $shipment->status = 'created';
+                    $shipment->save();
+                    $resultados[] = [
+                        'payment_id' => $pagamento->id,
+                        'shipment_id' => $shipment->id,
+                        'status' => 'sucesso',
+                        'tracking_number' => $shipment->tracking_number
+                    ];
+                    \Log::info('Envio processado para pagamento confirmado', [
+                        'payment_id' => $pagamento->id,
+                        'shipment_id' => $shipment->id,
+                        'tracking_number' => $shipment->tracking_number
+                    ]);
+                } else {
+                    $resultados[] = [
+                        'payment_id' => $pagamento->id,
+                        'shipment_id' => $shipment->id,
+                        'status' => 'erro',
+                        'mensagem' => $respostaFedex['message'] ?? 'Erro desconhecido'
+                    ];
+                    \Log::error('Erro ao processar envio FedEx para pagamento confirmado', [
+                        'payment_id' => $pagamento->id,
+                        'shipment_id' => $shipment->id,
+                        'erro' => $respostaFedex['message'] ?? 'Erro desconhecido'
+                    ]);
+                }
+            }
+            return response()->json([
+                'success' => true,
+                'resultados' => $resultados
+            ]);
+        } catch (\Exception $e) {
+            \Log::error('Erro ao processar envios pagos para FedEx', [
+                'erro' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+            return response()->json([
+                'success' => false,
+                'mensagem' => $e->getMessage(),
+                'resultados' => $resultados
             ], 500);
         }
     }

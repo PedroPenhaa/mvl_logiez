@@ -363,6 +363,7 @@
                             <input type="hidden" name="payment_method" id="payment_method">
                             <input type="hidden" name="payment_currency" id="payment_currency" value="BRL">
                             <input type="hidden" name="payment_amount" id="payment_amount">
+                            <input type="hidden" name="installment_value" id="installment_value">
                             
                             <div class="row">
                                 <div class="col-md-4 mb-3">
@@ -2840,6 +2841,53 @@
             }
         });
     } // <- Fechamento da função inicializarApp
+
+    // Atualiza o valor da parcela sempre que o número de parcelas ou o valor total mudar
+    function atualizarValorParcela() {
+        // Pega o valor total do pagamento (em string, pode vir com R$ e vírgula)
+        let totalStr = $('#payment_amount').val() || '';
+        totalStr = totalStr.replace(/[^\d,\.]/g, '').replace(',', '.');
+        const total = parseFloat(totalStr) || 0;
+        const parcelas = parseInt($('#installments').val()) || 1;
+        if (parcelas > 0 && total > 0) {
+            const valorParcela = (total / parcelas).toFixed(2);
+            $('#installment_value').val(valorParcela);
+        } else {
+            $('#installment_value').val('');
+        }
+    }
+
+    // Sempre que o número de parcelas mudar, atualize o valor da parcela
+    $('#installments').on('change', atualizarValorParcela);
+    // Sempre que o valor total mudar, atualize o valor da parcela
+    $('#payment_amount').on('input', atualizarValorParcela);
+
+    // Sempre que selecionar serviço de entrega, atualize o valor da parcela
+    $(document).on('click', '.selecionar-servico', function() {
+        setTimeout(atualizarValorParcela, 100); // Pequeno delay para garantir atualização
+    });
+
+    // Sempre que selecionar método de pagamento, atualize o valor da parcela
+    $(document).on('click', '.select-payment-method', function() {
+        setTimeout(atualizarValorParcela, 100);
+    });
+
+    // Sempre que mostrar o formulário de cartão de crédito, atualize o valor da parcela
+    $('#credit-card-form').on('show', atualizarValorParcela);
+
+    // Antes de submeter o formulário, atualize o valor da parcela
+    $('#envio-form').on('submit', function(e) {
+        atualizarValorParcela();
+        // Se for 1x, desabilite os campos de parcelamento para não enviar
+        if ($('#installments').val() == '1') {
+            $('#installment_value').prop('disabled', true);
+            $('#installments').prop('disabled', true);
+        } else {
+            $('#installment_value').prop('disabled', false);
+            $('#installments').prop('disabled', false);
+        }
+        // ... resto do código ...
+    });
 </script> 
 
 <!-- Seção para exibir logs de depuração -->
