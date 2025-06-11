@@ -233,10 +233,13 @@ class TestFedexCotacao extends Command
                 CURLOPT_VERBOSE => true
             ]);
     
+
             $rateResponse = curl_exec($rateCurl);
             $rateHttpCode = curl_getinfo($rateCurl, CURLINFO_HTTP_CODE);
             $rateErr = curl_error($rateCurl);
             
+
+            dd($rateResponse . ' - ' . $rateHttpCode . ' - ' . $rateErr);
             curl_close($rateCurl);
 
             // Log da resposta detalhada para debug

@@ -130,6 +130,8 @@ class EnvioController extends Controller
             $shipment->ship_date = now();
             $shipment->estimated_delivery_date = now()->addDays(7); // Estimativa padrão
             $shipment->is_simulation = false;
+            $shipment->tipo_envio = $request->tipo_envio;
+            $shipment->tipo_pessoa = $request->tipo_pessoa;
             $shipment->save();
             
             // Log de criação do envio

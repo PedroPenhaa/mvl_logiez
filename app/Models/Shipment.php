@@ -39,7 +39,9 @@ class Shipment extends Model
         'delivery_date',
         'is_simulation',
         'was_delivered',
-        'has_issues'
+        'has_issues',
+        'tipo_envio',
+        'tipo_pessoa'
     ];
 
     /**

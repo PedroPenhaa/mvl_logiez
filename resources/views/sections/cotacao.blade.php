@@ -127,7 +127,7 @@ $(document).ready(function() {
         e.preventDefault();
         
         // DEBUG - Verificar a URL do formulário
-        console.log('Form action URL:', $(this).attr('action'));
+        //console.log('Form action URL:', $(this).attr('action'));
         
         // Mostrar o loader
         $('#cotacao-loader').show();
@@ -142,14 +142,14 @@ $(document).ready(function() {
         window.lastFormData = formData;
         
         // Log dos dados que serão enviados
-        console.log('Enviando dados para cotação:', {
-            origem: $('#origem').val(),
-            destino: $('#destino').val(),
-            altura: $('#altura').val(),
-            largura: $('#largura').val(),
-            comprimento: $('#comprimento').val(),
-            peso: $('#peso').val()
-        });
+        //console.log('Enviando dados para cotação:', {
+        //    origem: $('#origem').val(),
+        //    destino: $('#destino').val(),
+        //    altura: $('#altura').val(),
+        //    largura: $('#largura').val(),
+        //    comprimento: $('#comprimento').val(),
+        //    peso: $('#peso').val()
+        //});
         
         // Enviar para o endpoint de cotação
         $.ajax({
@@ -164,7 +164,7 @@ $(document).ready(function() {
                 $('#cotacao-loader').hide();
                 
                 // Exibir logs detalhados no console para depuração
-                console.log('Resposta completa da API:', response);
+                console.log('Resposta completa da API FedEx:', response);
                 
                 // Processar a resposta usando a função compartilhada
                 processarResposta(response);
@@ -310,7 +310,7 @@ $(document).ready(function() {
                 html += '<th>Tempo de Entrega</th>';
                 html += '<th>Valor (USD)</th>';
                 html += '<th>Valor (BRL)</th>';
-                html += '<th>Ação</th>';
+              //  html += '<th>Ação</th>';
                 html += '</tr></thead><tbody>';
                 
                 response.cotacoesFedEx.forEach(function(cotacao) {
@@ -325,7 +325,7 @@ $(document).ready(function() {
                     html += '</td>';
                     html += '<td>' + cotacao.valorTotal + ' ' + cotacao.moeda + '</td>';
                     html += '<td class="fw-bold text-success">R$ ' + (cotacao.valorTotalBRL || '-') + '</td>';
-                    html += '<td><a href="/envio?servico=' + cotacao.servicoTipo + '&valor=' + cotacao.valorTotal + '" class="btn btn-sm btn-primary">Escolher</a></td>';
+               //     html += '<td><a href="/envio?servico=' + cotacao.servicoTipo + '&valor=' + cotacao.valorTotal + '" class="btn btn-sm btn-primary">Escolher</a></td>';
                     html += '</tr>';
                 });
                 
@@ -346,6 +346,8 @@ $(document).ready(function() {
             html += '<div class="text-muted">Cotação calculada em: ' + response.dataConsulta + '</div>';
             
             html += '<div class="d-flex gap-2">';
+            html += '<button id="btn-realizar-envio" class="btn btn-success">';
+            html += '<i class="fas fa-shipping-fast me-2"></i>Realizar Envio</button>';
             html += '<button onclick="window.print();" class="btn btn-outline-secondary">';
             html += '<i class="fas fa-print me-2"></i>Imprimir</button>';
             
@@ -379,8 +381,8 @@ $(document).ready(function() {
     // Função para exibir erro
     function exibirErro(xhr) {
         // Log do erro
-        console.error('Erro na requisição AJAX:', xhr.status, xhr.statusText);
-        console.error('Resposta:', xhr.responseText);
+        //console.error('Erro na requisição AJAX:', xhr.status, xhr.statusText);
+        //console.error('Resposta:', xhr.responseText);
         
         // Exibir mensagem de erro
         var html = '<div class="alert alert-danger">';
@@ -405,6 +407,15 @@ $(document).ready(function() {
         
         $('#cotacao-resultado').html(html).fadeIn();
     }
+
+    // Após exibir resultados, adicionar o evento ao botão Realizar Envio
+    $(document).on('click', '#btn-realizar-envio', function() {
+        if (typeof loadSection === 'function') {
+            loadSection('envio');
+        } else {
+            window.location.href = '/sections/envio';
+        }
+    });
 });
 </script>
 

@@ -54,7 +54,7 @@ class ProcessarPagamentosValidados extends Command
         $pagamentos = Payment::whereIn('status', ['confirmed', 'received'])
             ->whereHas('shipment', function ($query) {
                 $query->whereNull('tracking_number')
-                      ->where('status', 'pending');
+                      ->where('status', 'pending_payment');
             })
             ->with(['shipment.senderAddress', 'shipment.recipientAddress', 'shipment.items'])
             ->limit(10) // Processa em lotes para evitar sobrecarga
@@ -103,32 +103,93 @@ class ProcessarPagamentosValidados extends Command
                     $dadosDestinatario,
                     $dadosPacote,
                     $dadosProdutos,
-                    $shipment->service_code
+                    $shipment->service_code,
+                    false // Não forçar simulação
                 );
                 
-                // Log da resposta
-                Log::info('ProcessarPagamentosValidados: Resposta da FedEx', [
+                // Log da resposta bruta
+                Log::info('ProcessarPagamentosValidados: Resposta bruta da FedEx', [
                     'payment_id' => $pagamento->id,
                     'shipment_id' => $shipment->id,
-                    'response' => $response
+                    'raw_response' => $response
                 ]);
+
+                // Mostrar resposta detalhada no console
+                //$this->info("\n📦 Resposta da API FedEx:");
+                //$this->info("----------------------------------------");
+                //$this->info("Payment ID: " . $pagamento->id);
+                //$this->info("Shipment ID: " . $shipment->id);
+                //$this->info("Status: " . ($response['success'] ? '✅ Sucesso' : '❌ Erro'));
                 
+                // Mostrar resposta completa
+                //$this->info("\n📋 Resposta Completa da API:");
+                //$this->info(json_encode($response, JSON_PRETTY_PRINT));
+                //$this->info("----------------------------------------\n");
+
+                // Verificar se a resposta é válida
+                if (!is_array($response)) {
+                    Log::error('ProcessarPagamentosValidados: Resposta inválida da FedEx', [
+                        'payment_id' => $pagamento->id,
+                        'shipment_id' => $shipment->id,
+                        'response' => $response
+                    ]);
+                    throw new \Exception('Resposta inválida da FedEx: formato não reconhecido');
+                }
+
+                // Verificar sucesso da operação
+                if (!isset($response['success'])) {
+                    Log::error('ProcessarPagamentosValidados: Resposta sem indicador de sucesso', [
+                        'payment_id' => $pagamento->id,
+                        'shipment_id' => $shipment->id,
+                        'response' => $response
+                    ]);
+                    throw new \Exception('Resposta da FedEx sem indicador de sucesso');
+                }
+
                 if ($response['success']) {
+                    // Verificar campos obrigatórios
+                    $camposObrigatorios = ['trackingNumber', 'shipmentId', 'labelUrl'];
+                    $camposFaltantes = [];
+
+                    foreach ($camposObrigatorios as $campo) {
+                        if (!isset($response[$campo])) {
+                            $camposFaltantes[] = $campo;
+                        }
+                    }
+
+                    if (!empty($camposFaltantes)) {
+                        Log::error('ProcessarPagamentosValidados: Campos obrigatórios ausentes na resposta', [
+                            'payment_id' => $pagamento->id,
+                            'shipment_id' => $shipment->id,
+                            'campos_faltantes' => $camposFaltantes,
+                            'response' => $response
+                        ]);
+                        throw new \Exception('Resposta incompleta da FedEx: campos obrigatórios ausentes: ' . implode(', ', $camposFaltantes));
+                    }
+
                     // Atualizar o envio com os dados de rastreamento
-                    $shipment->tracking_number = $response['tracking_number'];
-                    $shipment->shipment_id = $response['shipment_id'];
-                    $shipment->label_url = $response['label_url'];
+                    $shipment->tracking_number = $response['trackingNumber'];
+                    $shipment->shipment_id = $response['shipmentId'];
+                    $shipment->label_url = $response['labelUrl'];
                     $shipment->status = 'created';
                     $shipment->status_description = 'Envio criado e pronto para despacho';
                     $shipment->save();
                     
-                    $this->info("Envio processado com sucesso. Tracking: {$response['tracking_number']}");
+                    $this->info("Envio processado com sucesso. Tracking: {$response['trackingNumber']}");
                 } else {
+                    $errorMessage = isset($response['message']) ? $response['message'] : 'Erro desconhecido';
+                    Log::error('ProcessarPagamentosValidados: Erro na resposta da FedEx', [
+                        'payment_id' => $pagamento->id,
+                        'shipment_id' => $shipment->id,
+                        'error_message' => $errorMessage,
+                        'response' => $response
+                    ]);
+
                     $shipment->status = 'error';
-                    $shipment->status_description = 'Erro ao processar envio: ' . ($response['message'] ?? 'Erro desconhecido');
+                    $shipment->status_description = 'Erro ao processar envio: ' . $errorMessage;
                     $shipment->save();
                     
-                    $this->error("Erro ao processar o envio: " . ($response['message'] ?? 'Erro desconhecido'));
+                    $this->error("Erro ao processar o envio: " . $errorMessage);
                 }
                 
             } catch (\Exception $e) {
