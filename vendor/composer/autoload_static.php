@@ -603,6 +603,7 @@ class ComposerStaticInit626b9e7ddd47fb7eff9aaa53cce0c9ad
         'App\\Console\\Commands\\TestFedexAuth' => __DIR__ . '/../..' . '/app/Console/Commands/TestFedexAuth.php',
         'App\\Console\\Commands\\TestFedexCotacao' => __DIR__ . '/../..' . '/app/Console/Commands/TestFedexCotacao.php',
         'App\\Console\\Commands\\TestFedexEnvio' => __DIR__ . '/../..' . '/app/Console/Commands/TestFedexEnvio.php',
+        'App\\Console\\Commands\\TestFedexEtiqueta' => __DIR__ . '/../..' . '/app/Console/Commands/TestFedexEtiqueta.php',
         'App\\Console\\Commands\\TestFedexQuoteRequest' => __DIR__ . '/../..' . '/app/Console/Commands/TestFedexQuoteRequest.php',
         'App\\Console\\Kernel' => __DIR__ . '/../..' . '/app/Console/Kernel.php',
         'App\\Http\\Controllers\\AuthController' => __DIR__ . '/../..' . '/app/Http/Controllers/AuthController.php',

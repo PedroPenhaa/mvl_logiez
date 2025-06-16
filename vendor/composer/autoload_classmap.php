@@ -19,6 +19,7 @@ return array(
     'App\\Console\\Commands\\TestFedexAuth' => $baseDir . '/app/Console/Commands/TestFedexAuth.php',
     'App\\Console\\Commands\\TestFedexCotacao' => $baseDir . '/app/Console/Commands/TestFedexCotacao.php',
     'App\\Console\\Commands\\TestFedexEnvio' => $baseDir . '/app/Console/Commands/TestFedexEnvio.php',
+    'App\\Console\\Commands\\TestFedexEtiqueta' => $baseDir . '/app/Console/Commands/TestFedexEtiqueta.php',
     'App\\Console\\Commands\\TestFedexQuoteRequest' => $baseDir . '/app/Console/Commands/TestFedexQuoteRequest.php',
     'App\\Console\\Kernel' => $baseDir . '/app/Console/Kernel.php',
     'App\\Http\\Controllers\\AuthController' => $baseDir . '/app/Http/Controllers/AuthController.php',

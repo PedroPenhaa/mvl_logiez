@@ -144,8 +144,6 @@ class BuscaProdutos extends Command
                 $produto['descricao'] = strip_tags($produto['descricao']);
             }
 
-
-            
             // 4. Filtrar produtos para eliminar repetições nas descrições
             foreach ($produtos as $produto) {
                 if (!in_array($produto['descricao'], $descricoesVistas)) {
@@ -162,7 +160,6 @@ class BuscaProdutos extends Command
             File::put($jsonFilePath, json_encode($produtosUnicos, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE));
             $this->info("Arquivo json criado com sucesso em: {$jsonFilePath}");
 
-       
             // Opcional: salvar o resultado filtrado
             //Storage::disk('local')->put('produtos_filtrados.json', json_encode($produtos, JSON_PRETTY_PRINT));
 

@@ -1290,4 +1290,167 @@ class SectionController extends Controller
         
         return null;
     }
+
+    /**
+     * Retorna as etiquetas do usuário logado (tracking_number != null)
+     */
+    public function apiListarEtiquetasUsuario(Request $request)
+    {
+        if (!\Illuminate\Support\Facades\Auth::check()) {
+            return response()->json(['success' => false, 'message' => 'Não autenticado.'], 401);
+        }
+        $userId = \Illuminate\Support\Facades\Auth::id();
+        $etiquetas = \App\Models\Shipment::where('user_id', $userId)
+            ->whereNotNull('tracking_number')
+            ->orderByDesc('created_at')
+            ->get();
+        // Retornar apenas os campos necessários para a tabela
+        $dados = $etiquetas->map(function($etiqueta) {
+            return [
+                'id' => $etiqueta->id,
+                'tracking_number' => $etiqueta->tracking_number,
+                'ship_date' => optional($etiqueta->ship_date)->format('Y-m-d'),
+                'recipient_name' => optional($etiqueta->recipientAddress)->name ?? '',
+                'recipient_city' => optional($etiqueta->recipientAddress)->city ?? '',
+                'recipient_country' => optional($etiqueta->recipientAddress)->country ?? '',
+                'status' => $etiqueta->status,
+                'label_url' => $etiqueta->label_url,
+                'service_name' => $etiqueta->service_name,
+            ];
+        });
+        return response()->json(['success' => true, 'etiquetas' => $dados]);
+    }
+
+    /**
+     * Gera o array do invoice para um shipment específico
+     */
+    public function apiInvoiceByShipment($shipment_id)
+    {
+        $shipment = \App\Models\Shipment::find($shipment_id);
+        if (!$shipment) {
+            return response()->json(['success' => false, 'message' => 'Envio não encontrado.'], 404);
+        }
+        $recipient = $shipment->recipientAddress;
+        $items = $shipment->items;
+        $cartoons = [];
+        $total_qty = 0;
+        $total_amount = 0;
+        foreach ($items as $item) {
+            $cartoons[] = [
+                'goods' => $item->description ?? $item->name ?? 'Produto',
+                'ncm' => $item->ncm ?? '',
+                'qty_utd' => $item->quantity ?? 0,
+                'qty_unidade' => $item->unit_type ?? 'PAR',
+                'unit_price_usd' => $item->unit_price_usd ?? 0,
+                'amount_usd' => $item->total_price_usd ?? 0,
+            ];
+            $total_qty += $item->quantity ?? 0;
+            $total_amount += $item->total_price_usd ?? 0;
+        }
+        $invoice = [
+            'invoice_number' => $shipment->id ? sprintf('#%05d', $shipment->id) : '#00000',
+            'date' => $shipment->ship_date ? $shipment->ship_date->format('d/m/y') : now()->format('d/m/y'),
+            'terms_of_payment' => 'INTERNACIONAL TRANSFER',
+            'purchase_order' => $shipment->quote_id ?? '',
+            'shipment' => 'FLIGHT',
+            'marks' => 'N/A',
+            'loading_airport' => 'VIRACOPOS (VCP)',
+            'airport_of_discharge' => 'MIAMI AIRPORT (MIA)',
+            'selling_conditions' => 'DAB',
+            'pages' => 1,
+            'cartoons' => $cartoons,
+            'total_qty' => $total_qty,
+            'total_amount' => $total_amount,
+            'freight' => $shipment->freight_usd ?? 98,
+            'volumes' => $shipment->volumes ?? 4,
+            'net_weight' => $shipment->net_weight_lbs ?? 37.0392,
+            'gross_weight' => $shipment->gross_weight_lbs ?? 35.19,
+            'container' => $shipment->container ?? 0,
+            'sender' => [
+                'name' => 'LS COMÉRCIO ATACADISTA E VAREJISTA LTDA',
+                'address' => 'Rua 4, Pq Res. Dona Chiquinha, Cosmópolis - SP - Brazil',
+                'contact' => '+55(19) 98116-6445 / envios@logiez.com.br',
+                'cnpj' => '48.103.206/0001-73',
+            ],
+            'recipient' => [
+                'name' => $recipient->name ?? 'Destinatário',
+                'address' => $recipient->address ?? '',
+                'city' => $recipient->city ?? '',
+                'state' => $recipient->state ?? '',
+                'country' => $recipient->country ?? '',
+            ],
+        ];
+        return response()->json(['success' => true, 'invoice' => $invoice]);
+    }
+
+    /**
+     * Gera o PDF do invoice para um shipment específico
+     */
+    public function apiInvoicePdfByShipment($shipment_id)
+    {
+        ini_set('memory_limit', '512M');
+        $shipment = \App\Models\Shipment::find($shipment_id);
+        if (!$shipment) {
+            abort(404, 'Envio não encontrado.');
+        }
+        $recipient = $shipment->recipientAddress;
+        $items = $shipment->items;
+        $cartoons = [];
+        $total_qty = 0;
+        $total_amount = 0;
+        foreach ($items as $item) {
+            $cartoons[] = [
+                'goods' => $item->description ?? $item->name ?? 'Produto',
+                'ncm' => $item->ncm ?? '',
+                'qty_utd' => $item->quantity ?? 0,
+                'qty_unidade' => $item->unit_type ?? 'PAR',
+                'unit_price_usd' => $item->unit_price_usd ?? 0,
+                'amount_usd' => $item->total_price_usd ?? 0,
+            ];
+            $total_qty += $item->quantity ?? 0;
+            $total_amount += $item->total_price_usd ?? 0;
+        }
+        $invoice = [
+            'invoice_number' => $shipment->id ? sprintf('#%05d', $shipment->id) : '#00000',
+            'date' => $shipment->ship_date ? $shipment->ship_date->format('d/m/y') : now()->format('d/m/y'),
+            'terms_of_payment' => 'INTERNACIONAL TRANSFER',
+            'purchase_order' => $shipment->quote_id ?? '',
+            'shipment' => 'FLIGHT',
+            'marks' => 'N/A',
+            'loading_airport' => 'VIRACOPOS (VCP)',
+            'airport_of_discharge' => 'MIAMI AIRPORT (MIA)',
+            'selling_conditions' => 'DAB',
+            'pages' => 1,
+            'cartoons' => $cartoons,
+            'total_qty' => $total_qty,
+            'total_amount' => $total_amount,
+            'freight' => $shipment->freight_usd ?? 98,
+            'volumes' => $shipment->volumes ?? 4,
+            'net_weight' => $shipment->net_weight_lbs ?? 37.0392,
+            'gross_weight' => $shipment->gross_weight_lbs ?? 35.19,
+            'container' => $shipment->container ?? 0,
+            'sender' => [
+                'name' => 'LS COMÉRCIO ATACADISTA E VAREJISTA LTDA',
+                'address' => 'Rua 4, Pq Res. Dona Chiquinha, Cosmópolis - SP - Brazil',
+                'contact' => '+55(19) 98116-6445 / envios@logiez.com.br',
+                'cnpj' => '48.103.206/0001-73',
+            ],
+            'recipient' => [
+                'name' => $recipient->name ?? 'Destinatário',
+                'address' => $recipient->address ?? '',
+                'city' => $recipient->city ?? '',
+                'state' => $recipient->state ?? '',
+                'country' => $recipient->country ?? '',
+            ],
+        ];
+        // PERFORMANCE: opções DomPDF
+        $pdf = \PDF::loadView('pdf.invoice', ['invoice' => $invoice]);
+        $pdf->setOptions([
+            'isHtml5ParserEnabled' => false,
+            'isRemoteEnabled' => false,
+            'defaultFont' => 'Arial',
+        ]);
+        $pdf->setPaper('a4', 'landscape');
+        return $pdf->download('invoice_' . $shipment->id . '.pdf');
+    }
 } 

@@ -15,6 +15,7 @@ use App\Http\Controllers\EnvioController;
 use App\Http\Controllers\WebhookController;
 use Illuminate\Support\Facades\Log;
 use App\Http\Controllers\PaymentController;
+use App\Http\Controllers\EtiquetaController;
 
 /*
 |--------------------------------------------------------------------------
@@ -93,6 +94,26 @@ Route::prefix('api')->name('api.')->group(function () {
 
     // Rota para processar o envio
     Route::post('/envio/processar', [EnvioController::class, 'processar'])->name('envio.processar');
+
+    // Rota para etiqueta FedEx
+    Route::post('/fedex/etiqueta', [EtiquetaController::class, 'fedex'])
+        ->name('fedex.etiqueta')
+        ->middleware(['web', 'auth']);
+
+    // Rota para listar etiquetas do usuário logado
+    Route::get('/sections/etiquetas-usuario', [SectionController::class, 'apiListarEtiquetasUsuario'])
+        ->name('sections.etiquetas_usuario')
+        ->middleware(['web', 'auth']);
+
+    // Rota para gerar invoice de um shipment
+    Route::get('/sections/invoice/{shipment_id}', [SectionController::class, 'apiInvoiceByShipment'])
+        ->name('sections.invoice_by_shipment')
+        ->middleware(['web', 'auth']);
+
+    // Rota para baixar o PDF do invoice de um shipment
+    Route::get('/sections/invoice/{shipment_id}/pdf', [SectionController::class, 'apiInvoicePdfByShipment'])
+        ->name('sections.invoice_pdf_by_shipment')
+        ->middleware(['web', 'auth']);
 });
 
 // Esta rota deve estar definida em algum lugar do seu código
