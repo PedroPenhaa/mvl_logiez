@@ -1,3 +1,11 @@
+@php
+    Log::info('Debug View - Payments:', [
+        'pending' => $pendingPayments->count(),
+        'completed' => $completedPayments->count(),
+        'cancelled' => $cancelledPayments->count()
+    ]);
+@endphp
+
 <div class="card">
     <div class="card-header bg-primary text-white">
         <i class="fas fa-credit-card me-2"></i> Meus Pagamentos
@@ -53,7 +61,7 @@
                                                 <span class="badge bg-info text-dark"><i class="fas fa-qrcode me-1"></i> PIX</span>
                                             @elseif($payment->payment_method == 'boleto')
                                                 <span class="badge bg-secondary"><i class="fas fa-barcode me-1"></i> Boleto</span>
-                                            @elseif($payment->payment_method == 'cartao')
+                                            @elseif($payment->payment_method == 'cartao' || $payment->payment_method == 'credit_card')
                                                 <span class="badge bg-primary"><i class="fas fa-credit-card me-1"></i> Cartão</span>
                                             @else
                                                 <span class="badge bg-light text-dark">{{ $payment->payment_method }}</span>
@@ -72,7 +80,7 @@
                                         </td>
                                         <td>
                                             <div class="btn-group" role="group">
-                                                <a href="/pagamentos/{{ $payment->id }}" class="btn btn-sm btn-outline-secondary">
+                                                <a href="{{ route('payments.show', $payment->id) }}" class="btn btn-sm btn-outline-secondary">
                                                     <i class="fas fa-eye"></i> Detalhes
                                                 </a>
                                             </div>
@@ -116,14 +124,14 @@
                                                 <span class="badge bg-info text-dark"><i class="fas fa-qrcode me-1"></i> PIX</span>
                                             @elseif($payment->payment_method == 'boleto')
                                                 <span class="badge bg-secondary"><i class="fas fa-barcode me-1"></i> Boleto</span>
-                                            @elseif($payment->payment_method == 'cartao')
+                                            @elseif($payment->payment_method == 'cartao' || $payment->payment_method == 'credit_card')
                                                 <span class="badge bg-primary"><i class="fas fa-credit-card me-1"></i> Cartão</span>
                                             @else
                                                 <span class="badge bg-light text-dark">{{ $payment->payment_method }}</span>
                                             @endif
                                         </td>
                                         <td>
-                                            <a href="/pagamentos/{{ $payment->id }}" class="btn btn-sm btn-outline-secondary">
+                                            <a href="{{ route('payments.show', $payment->id) }}" class="btn btn-sm btn-outline-secondary">
                                                 <i class="fas fa-eye"></i> Detalhes
                                             </a>
                                         </td>
@@ -166,14 +174,14 @@
                                                 <span class="badge bg-info text-dark"><i class="fas fa-qrcode me-1"></i> PIX</span>
                                             @elseif($payment->payment_method == 'boleto')
                                                 <span class="badge bg-secondary"><i class="fas fa-barcode me-1"></i> Boleto</span>
-                                            @elseif($payment->payment_method == 'cartao')
+                                            @elseif($payment->payment_method == 'cartao' || $payment->payment_method == 'credit_card')
                                                 <span class="badge bg-primary"><i class="fas fa-credit-card me-1"></i> Cartão</span>
                                             @else
                                                 <span class="badge bg-light text-dark">{{ $payment->payment_method }}</span>
                                             @endif
                                         </td>
                                         <td>
-                                            <a href="/pagamentos/{{ $payment->id }}" class="btn btn-sm btn-outline-secondary">
+                                            <a href="{{ route('payments.show', $payment->id) }}" class="btn btn-sm btn-outline-secondary">
                                                 <i class="fas fa-eye"></i> Detalhes
                                             </a>
                                         </td>

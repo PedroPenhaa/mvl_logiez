@@ -9,7 +9,7 @@
                 <div class="row mb-4">
                     <div class="col-md-6">
                         <div class="card mb-3">
-                            <div class="card-header bg-primary text-white">
+                            <div class="card-header text-white" style="background-color: #6f42c1;">
                                 <h5 class="mb-0">Origem</h5>
                             </div>
                             <div class="card-body">
@@ -22,7 +22,7 @@
                     </div>
                     <div class="col-md-6">
                         <div class="card mb-3">
-                            <div class="card-header bg-primary text-white">
+                            <div class="card-header text-white" style="background-color: #6f42c1;">
                                 <h5 class="mb-0">Destino</h5>
                             </div>
                             <div class="card-body">
@@ -36,7 +36,7 @@
                 </div>
                 
                 <div class="card mb-4">
-                    <div class="card-header bg-primary text-white">
+                    <div class="card-header text-white"  style="background-color: #6f42c1;">
                         <h5 class="mb-0">Dimensões do Pacote</h5>
                     </div>
                     <div class="card-body">
@@ -73,7 +73,7 @@
                 </div>
                 
                 <div class="mb-4 text-center d-flex justify-content-center gap-2">
-                    <button type="submit" class="btn btn-primary btn-lg px-5" id="calcular-cotacao">
+                    <button type="submit" class="btn btn-primary btn-lg px-5" id="calcular-cotacao" style="background-color: #6f42c1;">
                         <i class="fas fa-calculator me-2"></i> Calcular Cotação
                     </button>
                     <button type="button" id="limpar-form" class="btn btn-outline-secondary btn-lg px-4">

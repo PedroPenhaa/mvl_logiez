@@ -6,6 +6,7 @@ use Illuminate\Http\Request;
 use App\Models\Payment;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\DB;
 
 class PaymentController extends Controller
 {
@@ -16,28 +17,111 @@ class PaymentController extends Controller
      */
     public function index()
     {
-        // Verificar se o usuário está autenticado
-        if (!Auth::check()) {
-            return redirect()->route('login')->with('error', 'Você precisa estar logado para acessar seus pagamentos.');
+        try {
+            Log::info('PaymentController::index - Início da execução');
+            
+            // Verificar se o usuário está autenticado
+            if (!Auth::check()) {
+                Log::warning('PaymentController::index - Usuário não autenticado');
+                return redirect()->route('login')->with('error', 'Você precisa estar logado para acessar seus pagamentos.');
+            }
+
+            // Log do ID do usuário e dados da sessão
+            $userId = Auth::id();
+            Log::info('Dados do usuário:', [
+                'user_id' => $userId,
+                'is_authenticated' => Auth::check(),
+                'session_id' => session()->getId()
+            ]);
+
+            // Status possíveis para cada categoria
+            $pendingStatuses = [
+                'pending', 'PENDING', 'AWAITING', 'AWAITING_PAYMENT',
+                'processing', 'PROCESSING', 'waiting', 'WAITING'
+            ];
+            
+            $completedStatuses = [
+                'completed', 'COMPLETED', 'CONFIRMED', 'RECEIVED',
+                'RECEIVED_IN_CASH', 'paid', 'PAID', 'success', 'SUCCESS'
+            ];
+            
+            $cancelledStatuses = [
+                'cancelled', 'CANCELLED', 'FAILED', 'REFUNDED',
+                'REFUND_REQUESTED', 'failed', 'error', 'ERROR'
+            ];
+
+
+            dd('Para aqui ' . $userId);
+            // Buscar pagamentos com try/catch individual
+            try {
+                $pendingPayments = Payment::where('user_id', $userId)
+                    ->whereIn('status', $pendingStatuses)
+                    ->orderBy('created_at', 'desc')
+                    ->get();
+                
+                Log::info('Pagamentos pendentes:', [
+                    'count' => $pendingPayments->count(),
+                    'status_procurados' => $pendingStatuses,
+                    'primeiro_registro' => $pendingPayments->first()
+                ]);
+            } catch (\Exception $e) {
+                Log::error('Erro ao buscar pagamentos pendentes:', ['error' => $e->getMessage()]);
+                $pendingPayments = collect();
+            }
+
+            try {
+                $completedPayments = Payment::where('user_id', $userId)
+                    ->whereIn('status', $completedStatuses)
+                    ->orderBy('created_at', 'desc')
+                    ->get();
+                
+                Log::info('Pagamentos completados:', [
+                    'count' => $completedPayments->count(),
+                    'status_procurados' => $completedStatuses,
+                    'primeiro_registro' => $completedPayments->first()
+                ]);
+            } catch (\Exception $e) {
+                Log::error('Erro ao buscar pagamentos completados:', ['error' => $e->getMessage()]);
+                $completedPayments = collect();
+            }
+
+            try {
+                $cancelledPayments = Payment::where('user_id', $userId)
+                    ->whereIn('status', $cancelledStatuses)
+                    ->orderBy('created_at', 'desc')
+                    ->get();
+                
+                Log::info('Pagamentos cancelados:', [
+                    'count' => $cancelledPayments->count(),
+                    'status_procurados' => $cancelledStatuses,
+                    'primeiro_registro' => $cancelledPayments->first()
+                ]);
+            } catch (\Exception $e) {
+                Log::error('Erro ao buscar pagamentos cancelados:', ['error' => $e->getMessage()]);
+                $cancelledPayments = collect();
+            }
+
+            // Verificar todos os status únicos na tabela
+            $allStatuses = DB::table('payments')
+                ->select('status')
+                ->distinct()
+                ->get()
+                ->pluck('status');
+            
+            Log::info('Status encontrados na tabela:', ['status' => $allStatuses]);
+
+            return view('sections.pagamento', compact('pendingPayments', 'completedPayments', 'cancelledPayments'));
+            
+        } catch (\Exception $e) {
+            Log::error('Erro crítico no PaymentController::index', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+            
+            return redirect()
+                ->back()
+                ->with('error', 'Ocorreu um erro ao carregar seus pagamentos. Por favor, tente novamente.');
         }
-
-        // Buscar os pagamentos do usuário logado
-        $pendingPayments = Payment::where('user_id', Auth::id())
-            ->where('status', 'pending')
-            ->orderBy('created_at', 'desc')
-            ->get();
-            
-        $completedPayments = Payment::where('user_id', Auth::id())
-            ->where('status', 'completed')
-            ->orderBy('created_at', 'desc')
-            ->get();
-            
-        $cancelledPayments = Payment::where('user_id', Auth::id())
-            ->where('status', 'cancelled')
-            ->orderBy('created_at', 'desc')
-            ->get();
-
-        return view('sections.pagamento', compact('pendingPayments', 'completedPayments', 'cancelledPayments'));
     }
 
     /**

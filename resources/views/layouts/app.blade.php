@@ -25,7 +25,7 @@
         .sidebar {
             width: 250px;
             height: 100vh;
-            background: #2c3e50;
+            background: #6f42c1;
             color: #fff;
             position: fixed;
             left: 0;
@@ -36,7 +36,8 @@
         }
         
         .sidebar-header {
-            padding: 20px;
+            height: 100px;
+            padding: 0px;
             text-align: center;
             border-bottom: 1px solid rgba(255,255,255,0.1);
         }
@@ -222,7 +223,7 @@
     <!-- Sidebar / Menu Lateral -->
     <div class="sidebar" id="sidebar">
         <div class="sidebar-header">
-            <h3>Logiez</h3>
+            <img src="{{ asset('img/logo_logiez1.png') }}" alt="Logo Logiez" style="width: 100%; height: 160%; margin-top: -25px; object-fit: contain;">
         </div>
         
         <nav>
@@ -276,7 +277,7 @@
         <div id="alert-container"></div>
         
         <div class="content-header">
-            <h1 id="section-title" class="section-title">Dashboard</h1>
+            <h1 id="section-title" class="section-title" style="color: #6f42c1;">Dashboard</h1>
         </div>
         
         <div class="loader" id="content-loader"></div>

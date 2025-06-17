@@ -34,7 +34,7 @@ class Payment extends Model
         'payment_link',
         'qrcode',
         'gateway_response',
-        'notes',
+        'notes'
     ];
 
     /**
@@ -43,11 +43,20 @@ class Payment extends Model
      * @var array<string, string>
      */
     protected $casts = [
-        'amount' => 'float',
+        'amount' => 'decimal:2',
+        'gateway_response' => 'json',
         'payment_date' => 'datetime',
         'due_date' => 'datetime',
-        'gateway_response' => 'json',
+        'created_at' => 'datetime',
+        'updated_at' => 'datetime'
     ];
+
+    /**
+     * Indicates if the model should be timestamped.
+     *
+     * @var bool
+     */
+    public $timestamps = true;
 
     /**
      * Get the user that owns the payment.
@@ -64,4 +73,11 @@ class Payment extends Model
     {
         return $this->belongsTo(Shipment::class);
     }
+
+    protected $dates = [
+        'due_date',
+        'payment_date',
+        'created_at',
+        'updated_at'
+    ];
 } 

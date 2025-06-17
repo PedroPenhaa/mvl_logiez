@@ -152,7 +152,7 @@
                                     </div>
                                 </div>
                                 <div class="col-lg-3 col-md-3">
-                                    <button type="button" class="btn btn-primary w-100" id="adicionar-produto">
+                                    <button type="button" class="btn btn-primary w-100" id="adicionar-produto" style="background-color: #6f42c1;">
                                         <i class="fas fa-plus me-2"></i>Adicionar
                                     </button>
                                 </div>
@@ -208,7 +208,7 @@
                                     <input type="number" step="0.1" min="0.1" class="form-control" id="peso_caixa" name="peso_caixa_temp" value="0.5">
                                 </div>
                                 <div class="col-md-4 col-12 mb-3 d-flex align-items-end">
-                                    <button type="button" class="btn btn-primary w-100" id="adicionar-caixa">
+                                    <button type="button" class="btn btn-primary w-100" id="adicionar-caixa" style="background-color: #6f42c1;">
                                         <i class="fas fa-plus me-2"></i>Adicionar Caixa
                                     </button>
                                 </div>
@@ -532,7 +532,7 @@
             </div>
 
             <div class="text-center mt-4">
-                <button type="button" class="btn btn-primary btn-lg" id="consultar-servicos">
+                <button type="button" class="btn btn-primary btn-lg" style="background-color: #6f42c1;" id="consultar-servicos">
                     <i class="fas fa-search me-2"></i> Consultar Serviços
                 </button>
                 <button type="submit" class="btn btn-success btn-lg" id="submit-button" style="display: none;">
@@ -3434,9 +3434,9 @@
 </script>
 
 <!-- Seção para exibir logs de depuração -->
-<div id="debug-logs-section" class="mt-5 mb-3 bg-gray-100 rounded-md p-4 hidden">
+<div id="debug-logs-section" class="mt-5 mb-3 bg-gray-100 rounded-md p-4 hidden" style="display: none;">
     <h3 class="text-lg font-semibold mb-2 flex items-center">
-        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <svg xmlns="http://www.w3.org/2000/svg"  class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
         </svg>
         Logs de Depuração
