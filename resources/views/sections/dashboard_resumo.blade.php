@@ -1,4 +1,5 @@
 @if(auth()->check())
+<!--
 <div class="row mb-4">
     <div class="col-12">
         <div class="card">
@@ -7,7 +8,6 @@
             </div>
             <div class="card-body">
                 <div class="row">
-                    <!-- Últimos Envios -->
                     <div class="col-lg-6 mb-4">
                         <h5><i class="fas fa-shipping-fast me-2"></i> Últimos Envios</h5>
                         @if(isset($shipments) && $shipments->count() > 0)
@@ -55,7 +55,6 @@
                         @endif
                     </div>
                     
-                    <!-- Últimos Pagamentos -->
                     <div class="col-lg-6">
                         <h5><i class="fas fa-credit-card me-2"></i> Pagamentos Recentes</h5>
                         <ul class="nav nav-tabs mb-3" id="pagamentosTab" role="tablist">
@@ -72,7 +71,6 @@
                         </ul>
                         
                         <div class="tab-content" id="pagamentosTabContent">
-                            <!-- Pagamentos Pendentes -->
                             <div class="tab-pane fade show active" id="pendentes" role="tabpanel" aria-labelledby="pendentes-tab">
                                 @if(isset($pendingPayments) && count($pendingPayments) > 0)
                                     <div class="table-responsive">
@@ -119,7 +117,6 @@
                                 @endif
                             </div>
                             
-                            <!-- Pagamentos Concluídos -->
                             <div class="tab-pane fade" id="concluidos" role="tabpanel" aria-labelledby="concluidos-tab">
                                 @if(isset($completedPayments) && count($completedPayments) > 0)
                                     <div class="table-responsive">
@@ -168,6 +165,7 @@
         </div>
     </div>
 </div>
+-->
 @endif
 
 <!-- Seção padrão do dashboard (cards de serviços) -->
