@@ -141,6 +141,8 @@ class TestFedexEtiqueta extends Command
         $response = Http::withToken($accessToken)
             ->post('https://apis-sandbox.fedex.com/ship/v1/shipments', $body);
 
+            dd($response);
+
         $this->info('Status: ' . $response->status());
         $this->line('Resposta:');
         $this->line($response->body());

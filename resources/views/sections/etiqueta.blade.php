@@ -449,6 +449,31 @@
                 success: function(response) {
                     hideLoader();
                     if (response.success && response.labelUrl) {
+                        // Salvar os dados da etiqueta no banco de dados
+                        $.ajax({
+                            url: '/api/fedex/save-label',
+                            method: 'POST',
+                            data: {
+                                tracking_number: response.trackingNumber,
+                                label_url: response.labelUrl,
+                                status: 'active',
+                                api_response: JSON.stringify(response),
+                                service_type: response.serviceName,
+                                recipient_name: response.recipient.name,
+                                recipient_address: response.recipient.address,
+                                recipient_city: response.recipient.city,
+                                recipient_state: response.recipient.state,
+                                recipient_country: response.recipient.country,
+                                recipient_postal_code: response.recipient.postalCode
+                            },
+                            headers: {
+                                'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+                            },
+                            error: function(xhr) {
+                                console.error('Erro ao salvar etiqueta:', xhr);
+                            }
+                        });
+
                         // Preencher os dados no modal
                         $('#etiqueta-codigo').text(response.trackingNumber);
                         $('#etiqueta-servico').text(response.serviceName);

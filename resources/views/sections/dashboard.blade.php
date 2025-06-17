@@ -5,10 +5,10 @@
                 <i class="fas fa-calculator me-2"></i> Cotação
             </div>
             <div class="card-body text-center">
-                <i class="fas fa-calculator fa-4x mb-3 text-primary"></i>
+                <i class="fas fa-calculator fa-4x mb-3" style="color: #6F42C1;"></i>
                 <h5 class="card-title">Calcule o Envio</h5>
                 <p class="card-text">Calcule o valor e prazo de entrega para seus envios internacionais.</p>
-                <button class="btn btn-primary nav-section" data-section="cotacao">Fazer Cotação</button>
+                <button class="btn btn-primary nav-section" data-section="cotacao" style="background-color: #6F42C1; border-color: #6F42C1;">Fazer Cotação</button>
             </div>
         </div>
     </div>
@@ -19,10 +19,10 @@
                 <i class="fas fa-shipping-fast me-2"></i> Envio
             </div>
             <div class="card-body text-center">
-                <i class="fas fa-shipping-fast fa-4x mb-3 text-primary"></i>
+                <i class="fas fa-shipping-fast fa-4x mb-3" style="color: #6F42C1;"></i>
                 <h5 class="card-title">Envie Produtos</h5>
                 <p class="card-text">Envie seus produtos para qualquer lugar do mundo de forma rápida e segura.</p>
-                <button class="btn btn-primary nav-section" data-section="envio">Fazer Envio</button>
+                <button class="btn btn-primary nav-section" data-section="envio" style="background-color: #6F42C1; border-color: #6F42C1;">Fazer Envio</button>
             </div>
         </div>
     </div>
@@ -33,10 +33,10 @@
                 <i class="fas fa-map-marker-alt me-2"></i> Rastreamento
             </div>
             <div class="card-body text-center">
-                <i class="fas fa-map-marker-alt fa-4x mb-3 text-primary"></i>
+                <i class="fas fa-map-marker-alt fa-4x mb-3" style="color: #6F42C1;"></i>
                 <h5 class="card-title">Acompanhe seu Envio</h5>
                 <p class="card-text">Acompanhe o status de seus envios em tempo real.</p>
-                <button class="btn btn-primary nav-section" data-section="rastreamento">Rastrear Envio</button>
+                <button class="btn btn-primary nav-section" data-section="rastreamento" style="background-color: #6F42C1; border-color: #6F42C1;">Rastrear Envio</button>
             </div>
         </div>
     </div>
