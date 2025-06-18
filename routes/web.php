@@ -56,8 +56,10 @@ Route::middleware('auth')->group(function () {
     Route::get('/dashboard', [App\Http\Controllers\HomeController::class, 'dashboard'])->name('dashboard');
 });
 
-// Rota padrão - redireciona para a página welcome
-Route::get('/', [HomeController::class, 'welcome'])->name('welcome');
+// Rota padrão - redireciona para a página de login
+Route::get('/', function () {
+    return redirect()->route('login');
+})->name('welcome');
 
 // Páginas informativas
 Route::get('/about', [HomeController::class, 'about'])->name('about');

@@ -12,6 +12,7 @@ return array(
     'App\\Console\\Commands\\ConsultaGemini' => $baseDir . '/app/Console/Commands/ConsultaGemini.php',
     'App\\Console\\Commands\\ConverterFreteUSD' => $baseDir . '/app/Console/Commands/ConverterFreteUSD.php',
     'App\\Console\\Commands\\ConverterUSDparaBRL' => $baseDir . '/app/Console/Commands/ConverterUSDparaBRL.php',
+    'App\\Console\\Commands\\GerarInvoiceTeste' => $baseDir . '/app/Console/Commands/GerarInvoiceTeste.php',
     'App\\Console\\Commands\\ProcessarEnviosPagosFedex' => $baseDir . '/app/Console/Commands/ProcessarEnviosPagosFedex.php',
     'App\\Console\\Commands\\ProcessarEnviosPendentes' => $baseDir . '/app/Console/Commands/ProcessarEnviosPendentes.php',
     'App\\Console\\Commands\\ProcessarPagamentosValidados' => $baseDir . '/app/Console/Commands/ProcessarPagamentosValidados.php',

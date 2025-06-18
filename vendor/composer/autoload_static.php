@@ -596,6 +596,7 @@ class ComposerStaticInit626b9e7ddd47fb7eff9aaa53cce0c9ad
         'App\\Console\\Commands\\ConsultaGemini' => __DIR__ . '/../..' . '/app/Console/Commands/ConsultaGemini.php',
         'App\\Console\\Commands\\ConverterFreteUSD' => __DIR__ . '/../..' . '/app/Console/Commands/ConverterFreteUSD.php',
         'App\\Console\\Commands\\ConverterUSDparaBRL' => __DIR__ . '/../..' . '/app/Console/Commands/ConverterUSDparaBRL.php',
+        'App\\Console\\Commands\\GerarInvoiceTeste' => __DIR__ . '/../..' . '/app/Console/Commands/GerarInvoiceTeste.php',
         'App\\Console\\Commands\\ProcessarEnviosPagosFedex' => __DIR__ . '/../..' . '/app/Console/Commands/ProcessarEnviosPagosFedex.php',
         'App\\Console\\Commands\\ProcessarEnviosPendentes' => __DIR__ . '/../..' . '/app/Console/Commands/ProcessarEnviosPendentes.php',
         'App\\Console\\Commands\\ProcessarPagamentosValidados' => __DIR__ . '/../..' . '/app/Console/Commands/ProcessarPagamentosValidados.php',
