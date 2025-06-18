@@ -68,7 +68,6 @@ Route::get('/help', [HomeController::class, 'help'])->name('help');
 // Rotas da API para carregamento de seções (AJAX) - sem verificação de autenticação
 Route::prefix('api')->name('api.')->group(function () {
     // Seções
-    Route::get('/sections/dashboard', [SectionController::class, 'dashboard'])->name('sections.dashboard');
     Route::get('/sections/cotacao', [SectionController::class, 'cotacao'])->name('sections.cotacao');
     Route::get('/sections/envio', [SectionController::class, 'envio'])->name('sections.envio');
     Route::get('/sections/pagamento', [SectionController::class, 'pagamento'])->name('sections.pagamento');

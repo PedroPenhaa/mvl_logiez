@@ -17,7 +17,7 @@ class HomeController extends Controller
      */
     public function __construct()
     {
-        // Middleware pode ser configurado diretamente nas rotas
+        // Middleware já está definido nas rotas
     }
 
     /**
@@ -96,9 +96,7 @@ class HomeController extends Controller
      */
     public function index()
     {
-        // Em vez de apenas retornar a view, vamos buscar a seção dashboard
-        // e retornar essa view com o conteúdo
-        return view('sections.dashboard');
+        return view('dashboard');
     }
 
     /**
@@ -198,29 +196,6 @@ class HomeController extends Controller
             return redirect()->route('login');
         }
         
-        // Obter últimos 5 envios do usuário
-        $shipments = \App\Models\Shipment::where('user_id', Auth::id())
-            ->orderBy('created_at', 'desc')
-            ->take(5)
-            ->get();
-        
-        // Obter últimos 3 pagamentos pendentes
-        $pendingPayments = \App\Models\Payment::where('user_id', Auth::id())
-            ->where('status', 'pending')
-            ->orderBy('created_at', 'desc')
-            ->take(3)
-            ->get();
-        
-        // Obter últimos 3 pagamentos concluídos
-        $completedPayments = \App\Models\Payment::where('user_id', Auth::id())
-            ->where('status', 'completed')
-            ->orderBy('created_at', 'desc')
-            ->take(3)
-            ->get();
-        
-        // Retornar a view com os dados
-        return view('dashboard', [
-            'dashboardContent' => view('sections.dashboard_resumo', compact('shipments', 'pendingPayments', 'completedPayments'))->render()
-        ]);
+        return view('dashboard');
     }
 } 

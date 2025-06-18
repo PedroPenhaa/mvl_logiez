@@ -19,7 +19,7 @@ class SectionController extends Controller
     
     public function dashboard()
     {
-        return view('sections.dashboard');
+        return view('dashboard');
     }
     
     public function cotacao()

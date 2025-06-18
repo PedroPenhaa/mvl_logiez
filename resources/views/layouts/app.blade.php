@@ -227,10 +227,13 @@
         </div>
         
         <nav>
-            <div class="menu-item active" data-section="dashboard">
-                <i class="fas fa-home"></i>
-                <span class="menu-text">Dashboard</span>
-            </div>
+            <!-- Menu do Dashboard -->
+            <a href="{{ route('dashboard') }}" class="text-decoration-none">
+                <div class="menu-item active" data-section="dashboard">
+                    <i style="color: #fff;" class="fas fa-home"></i>
+                    <span style="color: #fff;">Dashboard</span>
+                </div>
+            </a>
             
             <div class="menu-item" data-section="cotacao">
                 <i class="fas fa-calculator"></i>
@@ -276,9 +279,11 @@
     <main class="main-content">
         <div id="alert-container"></div>
         
-        <div class="content-header">
-            <h1 id="section-title" class="section-title" style="color: #6f42c1;">Dashboard</h1>
-        </div>
+        @if(request()->segment(1) !== 'dashboard')
+            <div class="content-header">
+                <h1 id="section-title" class="section-title" style="color: #6f42c1;">Dashboard</h1>
+            </div>
+        @endif
         
         <div class="loader" id="content-loader"></div>
         
@@ -348,42 +353,30 @@
             
             // Definir a função loadSection globalmente
             loadSection = function(section) {
-                // Mostrar indicador de carregamento
-                $('#content-loader').show();
-                $('#content-container').hide();
-                
-                // Atualizar o título da seção
-                $('#section-title').text(section.charAt(0).toUpperCase() + section.slice(1));
-                
-                // Atualizar menu
-                $('.menu-item').removeClass('active');
-                $('.menu-item[data-section="' + section + '"]').addClass('active');
-                
-                // Carregar conteúdo via AJAX
+                // Se for dashboard, redirecionar para a rota do dashboard
+                if (section === 'dashboard') {
+                    window.location.href = '/dashboard';
+                    return;
+                }
+
+                // Para outras seções, continuar com o carregamento AJAX
                 $.ajax({
                     url: '/api/sections/' + section,
                     method: 'GET',
                     success: function(response) {
-                        // Atualizar conteúdo
                         $('#content-container').html(response);
-                        $('#content-container').show();
+                        $('.menu-item').removeClass('active');
+                        $('.menu-item[data-section="' + section + '"]').addClass('active');
                         
-                        // Inicializar eventos específicos da seção
-                        initSectionEvents();
+                        // Atualizar URL sem recarregar a página
+                        history.pushState({}, '', '/' + section);
+                        
+                        // Rolar para o topo da página
+                        window.scrollTo(0, 0);
                     },
-                    error: function(xhr) {
-                        // Mostrar erro
-                        $('#content-container').html(`
-                            <div class="alert alert-danger">
-                                <i class="fas fa-exclamation-triangle me-2"></i>
-                                Erro ao carregar conteúdo. Por favor, tente novamente.
-                            </div>
-                        `);
-                        $('#content-container').show();
-                        console.error('Erro ao carregar seção:', xhr);
-                    },
-                    complete: function() {
-                        $('#content-loader').hide();
+                    error: function(xhr, status, error) {
+                        console.error('Erro ao carregar seção:', error);
+                        alert('Erro ao carregar conteúdo. Por favor, tente novamente.');
                     }
                 });
             }
