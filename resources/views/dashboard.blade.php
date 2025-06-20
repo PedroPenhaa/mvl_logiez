@@ -19,69 +19,48 @@
         </div>
     </div>
 
-    <div class="card mb-4">
-        <div class="card-body">
-            <h2 class="mb-4">Com nosso envio, vá mais longe</h2>
+    <div class="card mb-4 feature-card">
+        <div class="card-body p-4">
+            <h2 class="display-6 mb-4 text-gradient" style="font-size:1.5rem">Com nosso envio, vá mais longe</h2>
             
-            <div class="row">
+            <div class="row g-4">
                 <div class="col-md-6">
-                    <div class="position-relative" style="height: 250px;">
-                        <img src="{{ asset('img/boxes.png') }}" alt="Boxes" class="img-fluid position-absolute" 
-                            style="width: 85%; 
-                                   height: 90%; 
-                                   object-fit: cover;
-                                   border-radius: 15px;
-                                   box-shadow: 0 4px 15px rgba(0,0,0,0.1);
-                                   transition: transform 0.3s ease;
-                                   filter: brightness(1.02) contrast(1.02);"
-                            onmouseover="this.style.transform='scale(1.02)'"
-                            onmouseout="this.style.transform='scale(1)'">
+                    <div class="position-relative feature-image-container">
+                        <img src="{{ asset('img/boxes.png') }}" alt="Boxes" class="feature-image">
                     </div>
                 </div>
                 <div class="col-md-6">
-                    <p class="mb-4">Somos uma plataforma inovadora que simplifica o processo de envios internacionais, eliminando a burocracia e reduzindo custos.</p>
-                    
-                    <ul class="list-unstyled">
-                        <li class="mb-3">
-                            <i class="fas fa-calculator text-primary me-2"></i>
-                            Economize com precisão: Calcule custos de envio exatos em segundos.
+                  <!--
+                  <p class="lead mb-4" style="font-size: 1rem;">Somos uma plataforma inovadora que simplifica o processo de envios internacionais, eliminando a burocracia e reduzindo custos.</p>
+                  -->
+                    <ul class="feature-list">
+                        <li class="feature-item">
+                            <span class="feature-icon">📊</span>
+                            <span style="font-size: 0.8rem;">Economize com precisão: Calcule custos de envio exatos em segundos.</span>
                         </li>
-                        <li class="mb-3">
-                            <i class="fas fa-balance-scale text-primary me-2"></i>
-                            Escolha inteligente: Compare peso cubado e real para otimizar suas despesas.
+                        <li class="feature-item">
+                            <span class="feature-icon">⚖️</span>
+                            <span style="font-size: 0.8rem;">Escolha inteligente: Compare peso cubado e real para otimizar suas despesas.</span>
                         </li>
-                        <li class="mb-3">
-                            <i class="fas fa-bolt text-primary me-2"></i>
-                            Agilidade total: Gere etiquetas automaticamente e envie sem atrasos.
+                        <li class="feature-item">
+                            <span class="feature-icon">⚡</span>
+                            <span style="font-size: 0.8rem;">Agilidade total: Gere etiquetas automaticamente e envie sem atrasos.</span>
                         </li>
-                        <li class="mb-3">
-                            <i class="fas fa-mobile-alt text-primary me-2"></i>
-                            Controle na palma da mão: Rastreie seus envios em tempo real, onde estiver.
+                        <li class="feature-item">
+                            <span class="feature-icon">📱</span>
+                            <span style="font-size: 0.8rem;">Controle na palma da mão: Rastreie seus envios em tempo real, onde estiver.</span>
                         </li>
-                        <li class="mb-3">
-                            <i class="fas fa-file-export text-primary me-2"></i>
-                            Exportação sem stress: Simplifique a documentação com nosso suporte especializado.
+                        <li class="feature-item">
+                            <span class="feature-icon">📄</span>
+                            <span style="font-size: 0.8rem;">Exportação sem stress: Simplifique a documentação com nosso suporte especializado.</span>
                         </li>
                     </ul>
-
-                    <div class="d-flex justify-content-between align-items-center mt-4">
-                        <div>
-                            <h4 class="mb-0">3,654</h4>
-                            <small class="text-muted">Clientes Atendidos</small>
-                        </div>
-                        <div>
-                            <h4 class="mb-0">4,154</h4>
-                            <small class="text-muted">Envios Realizados</small>
-                        </div>
-                        <div class="d-flex gap-2">
-                            <button class="btn btn-primary">Explorar</button>
-                            <button class="btn btn-outline-primary">Entre em contato</button>
-                        </div>
-                    </div>
                 </div>
             </div>
         </div>
     </div>
+
+    <!--
 
     <div class="row">
         <div class="col-md-8">
@@ -158,6 +137,8 @@
         </div>
     </div>
 
+    -->
+
     @if(session('user_data'))
         <div class="d-none">
             <div class="card mb-4">
@@ -225,3 +206,101 @@
     });
 </script>
 @endsection
+
+<style>
+.feature-card {
+    border: none;
+    border-radius: 20px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
+    overflow: hidden;
+    background: linear-gradient(145deg, #ffffff 0%, #f8f9fa 100%);
+}
+
+.text-gradient {
+    background: linear-gradient(120deg, #2563eb, #4f46e5);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    font-weight: 600;
+}
+
+.feature-image-container {
+    height: 100%;
+    max-height: 240;
+    border-radius: 15px;
+    overflow: hidden;
+}
+
+.feature-image {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    border-radius: 15px;
+    transition: transform 0.5s ease;
+}
+
+.feature-image:hover {
+    transform: scale(1.03);
+}
+
+.feature-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.feature-item {
+    display: flex;
+    align-items: center;
+    margin-bottom: 0px;
+    padding: 0.3rem;
+    border-radius: 12px;
+    transition: all 0.3s ease;
+    background: rgba(255, 255, 255, 0.7);
+}
+
+.feature-item:hover {
+    background: rgba(37, 99, 235, 0.05);
+    transform: translateX(5px);
+}
+
+.feature-icon {
+    font-size: 1.5rem;
+    margin-right: 1rem;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.stats-container {
+    display: flex;
+    gap: 2rem;
+    padding-top: 1rem;
+    border-top: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+.stat-item {
+    flex: 1;
+}
+
+.stat-number {
+    font-size: 2.5rem;
+    font-weight: 700;
+    margin: 0;
+    background: linear-gradient(120deg, #2563eb, #4f46e5);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+.stat-label {
+    color: #6b7280;
+    font-size: 0.9rem;
+    margin: 0;
+    font-weight: 500;
+}
+
+.lead {
+    color: #4b5563;
+    font-size: 1.1rem;
+    line-height: 1.6;
+}
+</style>

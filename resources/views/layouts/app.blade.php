@@ -231,7 +231,7 @@
             <a href="{{ route('dashboard') }}" class="text-decoration-none">
                 <div class="menu-item active" data-section="dashboard">
                     <i style="color: #fff;" class="fas fa-home"></i>
-                    <span style="color: #fff;">Dashboard</span>
+                    <span style="color: #fff;">Início</span>
                 </div>
             </a>
             

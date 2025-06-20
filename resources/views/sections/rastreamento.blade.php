@@ -1,6 +1,6 @@
 <div class="card shadow-lg">
-    <div class="card-header bg-dark text-white">
-        <i class="fas fa-map-marker-alt me-2"></i> Rastreamento de Envio FedEx
+    <div class="card-header text-white" style="background-color: #63499E;">
+        <i class="fas fa-map-marker-alt me-2" style="font-size: 1.2rem; "></i> Rastreamento de Envio FedEx
     </div>
     <div class="card-body">
         <div class="row">
@@ -9,7 +9,7 @@
                     @csrf
                     <div class="input-group mb-3 shadow-sm">
                         <input type="text" class="form-control form-control-lg" id="codigo_rastreamento" name="codigo_rastreamento" placeholder="Digite o código de rastreamento FedEx" required>
-                        <button class="btn btn-primary" type="submit"><i class="fas fa-search me-2"></i>Rastrear</button>
+                        <button class="btn" style="background-color: #63499E; color: #fff;" type="submit"><i class="fas fa-search me-2"></i>Rastrear</button>
                     </div>
                     <div class="small text-muted text-center">
                         <i class="fas fa-info-circle me-1"></i> Digite o código de rastreamento fornecido no momento do envio.
@@ -151,9 +151,10 @@
 </div>
 
 <!-- Seção para exibir logs de depuração -->
+ 
 <div id="debug-logs-section" class="mt-5 mb-3 bg-gray-100 rounded-md p-4 hidden">
     <h3 class="text-lg font-semibold mb-2 flex items-center">
-        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <!--<svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
         </svg>
         Logs de Rastreamento
@@ -161,7 +162,7 @@
     </h3>
     <div id="logs-container" class="bg-gray-900 text-green-400 p-4 rounded-md font-mono text-sm overflow-auto" style="max-height: 400px;">
         <div id="logs-content"></div>
-    </div>
+    </div>-->
 </div>
 
 <style>
