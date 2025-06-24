@@ -269,6 +269,13 @@ $(document).ready(function() {
             html += '<div class="card-header bg-success text-white"><h4 class="mb-0">Cotação calculada com sucesso!</h4></div>';
             html += '<div class="card-body">';
             
+            // Se for simulação, mostrar aviso
+            if (response.simulado) {
+                html += '<div class="alert alert-info mb-4">';
+                html += '<i class="fas fa-info-circle me-2"></i> ' + response.mensagem;
+                html += '</div>';
+            }
+            
             // Detalhes do peso
             html += '<div class="row mb-4">';
             html += '<div class="col-md-4">';
@@ -293,13 +300,6 @@ $(document).ready(function() {
             html += '</div></div></div>';
             html += '</div>';
             
-            // Mensagem de status (se for simulado)
-            if (response.mensagem) {
-                html += '<div class="alert alert-info mb-4">';
-                html += '<i class="fas fa-info-circle me-2"></i> ' + response.mensagem;
-                html += '</div>';
-            }
-            
             // Opções de Envio
             if (response.cotacoesFedEx && response.cotacoesFedEx.length > 0) {
                 html += '<h4 class="mb-3">Opções de Envio</h4>';
@@ -310,7 +310,6 @@ $(document).ready(function() {
                 html += '<th>Tempo de Entrega</th>';
                 html += '<th>Valor (USD)</th>';
                 html += '<th>Valor (BRL)</th>';
-              //  html += '<th>Ação</th>';
                 html += '</tr></thead><tbody>';
                 
                 response.cotacoesFedEx.forEach(function(cotacao) {
@@ -325,7 +324,6 @@ $(document).ready(function() {
                     html += '</td>';
                     html += '<td>' + cotacao.valorTotal + ' ' + cotacao.moeda + '</td>';
                     html += '<td class="fw-bold text-success">R$ ' + (cotacao.valorTotalBRL || '-') + '</td>';
-               //     html += '<td><a href="/envio?servico=' + cotacao.servicoTipo + '&valor=' + cotacao.valorTotal + '" class="btn btn-sm btn-primary">Escolher</a></td>';
                     html += '</tr>';
                 });
                 

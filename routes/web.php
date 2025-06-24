@@ -167,129 +167,316 @@ Route::get('/test-fedex-auth', function() {
 
 // Rota para exportar cotação em PDF
 Route::get('/exportar-cotacao-pdf', function (Illuminate\Http\Request $request, App\Http\Controllers\SectionController $sectionController) {
-    $hash = $request->query('hash');
-    
-    if (!$hash) {
-        return redirect('/cotacao')->with('error', 'Cotação não encontrada ou expirada');
-    }
-    
-    $cotacaoData = $sectionController->getCotacaoFromCache($hash);
-    
-    if (!$cotacaoData) {
-        return redirect('/cotacao')->with('error', 'Cotação não encontrada ou expirada');
-    }
-    
-    $dados = $cotacaoData['dados'];
-    $resultado = $cotacaoData['resultado'];
-    
-    // Criar HTML para o PDF
-    $html = '<!DOCTYPE html>
+    try {
+        $hash = $request->query('hash');
+        
+        if (!$hash) {
+            return redirect('/cotacao')->with('error', 'Hash da cotação não fornecido');
+        }
+        
+        $cotacaoData = $sectionController->getCotacaoFromCache($hash);
+        
+        if (!$cotacaoData) {
+            // Se não encontrar no cache, gerar uma simulação
+            $dados = [
+                'origem_cep' => $request->origem_cep ?? '00000-000',
+                'destino_cep' => $request->destino_cep ?? '00000',
+                'altura' => $request->altura ?? 10,
+                'largura' => $request->largura ?? 10,
+                'comprimento' => $request->comprimento ?? 10,
+                'peso' => $request->peso ?? 1
+            ];
+            
+            $cotacaoDolar = 5.00; // Valor padrão do dólar
+            $pesoUtilizado = max(
+                ($dados['altura'] * $dados['largura'] * $dados['comprimento']) / 6000,
+                $dados['peso']
+            );
+            
+            $cotacoes = [
+                [
+                    'servico' => 'FedEx International Priority',
+                    'servicoTipo' => 'PRIORITY',
+                    'valorTotal' => number_format($pesoUtilizado * 35, 2, '.', ''),
+                    'moeda' => 'USD',
+                    'tempoEntrega' => '2-3 dias úteis',
+                    'valorTotalBRL' => number_format($pesoUtilizado * 35 * $cotacaoDolar, 2, ',', '.')
+                ],
+                [
+                    'servico' => 'FedEx International Economy',
+                    'servicoTipo' => 'ECONOMY',
+                    'valorTotal' => number_format($pesoUtilizado * 25, 2, '.', ''),
+                    'moeda' => 'USD',
+                    'tempoEntrega' => '5-7 dias úteis',
+                    'valorTotalBRL' => number_format($pesoUtilizado * 25 * $cotacaoDolar, 2, ',', '.')
+                ]
+            ];
+            
+            $resultado = [
+                'pesoCubico' => round(($dados['altura'] * $dados['largura'] * $dados['comprimento']) / 6000, 2),
+                'pesoReal' => $dados['peso'],
+                'pesoUtilizado' => round($pesoUtilizado, 2),
+                'cotacoesFedEx' => $cotacoes,
+                'dataConsulta' => date('Y-m-d H:i:s'),
+                'simulado' => true,
+                'mensagem' => 'Cotação simulada. Os valores são aproximados e podem variar.',
+                'cotacaoDolar' => $cotacaoDolar
+            ];
+            
+            $cotacaoData = [
+                'dados' => $dados,
+                'resultado' => $resultado
+            ];
+        }
+        
+        $dados = $cotacaoData['dados'];
+        $resultado = $cotacaoData['resultado'];
+        
+        // Criar HTML para o PDF com layout melhorado
+        $html = '<!DOCTYPE html>
 <html>
 <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
-    <title>Cotação FedEx</title>
+    <title>Cotação FedEx - LOGIEZ</title>
     <style>
-        body { font-family: Arial, sans-serif; font-size: 12px; color: #333; line-height: 1.4; }
-        .container { width: 100%; margin: 0 auto; }
-        .header { padding: 10px 0; border-bottom: 2px solid #4472C4; margin-bottom: 20px; }
-        .logo { float: left; width: 150px; }
-        .document-title { float: right; font-size: 20px; color: #4472C4; margin-top: 20px; }
-        .clearfix:after { content: ""; display: table; clear: both; }
-        .info-box { background-color: #f9f9f9; border: 1px solid #ddd; padding: 10px; margin-bottom: 20px; border-radius: 5px; }
-        .box-title { font-size: 14px; font-weight: bold; margin-bottom: 10px; color: #4472C4; border-bottom: 1px solid #ddd; padding-bottom: 5px; }
-        .rates-table { width: 100%; border-collapse: collapse; margin-bottom: 20px; }
-        .rates-table th { background-color: #4472C4; color: white; font-weight: bold; text-align: left; padding: 8px; }
-        .rates-table td { border: 1px solid #ddd; padding: 8px; text-align: left; }
-        .text-center { text-align: center; }
-        .footer { margin-top: 30px; padding-top: 10px; border-top: 1px solid #ddd; font-size: 10px; color: #777; }
-        .alert { padding: 10px; background-color: #fff3cd; color: #856404; border: 1px solid #ffeeba; border-radius: 5px; margin-bottom: 20px; }
+        @page {
+            margin: 0cm 0cm;
+        }
+        body {
+            margin-top: 2.5cm;
+            margin-left: 2cm;
+            margin-right: 2cm;
+            margin-bottom: 2cm;
+            font-family: Arial, sans-serif;
+            color: #333;
+            line-height: 1.5;
+            background: #fff;
+        }
+        .header {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 2cm;
+            background-color: #6f42c1;
+            color: white;
+            text-align: left;
+            padding: 20px 2cm;
+        }
+        .header .logo {
+            font-size: 24px;
+            font-weight: bold;
+        }
+        .header .subtitle {
+            font-size: 12px;
+            margin-top: 5px;
+        }
+        .footer {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 1cm;
+            padding: 10px 2cm;
+            background-color: #f8f9fa;
+            font-size: 10px;
+            color: #666;
+            border-top: 1px solid #ddd;
+        }
+        .section {
+            margin-bottom: 20px;
+            padding: 15px;
+            background-color: #fff;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+        .section-title {
+            color: #6f42c1;
+            font-size: 16px;
+            font-weight: bold;
+            margin-bottom: 15px;
+            padding-bottom: 5px;
+            border-bottom: 2px solid #6f42c1;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 10px 0;
+        }
+        th {
+            background-color: #6f42c1;
+            color: white;
+            padding: 10px;
+            text-align: left;
+            font-size: 12px;
+        }
+        td {
+            padding: 8px;
+            border-bottom: 1px solid #ddd;
+            font-size: 11px;
+        }
+        tr:nth-child(even) {
+            background-color: #f8f9fa;
+        }
+        .info-grid {
+            display: table;
+            width: 100%;
+            margin-bottom: 10px;
+        }
+        .info-item {
+            display: table-cell;
+            width: 25%;
+            padding: 8px;
+            background-color: #f8f9fa;
+            border-radius: 4px;
+            margin: 5px;
+        }
+        .info-label {
+            font-weight: bold;
+            color: #495057;
+            font-size: 10px;
+        }
+        .info-value {
+            color: #212529;
+            font-size: 12px;
+            margin-top: 3px;
+        }
+        .highlight {
+            color: #6f42c1;
+            font-weight: bold;
+        }
+        .text-right {
+            text-align: right;
+        }
     </style>
 </head>
 <body>
-    <div class="container">
-        <div class="header clearfix">
-            <div class="logo">
-                <strong style="font-size: 24px; color: #4472C4;">LOGIEZ</strong><br>
-                <span style="font-size: 12px;">Soluções em Logística</span>
+    <div class="header">
+        <div class="logo">LOGIEZ</div>
+        <div class="subtitle">Soluções em Logística Internacional</div>
+    </div>
+
+    <h1 style="color: #6f42c1; text-align: center; font-size: 20px; margin-bottom: 20px;">
+        Cotação de Envio Internacional
+    </h1>
+
+    <div class="section">
+        <div class="section-title">Informações do Envio</div>
+        <div class="info-grid">
+            <div class="info-item">
+                <div class="info-label">CEP de Origem (Brasil)</div>
+                <div class="info-value">' . $dados['origem_cep'] . '</div>
             </div>
-            <div class="document-title">
-                COTAÇÃO DE FRETE FedEx
+            <div class="info-item">
+                <div class="info-label">CEP de Destino (EUA)</div>
+                <div class="info-value">' . $dados['destino_cep'] . '</div>
             </div>
         </div>
-        
-        <div class="info-box">
-            <div class="box-title">Informações da Cotação</div>
-            <table width="100%" cellpadding="0" cellspacing="0">
-                <tr>
-                    <td width="50%" valign="top">
-                        <div style="margin-bottom: 5px;"><strong style="display: inline-block; width: 150px;">Origem:</strong> ' . $dados['origem_cep'] . ' (' . $dados['origem_pais'] . ')</div>
-                        <div style="margin-bottom: 5px;"><strong style="display: inline-block; width: 150px;">Destino:</strong> ' . $dados['destino_cep'] . ' (' . $dados['destino_pais'] . ')</div>
-                    </td>
-                    <td width="50%" valign="top">
-                        <div style="margin-bottom: 5px;"><strong style="display: inline-block; width: 150px;">Dimensões:</strong> ' . $dados['comprimento'] . ' x ' . $dados['largura'] . ' x ' . $dados['altura'] . ' cm</div>
-                        <div style="margin-bottom: 5px;"><strong style="display: inline-block; width: 150px;">Peso Real:</strong> ' . $resultado['pesoReal'] . ' kg</div>
-                        <div style="margin-bottom: 5px;"><strong style="display: inline-block; width: 150px;">Peso Cubado:</strong> ' . $resultado['pesoCubico'] . ' kg</div>
-                        <div style="margin-bottom: 5px;"><strong style="display: inline-block; width: 150px;">Peso Utilizado:</strong> ' . $resultado['pesoUtilizado'] . ' kg</div>
-                    </td>
-                </tr>
-            </table>
-        </div>';
-        
-    if ($resultado['simulado']) {
-        $html .= '
-        <div class="alert">
-            <strong>Observação:</strong> ' . ($resultado['mensagem'] ?? 'Cotação simulada') . '
-        </div>';
-    }
-    
-    $html .= '
-        <div class="box-title">Opções de Serviço</div>
-        <table class="rates-table">
+    </div>
+
+    <div class="section">
+        <div class="section-title">Dimensões e Peso</div>
+        <div class="info-grid">
+            <div class="info-item">
+                <div class="info-label">Altura</div>
+                <div class="info-value">' . $dados['altura'] . ' cm</div>
+            </div>
+            <div class="info-item">
+                <div class="info-label">Largura</div>
+                <div class="info-value">' . $dados['largura'] . ' cm</div>
+            </div>
+            <div class="info-item">
+                <div class="info-label">Comprimento</div>
+                <div class="info-value">' . $dados['comprimento'] . ' cm</div>
+            </div>
+            <div class="info-item">
+                <div class="info-label">Peso</div>
+                <div class="info-value">' . $dados['peso'] . ' kg</div>
+            </div>
+        </div>
+
+        <div class="info-grid" style="margin-top: 10px;">
+            <div class="info-item">
+                <div class="info-label">Peso Cúbico</div>
+                <div class="info-value highlight">' . $resultado['pesoCubico'] . ' kg</div>
+            </div>
+            <div class="info-item">
+                <div class="info-label">Peso Real</div>
+                <div class="info-value">' . $resultado['pesoReal'] . ' kg</div>
+            </div>
+            <div class="info-item">
+                <div class="info-label">Peso Utilizado</div>
+                <div class="info-value highlight">' . $resultado['pesoUtilizado'] . ' kg</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="section">
+        <div class="section-title">Opções de Envio</div>
+        <table>
             <thead>
                 <tr>
                     <th>Serviço</th>
-                    <th class="text-center">Valor</th>
-                    <th class="text-center">Moeda</th>
-                    <th class="text-center">Prazo</th>
-                    <th class="text-center">Entrega Estimada</th>
+                    <th class="text-right">Valor (USD)</th>
+                    <th class="text-right">Valor (BRL)</th>
+                    <th>Prazo de Entrega</th>
                 </tr>
             </thead>
             <tbody>';
     
-    if (count($resultado['cotacoesFedEx']) > 0) {
-        foreach ($resultado['cotacoesFedEx'] as $cotacao) {
-            $html .= '
+        if (count($resultado['cotacoesFedEx']) > 0) {
+            foreach ($resultado['cotacoesFedEx'] as $cotacao) {
+                $html .= '
                 <tr>
                     <td>' . $cotacao['servico'] . '</td>
-                    <td class="text-center">' . $cotacao['valorTotal'] . '</td>
-                    <td class="text-center">' . $cotacao['moeda'] . '</td>
-                    <td class="text-center">' . ($cotacao['tempoEntrega'] ?? 'N/A') . '</td>
-                    <td class="text-center">' . ($cotacao['dataEntrega'] ?? 'N/A') . '</td>
+                    <td class="text-right">' . $cotacao['valorTotal'] . ' ' . $cotacao['moeda'] . '</td>
+                    <td class="text-right">R$ ' . $cotacao['valorTotalBRL'] . '</td>
+                    <td>' . ($cotacao['tempoEntrega'] ?? 'N/A') . '</td>
+                </tr>';
+            }
+        } else {
+            $html .= '
+                <tr>
+                    <td colspan="4" style="text-align: center;">Nenhuma cotação disponível</td>
                 </tr>';
         }
-    } else {
+        
         $html .= '
-                <tr>
-                    <td colspan="5" class="text-center">Nenhuma cotação disponível</td>
-                </tr>';
-    }
-    
-    $html .= '
             </tbody>
         </table>
-        
-        <div class="footer">
-            <p>Data da Consulta: ' . ($resultado['dataConsulta'] ?? date('Y-m-d H:i:s')) . '</p>
-            <p>Esta cotação é válida por 7 dias a partir da data de consulta. Valores sujeitos a alterações conforme disponibilidade e regras da FedEx.</p>
-            <p>LOGIEZ - Soluções em Logística | CNPJ: 00.000.000/0001-00 | contato@logiez.com.br | (11) 0000-0000</p>
-        </div>
+    </div>
+
+    <div style="margin-top: 20px; padding: 15px; background-color: #f8f9fa; border-radius: 4px; font-size: 11px;">
+        <p><strong>Data da Consulta:</strong> ' . ($resultado['dataConsulta'] ?? date('Y-m-d H:i:s')) . '</p>
+        <p><strong>Cotação do Dólar:</strong> R$ ' . number_format($resultado['cotacaoDolar'], 2, ',', '.') . '</p>
+        <p style="color: #666; margin-top: 10px;">
+            Esta cotação é válida por 7 dias a partir da data de consulta.<br>
+            Valores sujeitos a alterações conforme disponibilidade e regras da FedEx.
+        </p>
+    </div>
+
+    <div class="footer">
+        <div style="float: left;">LOGIEZ - Soluções em Logística Internacional</div>
+        <div style="float: right;">contato@logiez.com.br</div>
+        <div style="clear: both;"></div>
     </div>
 </body>
 </html>';
-    
-    $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadHTML($html);
-    
-    return $pdf->download('Cotacao_FedEx_' . date('Y-m-d_His') . '.pdf');
+        
+        // Configurar e gerar o PDF
+        $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadHTML($html);
+        $pdf->setPaper('A4');
+        $pdf->setOptions([
+            'isHtml5ParserEnabled' => true,
+            'isRemoteEnabled' => true,
+            'defaultFont' => 'Arial'
+        ]);
+        
+        return $pdf->download('Cotacao_FedEx_' . date('Y-m-d_His') . '.pdf');
+    } catch (\Exception $e) {
+        \Illuminate\Support\Facades\Log::error('Erro ao gerar PDF: ' . $e->getMessage());
+        return redirect('/cotacao')->with('error', 'Erro ao gerar o PDF da cotação. Por favor, tente novamente.');
+    }
 })->name('cotacao.exportar.pdf');
 
 // Rota para a página de confirmação de envio

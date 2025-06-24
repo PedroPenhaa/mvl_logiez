@@ -16,7 +16,8 @@ class CotacaoController extends Controller
     
     public function index()
     {
-        return view('cotacao.index');
+        // Usar a view sections.cotacao que já existe
+        return view('sections.cotacao');
     }
     
     public function calcular(Request $request)
