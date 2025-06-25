@@ -8,6 +8,8 @@ use Illuminate\Support\Facades\Cache;
 use App\Services\FedexService;
 use Illuminate\Support\Facades\DB;
 use Barryvdh\DomPDF\Facade\Pdf;
+use Illuminate\Support\Facades\Auth; // Adicione esta linha
+
 
 class SectionController extends Controller
 {
@@ -39,6 +41,8 @@ class SectionController extends Controller
     
     public function pagamento()
     {
+        $userId = Auth::id();
+
         // Verificar se o usuário está autenticado
         if (!\Illuminate\Support\Facades\Auth::check()) {
             return view('sections.pagamento', [
@@ -50,19 +54,20 @@ class SectionController extends Controller
 
         // Usar o mesmo código do PaymentController index, mas só renderizar a view
         $pendingPayments = \App\Models\Payment::where('user_id', \Illuminate\Support\Facades\Auth::id())
-            ->where('status', 'pending')
+            ->whereIn('status', ['pending', 'PENDING'])
             ->orderBy('created_at', 'desc')
             ->get();
             
         $completedPayments = \App\Models\Payment::where('user_id', \Illuminate\Support\Facades\Auth::id())
-            ->where('status', 'completed')
+            ->whereIn('status', ['completed', 'CONFIRMED'])
             ->orderBy('created_at', 'desc')
             ->get();
             
         $cancelledPayments = \App\Models\Payment::where('user_id', \Illuminate\Support\Facades\Auth::id())
-            ->where('status', 'cancelled')
+            ->whereIn('status', ['cancelled', 'CANCELLED'])
             ->orderBy('created_at', 'desc')
             ->get();
+
 
         return view('sections.pagamento', compact('pendingPayments', 'completedPayments', 'cancelledPayments'));
     }

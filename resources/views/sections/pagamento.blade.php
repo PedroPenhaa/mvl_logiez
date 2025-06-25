@@ -117,7 +117,7 @@
                                 @foreach($completedPayments as $payment)
                                     <tr>
                                         <td>{{ $payment->transaction_id }}</td>
-                                        <td>{{ $payment->payment_date ? $payment->payment_date->format('d/m/Y H:i') : 'N/A' }}</td>
+                                        <td>{{ $payment->created_at->format('d/m/Y H:i') }}</td>
                                         <td>{{ 'R$ ' . number_format($payment->amount, 2, ',', '.') }}</td>
                                         <td>
                                             @if($payment->payment_method == 'pix')
