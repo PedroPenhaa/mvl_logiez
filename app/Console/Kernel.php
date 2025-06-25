@@ -15,15 +15,15 @@ class Kernel extends ConsoleKernel
     {
         // $schedule->command('inspire')->hourly();
         
-        // Atualizar status de pagamentos a cada 10 minutos
+        // Atualizar status de pagamentos a cada 3 minutos
         $schedule->command('app:atualizar-status-pagamentos')
-                ->everyTenMinutes()
+                ->everyThreeMinutes()
                 ->withoutOverlapping()
                 ->appendOutputTo(storage_path('logs/atualizar-pagamentos.log'));
         
         // Processar envios pendentes a cada 10 minutos, após atualizar os pagamentos
         $schedule->command('app:processar-envios-pendentes')
-                ->everyTenMinutes()
+                ->everyThreeMinutes()
                 ->withoutOverlapping()
                 ->after(function () {
                     Log::info('Comando processar-envios-pendentes executado com sucesso');

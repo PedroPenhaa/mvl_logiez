@@ -422,7 +422,7 @@
                                     </div>
                                 </div>
                 
-                                 -->
+                                
 
                                 <div class="col-md-4 mb-3">
                                     <div class="card h-100 payment-method-card" data-method="pix">
@@ -437,7 +437,7 @@
                                         </div>
                                     </div>
                                 </div>
-
+ -->
                                 <div class="col-md-4 mb-3">
                                     <div class="card h-100 payment-method-card" data-method="credit_card">
                                         <div class="card-body text-center">
