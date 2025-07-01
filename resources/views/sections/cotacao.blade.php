@@ -256,10 +256,17 @@ $(document).ready(function() {
     // Função para processar a resposta
     function processarResposta(response) {
         // Verificar se é o erro específico da FedEx indisponível
-        if (response.success === false && response.error_code === 'fedex_unavailable') {
-            // Mostrar o modal de erro da FedEx
-            var fedexModal = new bootstrap.Modal(document.getElementById('fedexErrorModal'));
-            fedexModal.show();
+        if (response.success === false) {
+            // Mostrar mensagem de erro
+            var html = '<div class="card shadow">';
+            html += '<div class="card-header bg-danger text-white"><h4 class="mb-0">Erro na Cotação</h4></div>';
+            html += '<div class="card-body">';
+            html += '<div class="alert alert-danger">';
+            html += '<i class="fas fa-exclamation-circle me-2"></i> ' + response.message;
+            html += '</div>';
+            html += '</div></div>';
+            
+            $('#cotacao-resultado').html(html).fadeIn();
             return;
         }
         

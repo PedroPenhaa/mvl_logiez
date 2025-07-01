@@ -11,7 +11,6 @@ RUN apt-get update && apt-get install -y \
     curl \
     git \
     nginx \
-    supervisor \
     default-mysql-client \
     && docker-php-ext-install pdo pdo_mysql gd
 
@@ -28,9 +27,8 @@ COPY . .
 RUN chown -R www-data:www-data /var/www/storage /var/www/bootstrap/cache
 RUN chmod -R 775 /var/www/storage /var/www/bootstrap/cache
 
-# Copia arquivos de configuração do nginx e supervisor
+# Copia arquivo de configuração do nginx
 COPY nginx/default.conf /etc/nginx/conf.d/default.conf
-COPY supervisord.conf /etc/supervisord.conf
 
 # Criar script de inicialização
 RUN echo '#!/bin/bash\n\
@@ -46,7 +44,12 @@ php artisan config:clear\n\
 php artisan route:clear\n\
 php artisan view:clear\n\
 php artisan migrate --force\n\
-exec supervisord -c /etc/supervisord.conf\n'\
+\n\
+# Iniciar PHP-FPM em background\n\
+php-fpm -D\n\
+\n\
+# Iniciar Nginx em foreground\n\
+nginx -g "daemon off;"\n'\
 > /start.sh && chmod +x /start.sh
 
 # Exposição de portas

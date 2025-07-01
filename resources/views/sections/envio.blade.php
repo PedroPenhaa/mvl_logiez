@@ -144,7 +144,7 @@
                                     </div>
                                     <div class="input-group mb-2">
                                         <span class="input-group-text">Valor R$</span>
-                                        <input type="number" class="form-control" id="produto-valor" min="0.01" step="0.01" value="0.00">
+                                        <input type="number" class="form-control" id="produto-valor" step="0.01" value="0.00">
                                     </div>
                                     <div class="input-group">
                                         <span class="input-group-text">Unidade</span>
@@ -2111,17 +2111,16 @@
                 const codigo = produtoSelecionado.codigo || id;
                 const nome = produtoSelecionado.text;
                 const peso = produtoSelecionado.peso || 0.5;
-                const valorInformado = parseFloat($('#produto-valor').val());
+                const valorInformado = parseFloat($('#produto-valor').val()) || 0;
                 const unidade = $('#produto-unidade').val();
+                const quantidade = parseInt($('#produto-quantidade').val());
 
                 // Validar valor
-                if (isNaN(valorInformado) || valorInformado <= 0) {
+                if (isNaN(valorInformado) || valorInformado < 0) {
                     alert('Por favor, informe um valor válido para o produto.');
                     $('#produto-valor').focus();
                     return;
                 }
-
-                const quantidade = parseInt($('#produto-quantidade').val());
 
                 // Armazenar o produto em uma variável global para uso após a confirmação
                 produtoEmConfirmacao = {
@@ -3072,63 +3071,8 @@
                     if (response.success) {
                         // Exibir mensagem de sucesso
                         showAlert('Envio processado com sucesso! ' + response.message, 'success');
-
-                        // GERAR PDF COM OS DADOS RETORNADOS PELA API FEDEX
-                        if (response.fedexData || response.dadosFedex || response) {
-                            // Carregar jsPDF dinamicamente se não estiver presente
-                            function gerarPDFComDadosFedex(dados) {
-                                if (typeof window.jspdf === 'undefined' && typeof window.jsPDF === 'undefined') {
-                                    var script = document.createElement('script');
-                                    script.src = 'https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js';
-                                    script.onload = function() {
-                                        gerarPDFComDadosFedex(dados);
-                                    };
-                                    document.head.appendChild(script);
-                                    return;
-                                }
-                                // jsPDF pode estar em window.jspdf.jsPDF ou window.jsPDF
-                                var jsPDF = window.jspdf ? window.jspdf.jsPDF : window.jsPDF;
-                                var doc = new jsPDF();
-                                let y = 10;
-                                doc.setFontSize(16);
-                                doc.text('Dados do Envio - FedEx', 10, y);
-                                y += 10;
-                                doc.setFontSize(10);
-
-                                function printObj(obj, indent = 0) {
-                                    for (const key in obj) {
-                                        if (!obj.hasOwnProperty(key)) continue;
-                                        let value = obj[key];
-                                        let line = ' '.repeat(indent * 2) + key + ': ';
-                                        if (typeof value === 'object' && value !== null) {
-                                            doc.text(line, 10, y);
-                                            y += 6;
-                                            printObj(value, indent + 1);
-                                        } else {
-                                            line += String(value);
-                                            doc.text(line, 10, y);
-                                            y += 6;
-                                            if (y > 280) {
-                                                doc.addPage();
-                                                y = 10;
-                                            }
-                                        }
-                                    }
-                                }
-                                printObj(dados);
-                                doc.save('dados_envio_fedex.pdf');
-                            }
-                            // Tenta pegar o objeto de dados retornados
-                            let dadosFedex = response.fedexData || response.dadosFedex || response;
-                            gerarPDFComDadosFedex(dadosFedex);
-                        }
-                        // Redirecionar para a próxima etapa
-                        if (response.nextStep) {
-                            setTimeout(function() {
-                                window.location.href = '/' + response.nextStep + '?hash=' + response.hash;
-                            }, 2000);
-                        }
                     } else {
+                        // Exibir mensagem de erro
                         showAlert('Erro ao processar envio: ' + response.message, 'danger');
                     }
                 },

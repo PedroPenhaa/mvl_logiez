@@ -337,11 +337,13 @@ class FedexService
                 'error' => $e->getMessage(),
                 'trace' => $e->getTraceAsString()
             ]);
-    
-            // Em caso de erro, retorna simulação
-            $resultado = $this->simularCotacao($origem, $destino, $altura, $largura, $comprimento, $peso);
-            $resultado['mensagem'] = 'Cotação simulada devido a erro na API: ' . $e->getMessage();
-            return $resultado;
+
+            // Em caso de erro, retornar o erro ao invés de simular
+            return [
+                'success' => false,
+                'error_code' => 'fedex_api_error',
+                'message' => 'Erro na API FedEx: ' . $e->getMessage()
+            ];
         }
     }
 
