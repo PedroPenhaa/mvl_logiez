@@ -10,7 +10,6 @@ RUN apt-get update && apt-get install -y \
     unzip \
     curl \
     git \
-    nginx \
     default-mysql-client \
     && docker-php-ext-install pdo pdo_mysql gd
 
@@ -27,9 +26,6 @@ COPY . .
 RUN chown -R www-data:www-data /var/www/storage /var/www/bootstrap/cache
 RUN chmod -R 775 /var/www/storage /var/www/bootstrap/cache
 
-# Copia arquivo de configuração do nginx
-COPY nginx/default.conf /etc/nginx/conf.d/default.conf
-
 # Criar script de inicialização
 RUN echo '#!/bin/bash\n\
 echo "Aguardando o banco de dados..."\n\
@@ -45,15 +41,12 @@ php artisan route:clear\n\
 php artisan view:clear\n\
 php artisan migrate --force\n\
 \n\
-# Iniciar PHP-FPM em background\n\
-php-fpm -D\n\
-\n\
-# Iniciar Nginx em foreground\n\
-nginx -g "daemon off;"\n'\
+# Iniciar PHP-FPM\n\
+php-fpm\n'\
 > /start.sh && chmod +x /start.sh
 
-# Exposição de portas
-EXPOSE 80 9000
+# Exposição da porta do PHP-FPM
+EXPOSE 9000
 
 # Comando para iniciar o container com o script de inicialização
 CMD ["/start.sh"]
