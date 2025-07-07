@@ -87,30 +87,6 @@
     </div>
 </div>
 
-<!-- Modal para quando a API da FedEx estiver indisponível -->
-<div class="modal fade" id="fedexErrorModal" tabindex="-1" aria-labelledby="fedexErrorModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content">
-            <div class="modal-header bg-warning">
-                <h5 class="modal-title" id="fedexErrorModalLabel">Serviço FedEx Indisponível</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
-            </div>
-            <div class="modal-body">
-                <p>O serviço da FedEx está temporariamente indisponível para cotações em tempo real.</p>
-                <p>Você gostaria de:</p>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" id="tryAgainButton">
-                    <i class="fas fa-sync-alt me-2"></i>Tentar Novamente
-                </button>
-                <button type="button" class="btn btn-primary" id="useSimulationButton">
-                    <i class="fas fa-calculator me-2"></i>Usar Cotação Simulada
-                </button>
-            </div>
-        </div>
-    </div>
-</div>
-
 <script>
 $(document).ready(function() {
     // Garantir que o loader está escondido inicialmente
@@ -126,9 +102,6 @@ $(document).ready(function() {
     $('#cotacao-form').on('submit', function(e) {
         e.preventDefault();
         
-        // DEBUG - Verificar a URL do formulário
-        //console.log('Form action URL:', $(this).attr('action'));
-        
         // Mostrar o loader
         $('#cotacao-loader').show();
         
@@ -137,19 +110,6 @@ $(document).ready(function() {
         
         // Obter os dados do formulário
         var formData = $(this).serialize();
-        
-        // Armazenar os dados do formulário para reutilização
-        window.lastFormData = formData;
-        
-        // Log dos dados que serão enviados
-        //console.log('Enviando dados para cotação:', {
-        //    origem: $('#origem').val(),
-        //    destino: $('#destino').val(),
-        //    altura: $('#altura').val(),
-        //    largura: $('#largura').val(),
-        //    comprimento: $('#comprimento').val(),
-        //    peso: $('#peso').val()
-        //});
         
         // Enviar para o endpoint de cotação
         $.ajax({
@@ -162,9 +122,6 @@ $(document).ready(function() {
             success: function(response) {
                 // Esconder o loader
                 $('#cotacao-loader').hide();
-                
-                // Exibir logs detalhados no console para depuração
-                console.log('Resposta completa da API FedEx:', response);
                 
                 // Processar a resposta usando a função compartilhada
                 processarResposta(response);
@@ -179,90 +136,15 @@ $(document).ready(function() {
         });
     });
     
-    // Configurar o botão "Tentar Novamente" no modal
-    $('#tryAgainButton').on('click', function() {
-        // Reenviar o formulário
-        if (window.lastFormData) {
-            // Ocultar o modal atual
-            var fedexModal = bootstrap.Modal.getInstance(document.getElementById('fedexErrorModal'));
-            fedexModal.hide();
-            
-            // Mostrar o loader
-            $('#cotacao-loader').show();
-            
-            $.ajax({
-                url: $('#cotacao-form').attr('action'),
-                type: 'POST',
-                data: window.lastFormData,
-                headers: {
-                    'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
-                },
-                success: function(response) {
-                    // Esconder o loader
-                    $('#cotacao-loader').hide();
-                    
-                    // Verificar se é o erro específico da FedEx indisponível
-                    if (response.success === false && response.error_code === 'fedex_unavailable') {
-                        // Mostrar o modal de erro da FedEx novamente
-                        var fedexModal = new bootstrap.Modal(document.getElementById('fedexErrorModal'));
-                        fedexModal.show();
-                        return;
-                    }
-                    
-                    // Se não for erro de indisponibilidade, processa a resposta normalmente
-                    processarResposta(response);
-                },
-                error: function(xhr) {
-                    $('#cotacao-loader').hide();
-                    exibirErro(xhr);
-                }
-            });
-        }
-    });
-    
-    // Configurar o botão "Usar Cotação Simulada" no modal
-    $('#useSimulationButton').on('click', function() {
-        // Ocultar o modal
-        var fedexModal = bootstrap.Modal.getInstance(document.getElementById('fedexErrorModal'));
-        fedexModal.hide();
-        
-        // Mostrar loader
-        $('#cotacao-loader').show();
-        
-        // Solicitar cotação simulada
-        if (window.lastFormData) {
-            // Adicionar o parâmetro forcarSimulacao=true ao formData
-            var simulationData = window.lastFormData + '&forcarSimulacao=true';
-            
-            $.ajax({
-                url: $('#cotacao-form').attr('action'),
-                type: 'POST',
-                data: simulationData,
-                headers: {
-                    'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
-                },
-                success: function(response) {
-                    $('#cotacao-loader').hide();
-                    processarResposta(response);
-                },
-                error: function(xhr) {
-                    $('#cotacao-loader').hide();
-                    exibirErro(xhr);
-                }
-            });
-        }
-    });
-    
     // Função para processar a resposta
     function processarResposta(response) {
-        // Verificar se é o erro específico da FedEx indisponível
         if (response.success === false) {
             // Mostrar mensagem de erro
             var html = '<div class="card shadow">';
-            html += '<div class="card-header bg-danger text-white"><h4 class="mb-0">Erro na Cotação</h4></div>';
+            html += '<div class="card-header bg-danger text-white"><h4 class="mb-0">Serviço Indisponível</h4></div>';
             html += '<div class="card-body">';
             html += '<div class="alert alert-danger">';
-            html += '<i class="fas fa-exclamation-circle me-2"></i> ' + response.message;
+            html += '<i class="fas fa-exclamation-circle me-2"></i> O serviço da FedEx está temporariamente indisponível. Por favor, tente novamente mais tarde.';
             html += '</div>';
             html += '</div></div>';
             
@@ -275,13 +157,6 @@ $(document).ready(function() {
             var html = '<div class="card shadow">';
             html += '<div class="card-header bg-success text-white"><h4 class="mb-0">Cotação calculada com sucesso!</h4></div>';
             html += '<div class="card-body">';
-            
-            // Se for simulação, mostrar aviso
-            if (response.simulado) {
-                html += '<div class="alert alert-info mb-4">';
-                html += '<i class="fas fa-info-circle me-2"></i> ' + response.mensagem;
-                html += '</div>';
-            }
             
             // Detalhes do peso
             html += '<div class="row mb-4">';
@@ -372,43 +247,18 @@ $(document).ready(function() {
             $('html, body').animate({
                 scrollTop: $('#cotacao-resultado').offset().top - 100
             }, 500);
-        } else {
-            // Exibir mensagem de erro
-            var html = '<div class="alert alert-danger">';
-            html += '<h4>Erro ao calcular cotação</h4>';
-            html += '<p>' + (response.message || 'Ocorreu um erro ao processar sua cotação. Tente novamente.') + '</p>';
-            html += '</div>';
-            
-            $('#cotacao-resultado').html(html).fadeIn();
         }
     }
     
     // Função para exibir erro
     function exibirErro(xhr) {
-        // Log do erro
-        //console.error('Erro na requisição AJAX:', xhr.status, xhr.statusText);
-        //console.error('Resposta:', xhr.responseText);
-        
-        // Exibir mensagem de erro
-        var html = '<div class="alert alert-danger">';
-        html += '<h4>Erro ao calcular cotação</h4>';
-        
-        try {
-            var response = JSON.parse(xhr.responseText);
-            html += '<p>' + (response.message || 'Ocorreu um erro ao processar sua cotação. Tente novamente.') + '</p>';
-            
-            // Se tiver detalhes adicionais
-            if (response.error_details) {
-                html += '<p><small>Detalhes técnicos: ' + response.error_details + '</small></p>';
-            }
-        } catch (e) {
-            html += '<p>Ocorreu um erro ao processar sua cotação. Tente novamente.</p>';
-            if (xhr.status) {
-                html += '<p><small>Status do erro: ' + xhr.status + ' - ' + xhr.statusText + '</small></p>';
-            }
-        }
-        
+        var html = '<div class="card shadow">';
+        html += '<div class="card-header bg-danger text-white"><h4 class="mb-0">Serviço Indisponível</h4></div>';
+        html += '<div class="card-body">';
+        html += '<div class="alert alert-danger">';
+        html += '<i class="fas fa-exclamation-circle me-2"></i> O serviço da FedEx está temporariamente indisponível. Por favor, tente novamente mais tarde.';
         html += '</div>';
+        html += '</div></div>';
         
         $('#cotacao-resultado').html(html).fadeIn();
     }
