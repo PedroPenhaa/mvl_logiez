@@ -11,8 +11,8 @@
 
     <div class="d-flex justify-content-between align-items-center ">
         <div>
-            <h1 style="font-size: 30px; margin-bottom: 4px;">Olá {{ auth()->user()->name }}! 👋</h1>
-            <p class="text-muted mb-0" style="font-size: 12px;">Simplificamos envios internacionais, sem burocracia e com redução de custos</p>
+            <h1 style="font-size: 30px; margin-bottom: 0; color: #430776;">Olá {{ auth()->user()->name }}! 👋</h1>
+            <p class="text-muted" style="font-size: 14px; font-weight: 300; color: #6B7280; text-align: left; margin: 0;">Simplificamos envios internacionais, sem burocracia e com redução de custos</p>
         </div>
         <div>
             <img src="{{ asset('img/logo_dashboard.png') }}" alt="Logo Header" class="img-fluid" style="min-height: 130px; min-width: 104%; margin-top: -17px;">
@@ -21,12 +21,14 @@
 
     <div class="card mb-4 feature-card">
         <div class="card-body p-4">
-            <h2 class="display-6 mb-4 text-gradient" style="font-size:1.5rem">Com nosso envio, vá mais longe</h2>
+            <h2 class="display-6" style="font-size: 1.8rem; font-weight: 700; color: #430776; position: relative; padding-left: 15px; border-left: 4px solid #7209B7;">
+                Com nosso envio, <span style="color: #7209B7">vá mais longe</span>
+            </h2>
             
             <div class="row g-4">
                 <div class="col-md-6">
                     <div class="position-relative feature-image-container">
-                        <img src="{{ asset('img/boxes.png') }}" alt="Boxes" class="feature-image">
+                        <img src="{{ asset('img/login3.png') }}" alt="Boxes" class="feature-image">
                     </div>
                 </div>
                 <div class="col-md-6">
@@ -208,12 +210,18 @@
 @endsection
 
 <style>
+/* Aplicar Rubik globalmente */
+body, h1, h2, h3, h4, h5, h6, p, span, div, a, button {
+    font-family: 'Rubik', sans-serif !important;
+}
+
 .feature-card {
     border: none;
     border-radius: 20px;
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
     overflow: hidden;
     background: linear-gradient(145deg, #ffffff 0%, #f8f9fa 100%);
+    padding: 0;
 }
 
 .text-gradient {
@@ -224,22 +232,25 @@
 }
 
 .feature-image-container {
-    height: 100%;
-    max-height: 240;
+    position: relative;
+    width: 100%;
+    aspect-ratio: 16/9;
+    min-height: 200px;
     border-radius: 15px;
     overflow: hidden;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+    background: linear-gradient(145deg, #7209B7, #430776);
 }
 
 .feature-image {
+    position: absolute;
+    top: 0;
+    left: 0;
     width: 100%;
     height: 100%;
-    object-fit: cover;
-    border-radius: 15px;
-    transition: transform 0.5s ease;
-}
-
-.feature-image:hover {
-    transform: scale(1.03);
+    object-fit: contain;
+    /*padding: 20px;*/
+    transition: transform 0.3s ease;
 }
 
 .feature-list {
@@ -252,55 +263,162 @@
     display: flex;
     align-items: center;
     margin-bottom: 0px;
-    padding: 0.3rem;
+    padding: 0.6rem;
     border-radius: 12px;
     transition: all 0.3s ease;
     background: rgba(255, 255, 255, 0.7);
 }
 
-.feature-item:hover {
-    background: rgba(37, 99, 235, 0.05);
-    transform: translateX(5px);
+/* Regras de Responsividade */
+@media (max-width: 768px) {
+    .feature-image-container {
+        min-height: 200px;
+    }
+    
+    h1 {
+        font-size: 24px !important;
+    }
+    
+    .text-muted {
+        font-size: 12px !important;
+    }
+    
+    .display-6 {
+        font-size: 1.4rem !important;
+    }
+    
+    .feature-item {
+        padding: 0.4rem;
+        margin-bottom: 5px;
+    }
+    
+    .feature-icon {
+        font-size: 1.2rem;
+        margin-right: 0.5rem;
+    }
+    
+    .feature-item span {
+        font-size: 0.75rem !important;
+    }
+    
+    .d-flex.justify-content-between.align-items-center {
+        flex-direction: column;
+        text-align: center;
+    }
+    
+    .d-flex.justify-content-between.align-items-center img {
+        margin-top: 10px !important;
+        min-width: auto !important;
+        width: 100%;
+        max-width: 300px;
+    }
 }
 
-.feature-icon {
-    font-size: 1.5rem;
-    margin-right: 1rem;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
+@media (min-width: 769px) and (max-width: 1024px) {
+    .feature-image-container {
+        min-height: 250px;
+    }
+    
+    h1 {
+        font-size: 26px !important;
+    }
+    
+    .display-6 {
+        font-size: 1.6rem !important;
+    }
+    
+    .feature-item span {
+        font-size: 0.85rem !important;
+    }
 }
 
-.stats-container {
-    display: flex;
-    gap: 2rem;
-    padding-top: 1rem;
-    border-top: 1px solid rgba(0, 0, 0, 0.1);
+@media (min-width: 1025px) and (max-width: 1440px) {
+    .feature-image-container {
+        min-height: 300px;
+    }
 }
 
-.stat-item {
-    flex: 1;
+@media (min-width: 1441px) {
+    .feature-image-container {
+        min-height: 400px;
+    }
+    
+    .feature-item {
+        padding: 0.8rem;
+    }
+    
+    .feature-item span {
+        font-size: 0.9rem !important;
+    }
 }
 
-.stat-number {
-    font-size: 2.5rem;
-    font-weight: 700;
+/* Ajustes para garantir espaçamento correto em todos os dispositivos */
+.card-body {
+    padding: 0;
+}
+
+.row.g-4 {
     margin: 0;
-    background: linear-gradient(120deg, #2563eb, #4f46e5);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
+    padding: 0;
 }
 
-.stat-label {
-    color: #6b7280;
-    font-size: 0.9rem;
-    margin: 0;
-    font-weight: 500;
+/* Ajustes para melhor visualização em telas muito pequenas */
+@media (max-width: 480px) {
+    .card-body {
+        padding: 1rem;
+    }
+    
+    .feature-item {
+        flex-direction: row;
+        align-items: flex-start;
+    }
+    
+    .feature-icon {
+        margin-top: 2px;
+    }
 }
 
-.lead {
-    color: #4b5563;
-    font-size: 1.1rem;
-    line-height: 1.6;
+/* Regras de Responsividade para a Imagem */
+@media (max-width: 480px) {
+    .feature-image-container {
+        aspect-ratio: 4/3;
+        min-height: 180px;
+    }
+    
+    .feature-image {
+       /* padding: 10px;*/
+    }
+}
+
+@media (min-width: 481px) and (max-width: 768px) {
+    .feature-image-container {
+        aspect-ratio: 16/9;
+        min-height: 200px;
+    }
+}
+
+@media (min-width: 769px) and (max-width: 1024px) {
+    .feature-image-container {
+        aspect-ratio: 16/9;
+        min-height: 250px;
+    }
+}
+
+@media (min-width: 1025px) and (max-width: 1440px) {
+    .feature-image-container {
+        aspect-ratio: 16/9;
+        min-height: 300px;
+    }
+}
+
+@media (min-width: 1441px) {
+    .feature-image-container {
+        aspect-ratio: 16/9;
+        min-height: 350px;
+    }
+    
+    .feature-image {
+     /*   padding: 30px;*/
+    }
 }
 </style>
