@@ -8,7 +8,10 @@ use Illuminate\Support\Facades\Cache;
 use App\Services\FedexService;
 use Illuminate\Support\Facades\DB;
 use Barryvdh\DomPDF\Facade\Pdf;
-use Illuminate\Support\Facades\Auth; // Adicione esta linha
+use Illuminate\Support\Facades\Auth;
+use App\Models\Payment;
+use App\Models\Shipment;
+use App\Models\UserProfile;
 
 
 class SectionController extends Controller
@@ -25,34 +28,48 @@ class SectionController extends Controller
         return view('dashboard');
     }
     
-    public function cotacao()
+    public function cotacao(Request $request)
     {
         // Verificar se há dados da última cotação FedEx na sessão
         $dados = session('dados_fedex', null);
         $resultado = session('resultado_fedex', null);
         
+        // Se for uma requisição AJAX, retornar apenas a view da seção
+        if ($request->ajax()) {
+            return view('sections.cotacao', compact('dados', 'resultado'))->render();
+        }
+        
+        // Se for acesso direto, retornar a view completa com o layout
         return view('sections.cotacao', compact('dados', 'resultado'));
     }
     
-    public function envio()
+    public function envio(Request $request)
     {
+        if ($request->ajax()) {
+            return view('sections.envio')->render();
+        }
         return view('sections.envio');
     }
     
-    public function pagamento()
+    public function pagamento(Request $request)
     {
         $userId = Auth::id();
-
+        
         // Verificar se o usuário está autenticado
         if (!\Illuminate\Support\Facades\Auth::check()) {
-            return view('sections.pagamento', [
+            $data = [
                 'pendingPayments' => collect([]),
                 'completedPayments' => collect([]),
                 'cancelledPayments' => collect([])
-            ]);
+            ];
+            
+            if ($request->ajax()) {
+                return view('sections.pagamento', $data)->render();
+            }
+            return view('sections.pagamento', $data);
         }
-
-        // Usar o mesmo código do PaymentController index, mas só renderizar a view
+        
+        // Carregar os pagamentos do usuário
         $pendingPayments = \App\Models\Payment::where('user_id', \Illuminate\Support\Facades\Auth::id())
             ->whereIn('status', ['pending', 'PENDING'])
             ->orderBy('created_at', 'desc')
@@ -67,9 +84,13 @@ class SectionController extends Controller
             ->whereIn('status', ['cancelled', 'CANCELLED'])
             ->orderBy('created_at', 'desc')
             ->get();
-
-
-        return view('sections.pagamento', compact('pendingPayments', 'completedPayments', 'cancelledPayments'));
+        
+        $data = compact('pendingPayments', 'completedPayments', 'cancelledPayments');
+        
+        if ($request->ajax()) {
+            return view('sections.pagamento', $data)->render();
+        }
+        return view('sections.pagamento', $data);
     }
     
     public function etiqueta(Request $request)
@@ -97,35 +118,44 @@ class SectionController extends Controller
         }
         
         // Renderização normal da view
+        if ($request->ajax()) {
+            return view('sections.etiqueta')->render();
+        }
         return view('sections.etiqueta');
     }
     
-    public function rastreamento()
+    public function rastreamento(Request $request)
     {
+        if ($request->ajax()) {
+            return view('sections.rastreamento')->render();
+        }
         return view('sections.rastreamento');
     }
     
-    public function perfil()
+    public function perfil(Request $request)
     {
         // Verificar se o usuário está autenticado
         if (!\Illuminate\Support\Facades\Auth::check()) {
-            $userData = [
-                'nome' => 'Usuário não autenticado',
-                'email' => '',
-                'cpf' => '',
-                'telefone' => '',
-                'rua' => '',
-                'numero' => '',
-                'complemento' => '',
-                'cidade' => '',
-                'estado' => '',
-                'cep' => ''
+            $data = [
+                'usuario' => [
+                    'nome' => 'Usuário não autenticado',
+                    'email' => '',
+                    'cpf' => '',
+                    'telefone' => '',
+                    'rua' => '',
+                    'numero' => '',
+                    'complemento' => '',
+                    'cidade' => '',
+                    'estado' => '',
+                    'cep' => ''
+                ],
+                'shipments' => collect([])
             ];
             
-            return view('sections.perfil', [
-                'usuario' => $userData,
-                'shipments' => collect([])
-            ]);
+            if ($request->ajax()) {
+                return view('sections.perfil', $data)->render();
+            }
+            return view('sections.perfil', $data);
         }
         
         // Obter o usuário autenticado
@@ -191,10 +221,15 @@ class SectionController extends Controller
                                            ->get();
         }
         
-        return view('sections.perfil', [
+        $data = [
             'usuario' => $userData,
             'shipments' => $shipments
-        ]);
+        ];
+        
+        if ($request->ajax()) {
+            return view('sections.perfil', $data)->render();
+        }
+        return view('sections.perfil', $data);
     }
 
     /**

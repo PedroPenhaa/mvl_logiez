@@ -13,7 +13,10 @@
     <!-- Font Awesome -->
     <link rel="stylesheet" href="https://use.fontawesome.com/releases/v6.4.0/css/all.css">
     <link rel="stylesheet" href="https://use.fontawesome.com/releases/v6.4.0/css/v4-shims.css">
-
+    
+    <!-- Seção para estilos específicos da página -->
+    @yield('styles')
+    
     <style>
         /* Aplicar Rubik globalmente */
         * {
@@ -232,7 +235,6 @@
             }
         }
     </style>
-    @yield('styles')
 </head>
 <body>
     <!-- Botão toggle para menu lateral em telas pequenas -->
@@ -300,8 +302,8 @@
         <div id="alert-container"></div>
         
         @if(request()->segment(1) !== 'dashboard')
-            <div class="content-header">
-                <h1 id="section-title" class="section-title" style="color: #6f42c1;">Dashboard</h1>
+            <div class="section-header">
+                <h1 id="section-title" class="section-title" style="color: #6f42c1;"></h1>
             </div>
         @endif
         
