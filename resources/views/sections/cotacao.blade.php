@@ -27,7 +27,7 @@
                             </div>
                             <div class="card-body">
                                 <div class="mb-3">
-                                    <label for="destino" class="form-label">CEP de Destino (EUA)</label>
+                                    <label for="destino" class="form-label">CEP de Destino</label>
                                     <input type="text" class="form-control" id="destino" name="destino" placeholder="00000" required>
                                 </div>
                             </div>

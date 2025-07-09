@@ -368,7 +368,7 @@ Route::get('/exportar-cotacao-pdf', function (Illuminate\Http\Request $request, 
                 <div class="info-value">' . $dados['origem_cep'] . '</div>
             </div>
             <div class="info-item">
-                <div class="info-label">CEP de Destino (EUA)</div>
+                <div class="info-label">CEP de Destino</div>
                 <div class="info-value">' . $dados['destino_cep'] . '</div>
             </div>
         </div>

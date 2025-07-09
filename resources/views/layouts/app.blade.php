@@ -293,6 +293,12 @@
         </div>
     </main>
     
+    <!-- Footer fixo -->
+    <div style="position: fixed; bottom: 0; left: 0; right: 0; background: linear-gradient(45deg, #4a1d96, #6f42c1); color: #fff; text-align: center; padding: 12px; z-index: 1000; font-weight: 500; box-shadow: 0 -2px 10px rgba(0,0,0,0.1); font-family: 'Poppins', sans-serif;">
+        <i class="fas fa-code-branch" style="margin-right: 8px;"></i>
+        Sistema em Fase de Desenvolvimento
+    </div>
+
     <!-- Bootstrap JS e dependências -->
     <script src="https://cdn.jsdelivr.net/npm/jquery@3.6.0/dist/jquery.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
