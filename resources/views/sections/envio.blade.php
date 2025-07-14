@@ -886,7 +886,7 @@
                         <div class="card-body">
                             <div class="mb-3">
                                 <label for="origem_nome" class="form-label required">Descrição</label>
-                                <input type="text" class="form-control" id="origem_nome" name="origem_nome" required>
+                                <input type="text" class="form-control" id="origem_nome" name="origem_nome" required placeholder="Ex: João da Silva">
                             </div>
 
                             <div class="mb-3">
@@ -901,29 +901,29 @@
 
                             <div class="mb-3">
                                 <label for="origem_endereco" class="form-label required">Endereço</label>
-                                <input type="text" class="form-control" id="origem_endereco" name="origem_endereco" required>
+                                <input type="text" class="form-control" id="origem_endereco" name="origem_endereco" required placeholder="Ex: Rua das Flores, 123">
                             </div>
 
                             <div class="mb-3">
                                 <label for="origem_complemento" class="form-label">Complemento</label>
-                                <input type="text" class="form-control" id="origem_complemento" name="origem_complemento">
+                                <input type="text" class="form-control" id="origem_complemento" name="origem_complemento" placeholder="Ex: Apto 45">
                             </div>
 
                             <div class="row">
                                 <div class="col-6 mb-3">
                                     <label for="origem_cidade" class="form-label required">Cidade</label>
-                                    <input type="text" class="form-control" id="origem_cidade" name="origem_cidade" required>
+                                    <input type="text" class="form-control" id="origem_cidade" name="origem_cidade" required placeholder="Ex: São Paulo">
                                 </div>
                                 <div class="col-6 mb-3">
                                     <label for="origem_estado" class="form-label required">Estado</label>
-                                    <input type="text" class="form-control" id="origem_estado" name="origem_estado" required maxlength="2">
+                                    <input type="text" class="form-control" id="origem_estado" name="origem_estado" required maxlength="2" placeholder="Ex: SP">
                                 </div>
                             </div>
 
                             <div class="row">
                                 <div class="col-6 mb-3">
                                     <label for="origem_cep" class="form-label required">CEP</label>
-                                    <input type="text" class="form-control" id="origem_cep" name="origem_cep" required>
+                                    <input type="text" class="form-control" id="origem_cep" name="origem_cep" required placeholder="Ex: 01001-000">
                                 </div>
                                 <div class="col-6 mb-3">
                                     <label for="origem_pais" class="form-label required">País</label>
@@ -945,7 +945,7 @@
                         <div class="card-body">
                             <div class="mb-3">
                                 <label for="destino_nome" class="form-label required">Descrição</label>
-                                <input type="text" class="form-control" id="destino_nome" name="destino_nome" required>
+                                <input type="text" class="form-control" id="destino_nome" name="destino_nome" required placeholder="Ex: Maria Oliveira">
                             </div>
 
                             <div class="mb-3">
@@ -960,29 +960,29 @@
 
                             <div class="mb-3">
                                 <label for="destino_endereco" class="form-label required">Endereço</label>
-                                <input type="text" class="form-control" id="destino_endereco" name="destino_endereco" required>
+                                <input type="text" class="form-control" id="destino_endereco" name="destino_endereco" required placeholder="Ex: 123 Main St, Apt 4B">
                             </div>
 
                             <div class="mb-3">
                                 <label for="destino_complemento" class="form-label">Complemento</label>
-                                <input type="text" class="form-control" id="destino_complemento" name="destino_complemento">
+                                <input type="text" class="form-control" id="destino_complemento" name="destino_complemento" placeholder="Ex: Suite 200">
                             </div>
 
                             <div class="row">
                                 <div class="col-6 mb-3">
                                     <label for="destino_cidade" class="form-label required">Cidade</label>
-                                    <input type="text" class="form-control" id="destino_cidade" name="destino_cidade" required>
+                                    <input type="text" class="form-control" id="destino_cidade" name="destino_cidade" required placeholder="Ex: New York">
                                 </div>
                                 <div class="col-6 mb-3">
                                     <label for="destino_estado" class="form-label required">Estado</label>
-                                    <input type="text" class="form-control" id="destino_estado" name="destino_estado" required maxlength="2">
+                                    <input type="text" class="form-control" id="destino_estado" name="destino_estado" required maxlength="2" placeholder="Ex: NY">
                                 </div>
                             </div>
 
                             <div class="row">
                                 <div class="col-6 mb-3">
                                     <label for="destino_cep" class="form-label required">CEP</label>
-                                    <input type="text" class="form-control" id="destino_cep" name="destino_cep" required>
+                                    <input type="text" class="form-control" id="destino_cep" name="destino_cep" required placeholder="Ex: 10001">
                                 </div>
                                 <div class="col-6 mb-3">
                                     <label for="destino_pais" class="form-label required">País</label>
