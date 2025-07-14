@@ -193,8 +193,13 @@
             .sidebar.expanded .menu-item .menu-text {
                 opacity: 1;
                 display: inline;
+                color: #fff !important;
+
             }
-            
+   
+            .menu-item .menu-text {
+                color: #fff !important;
+            }
             .sidebar-header h3 {
                 display: none;
             }
@@ -237,6 +242,21 @@
                 display: flex;
             }
         }
+
+        /* Forçar cor branca nos ícones e textos do menu lateral */
+        .sidebar .menu-item i,
+        .sidebar .menu-item .menu-text,
+        .sidebar .menu-item span {
+            color: #fff !important;
+            font-weight: 600;
+        }
+
+        /* Aumentar o tamanho da fonte do texto do menu ao passar o mouse */
+        .sidebar .menu-item:hover .menu-text,
+        .sidebar .menu-item:hover span {
+            font-size: 1em;
+            transition: font-size 0.2s;
+        }
     </style>
 </head>
 <body>
@@ -255,8 +275,8 @@
             <!-- Menu do Dashboard -->
             <a href="{{ route('dashboard') }}" class="text-decoration-none">
                 <div class="menu-item active">
-                    <i style="color: #fff;" class="fas fa-home"></i>
-                    <span style="color: #fff;">Início</span>
+                    <i class="fas fa-home"></i>
+                    <span>Início</span>
                 </div>
             </a>
             <a href="/cotacao" class="text-decoration-none">
