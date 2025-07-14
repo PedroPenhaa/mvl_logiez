@@ -1,25 +1,40 @@
 @extends('layouts.app')
 
+@section('styles')
+<link rel="stylesheet" href="{{ asset('css/cotacao.css') }}">
+@endsection
+
 @section('content')
-<div class="card">
-    <div class="card-header">
-        <i class="fas fa-shipping-fast me-2"></i> Dados do Envio
+<!-- Header Section -->
+<div class="page-header-wrapper">
+    <div class="page-header-content">
+        <div class="header-content">
+            <div class="title-section">
+                <div class="title-area">
+                    <i class="fas fa-shipping-fast me-2"></i>
+                    <h1>Envio Internacional</h1>
+                </div>
+                <p class="description">Processe seu envio internacional de forma rápida e segura</p>
+            </div>
+        </div>
     </div>
+</div>
+
+<div class="card">
+  
     <div class="card-body">
         <form id="envio-form" action="{{ route('api.envio.processar') }}" method="POST">
             @csrf
 
             <!-- Novos campos adicionados -->
-            <div class="row mb-4">
+            <div class="row mb-2">
                 <div class="col-12">
-                    <div class="card border-light">
-                        <div class="card-header bg-light">
-                            <h5 class="mb-0">Informações do Envio</h5>
-                        </div>
+                    <div class="card border-light shadow-sm">
+                   
                         <div class="card-body">
-                            <div class="row">
+                            <div class="row g-4">
                                 <div class="col-md-6 mb-3">
-                                    <label for="tipo_envio" class="form-label required">Tipo de Envio</label>
+                                    <label for="tipo_envio" class="form-label required"><i class="fas fa-box me-1"></i> Tipo de Envio</label>
                                     <select class="form-select" id="tipo_envio" name="tipo_envio" required>
                                         <option value="">Selecione o tipo de envio</option>
                                         <option value="venda">Venda</option>
@@ -28,7 +43,7 @@
                                     </select>
                                 </div>
                                 <div class="col-md-6 mb-3">
-                                    <label for="tipo_pessoa" class="form-label required">Tipo de Pessoa</label>
+                                    <label for="tipo_pessoa" class="form-label required"><i class="fas fa-user me-1"></i> Tipo de Pessoa</label>
                                     <select class="form-select" id="tipo_pessoa" name="tipo_pessoa" required>
                                         <option value="">Selecione o tipo de pessoa</option>
                                         <option value="pf">Pessoa Física</option>
@@ -45,6 +60,322 @@
             <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
 
             <style>
+                /* ===== PADRÃO COTAÇÃO ===== */
+                body {
+                    background: #f6f7fb;
+                    font-family: 'Poppins', 'Segoe UI', Arial, sans-serif;
+                    color: #3d246c;
+                }
+                
+                /* Cards estilo cotação */
+                .card.border-light {
+                    border: none !important;
+                    border-radius: 12px !important;
+                    box-shadow: 0 8px 16px rgba(0,0,0,0.1) !important;
+                    transition: transform 0.3s ease, box-shadow 0.3s ease !important;
+                    background: #fff !important;
+                    margin-bottom: 1.5rem !important;
+                }
+                
+                .card.border-light:hover {
+                    transform: translateY(-5px) !important;
+                    box-shadow: 0 12px 24px rgba(0,0,0,0.15) !important;
+                }
+                
+                .card.border-light .card-header {
+                    background: linear-gradient(135deg, #6f42c1 0%, #8e44ad 100%) !important;
+                    color: white !important;
+                    border-radius: 12px 12px 0 0 !important;
+                    padding: 0.75rem 1rem !important;
+                    border: none !important;
+                }
+                
+                .card.border-light .card-header h5 {
+                    font-size: 1rem !important;
+                    margin: 0 !important;
+                    font-weight: 600 !important;
+                }
+                
+                .card.border-light .card-body {
+                    padding: 1rem !important;
+                    border-radius: 0 0 12px 12px !important;
+                }
+                
+                /* Container principal estilo cotação */
+                .cotacao-container {
+                    max-width: 1200px;
+                    margin: 0 auto;
+                    padding: 0 15px;
+                }
+                
+                /* Cards */
+                .main-card {
+                    border: none;
+                    border-radius: 15px;
+                    box-shadow: 0 8px 16px rgba(0,0,0,0.1);
+                }
+                
+                .feature-card {
+                    border: none;
+                    border-radius: 12px;
+                    transition: transform 0.3s ease, box-shadow 0.3s ease;
+                }
+                
+                .feature-card:hover {
+                    transform: translateY(-5px);
+                    box-shadow: 0 8px 16px rgba(0,0,0,0.1);
+                }
+                
+                .card, .card.border-light, .section-card {
+                    border-radius: 22px !important;
+                    background: #fff !important;
+                    border: none !important;
+                    box-shadow: 0 4px 24px 0 rgba(111,66,193,0.08), 0 1.5px 4px 0 rgba(111,66,193,0.04);
+                    margin-bottom: 32px;
+                }
+                .card-header, .card-header.bg-light, .origem-header, .destino-header {
+                    background: linear-gradient(90deg, #8f5be8 0%, #6f42c1 100%) !important;
+                    color: #fff !important;
+                    font-weight: 700;
+                    font-size: 1.15rem;
+                    border-radius: 22px 22px 0 0 !important;
+                    border: none !important;
+                    display: flex;
+                    align-items: center;
+                    gap: 0.5rem;
+                    min-height: 54px;
+                    padding: 1rem 1.5rem;
+                }
+                .card-body {
+                    background: #fff !important;
+                    border-radius: 0 0 22px 22px !important;
+                    padding: 2rem 1.5rem !important;
+                }
+                /* Inputs/selects padrão cotação */
+                .form-control, .form-select {
+                    border-radius: 14px !important;
+                    border: 1.5px solid #e0e0e0 !important;
+                    background: #fff !important;
+                    color: #3d246c !important;
+                    font-size: 1.08rem !important;
+                    padding: 1.1rem 1.1rem 0.4rem 1.1rem !important;
+                    height: 56px !important;
+                    box-shadow: 0 2px 8px 0 rgba(111,66,193,0.04) !important;
+                    transition: border 0.2s;
+                }
+                .form-control:focus, .form-select:focus {
+                    border-color: #8f5be8 !important;
+                    box-shadow: 0 0 0 2px #e9d6ff !important;
+                    background: #fff !important;
+                    color: #3d246c !important;
+                }
+                .form-control::placeholder {
+                    color: #6f42c1 !important;
+                    opacity: 0.7;
+                    font-weight: 400;
+                }
+                label.form-label, .form-floating > label {
+                    color: #6f42c1 !important;
+                    font-weight: 600 !important;
+                    margin-bottom: 0.35rem !important;
+                    font-size: 1.01rem !important;
+                    left: 1.1rem !important;
+                    top: 0.7rem !important;
+                    background: transparent !important;
+                    padding: 0 0.2rem;
+                }
+                .form-label.required:after {
+                    content: '*';
+                    color: #d72660;
+                    margin-left: 3px;
+                    font-size: 1.1em;
+                }
+                .form-floating > .form-control:focus ~ label,
+                .form-floating > .form-control:not(:placeholder-shown) ~ label {
+                    color: #8f5be8 !important;
+                    font-size: 0.98rem !important;
+                    top: -0.7rem !important;
+                    left: 0.9rem !important;
+                    background: #fff !important;
+                    padding: 0 0.4rem;
+                }
+                .form-floating {
+                    position: relative;
+                }
+                .form-floating > label {
+                    position: absolute;
+                    pointer-events: none;
+                    transition: 0.2s;
+                    z-index: 2;
+                }
+                /* Input group */
+                .input-group-text {
+                    background: #f3e7ff !important;
+                    color: #6f42c1 !important;
+                    border: none !important;
+                    font-weight: 600 !important;
+                    border-radius: 14px 0 0 14px !important;
+                    display: flex;
+                    align-items: center;
+                }
+                /* Botões padrão cotação */
+                .btn-primary, .btn-success, .btn-outline-primary {
+                    background: linear-gradient(90deg, #8f5be8 0%, #6f42c1 100%) !important;
+                    border: none !important;
+                    color: #fff !important;
+                    font-weight: 600 !important;
+                    border-radius: 14px !important;
+                    box-shadow: 0 2px 8px 0 rgba(111, 66, 193, 0.10) !important;
+                    transition: background 0.2s, box-shadow 0.2s;
+                    min-height: 56px;
+                    font-size: 1.08rem;
+                    padding: 0 2.5rem;
+                }
+                .btn-primary:hover, .btn-success:hover, .btn-outline-primary:hover {
+                    background: linear-gradient(90deg, #6f42c1 0%, #8f5be8 100%) !important;
+                    color: #fff !important;
+                    box-shadow: 0 4px 16px 0 rgba(111, 66, 193, 0.18) !important;
+                }
+                .btn-outline-secondary {
+                    border-color: #8f5be8 !important;
+                    color: #6f42c1 !important;
+                    background: #f3e7ff !important;
+                    font-weight: 500 !important;
+                    border-radius: 14px !important;
+                    min-height: 56px;
+                    font-size: 1.08rem;
+                }
+                .btn-outline-secondary:hover {
+                    background: #8f5be8 !important;
+                    color: #fff !important;
+                }
+                /* Sombra leve nos campos */
+                .form-control, .form-select, .input-group-text {
+                    box-shadow: 0 2px 8px 0 rgba(111,66,193,0.04) !important;
+                }
+                /* Responsividade */
+                @media (max-width: 767px) {
+                    .card-body {
+                        padding: 1.2rem 0.7rem !important;
+                    }
+                    .form-control, .form-select {
+                        font-size: 1rem !important;
+                        padding: 0.7rem 0.8rem !important;
+                        height: 44px !important;
+                    }
+                    .input-group-text {
+                        height: 44px !important;
+                    }
+                    .btn-primary, .btn-success, .btn-outline-primary, .btn-outline-secondary {
+                        min-height: 44px !important;
+                        font-size: 1rem !important;
+                        padding: 0 1.2rem;
+                    }
+                }
+
+                /* Títulos das seções */
+                h5.mb-0, h4.mb-3, h3.text-lg {
+                    color: #6f42c1;
+                    font-weight: 700;
+                    letter-spacing: 0.5px;
+                    margin-bottom: 1rem;
+                }
+
+                /* Botões principais */
+                .btn-primary, .btn-success, .btn-outline-primary {
+                    background: linear-gradient(90deg, #6f42c1 0%, #a084e8 100%);
+                    border: none;
+                    color: #fff;
+                    font-weight: 600;
+                    border-radius: 8px;
+                    box-shadow: 0 2px 8px 0 rgba(111, 66, 193, 0.10);
+                    transition: background 0.2s, box-shadow 0.2s;
+                }
+                .btn-primary:hover, .btn-success:hover, .btn-outline-primary:hover {
+                    background: linear-gradient(90deg, #a084e8 0%, #6f42c1 100%);
+                    color: #fff;
+                    box-shadow: 0 4px 16px 0 rgba(111, 66, 193, 0.18);
+                }
+                .btn-outline-secondary {
+                    border-color: #a084e8;
+                    color: #6f42c1;
+                    background: #f3e7ff;
+                    font-weight: 500;
+                    border-radius: 8px;
+                }
+                .btn-outline-secondary:hover {
+                    background: #a084e8;
+                    color: #fff;
+                }
+
+                /* Inputs e selects */
+                .form-control, .form-select {
+                    border-radius: 8px;
+                    border: 1.5px solid #a084e8;
+                    font-size: 1rem;
+                    padding: 0.6rem 1rem;
+                    color: #3d246c;
+                    background: #f8f9fa;
+                    transition: border 0.2s;
+                }
+                .form-control:focus, .form-select:focus {
+                    border-color: #6f42c1;
+                    box-shadow: 0 0 0 2px #e9d6ff;
+                    background: #fff;
+                    color: #3d246c;
+                }
+                label.form-label {
+                    color: #6f42c1;
+                    font-weight: 500;
+                    margin-bottom: 0.3rem;
+                }
+                .form-label.required:after {
+                    content: '*';
+                    color: #d72660;
+                    margin-left: 3px;
+                    font-size: 1.1em;
+                }
+
+                /* Espaçamento entre linhas e colunas */
+                .row.mb-4 {
+                    margin-bottom: 2.5rem !important;
+                }
+                .mb-3 {
+                    margin-bottom: 1.2rem !important;
+                }
+                .input-group-text {
+                    background: #e9d6ff;
+                    color: #6f42c1;
+                    border: none;
+                    font-weight: 600;
+                }
+
+                /* Select2 customização */
+                .select2-container--default .select2-selection--single {
+                    background: #f8f9fa;
+                    border: 1.5px solid #a084e8;
+                    border-radius: 8px;
+                    height: 38px;
+                    color: #3d246c;
+                    font-size: 1rem;
+                    padding: 0.4rem 1rem;
+                }
+                .select2-container--default .select2-selection--single .select2-selection__rendered {
+                    color: #3d246c;
+                    line-height: 36px;
+                }
+                .select2-container--default .select2-selection--single .select2-selection__arrow {
+                    height: 38px;
+                }
+                .select2-dropdown {
+                    border-radius: 8px;
+                    border: 1.5px solid #a084e8;
+                }
+                .select2-results__option--highlighted {
+                    background: #a084e8 !important;
+                    color: #fff !important;
+                }
+
                 /* Removendo estilos anteriores */
                 #produto-select {
                     max-height: 300px;
@@ -105,11 +436,315 @@
                 /* Aumentar o tamanho dos cards de produtos */
             </style>
 
+            <style>
+                /* Cards internos e seções especiais */
+                .card.border-light {
+                    border: 1.5px solid #e9d6ff !important;
+                    background: #faf7ff;
+                }
+                .section-card {
+                    border: 1.5px solid #e9d6ff;
+                    background: #f8f6ff;
+                    box-shadow: 0 2px 8px 0 rgba(111, 66, 193, 0.04);
+                }
+                .origem-header {
+                    background: linear-gradient(90deg, #e3d7ff 0%, #f3e7ff 100%) !important;
+                    color: #6f42c1 !important;
+                }
+                .destino-header {
+                    background: linear-gradient(90deg, #fff8e1 0%, #f3e7ff 100%) !important;
+                    color: #6f42c1 !important;
+                }
+
+                /* Alertas */
+                .alert-info {
+                    background: #e9d6ff;
+                    color: #6f42c1;
+                    border: none;
+                    font-weight: 500;
+                }
+                .alert-success {
+                    background: #d1ffe7;
+                    color: #1b7c4b;
+                    border: none;
+                }
+                .alert-warning {
+                    background: #fff3cd;
+                    color: #856404;
+                    border: none;
+                }
+                .alert-danger {
+                    background: #ffe1e1;
+                    color: #c82333;
+                    border: none;
+                }
+
+                /* Badges e status */
+                .badge.bg-info {
+                    background: #a084e8 !important;
+                    color: #fff !important;
+                    font-weight: 600;
+                    font-size: 0.95em;
+                    border-radius: 6px;
+                    padding: 0.3em 0.7em;
+                }
+
+                /* Tabela de serviços */
+                .table {
+                    border-radius: 12px;
+                    overflow: hidden;
+                    background: #fff;
+                    box-shadow: 0 2px 8px 0 rgba(111, 66, 193, 0.04);
+                }
+                .table th {
+                    background: #f3e7ff;
+                    color: #6f42c1;
+                    font-weight: 700;
+                    border: none;
+                }
+                .table td {
+                    border: none;
+                    color: #3d246c;
+                    vertical-align: middle;
+                }
+                .table-striped > tbody > tr:nth-of-type(odd) {
+                    background: #faf7ff;
+                }
+                .table-hover > tbody > tr:hover {
+                    background: #e9d6ff;
+                    color: #6f42c1;
+                }
+
+                /* Modais */
+                .modal-content {
+                    border-radius: 16px;
+                    border: 2px solid #a084e8;
+                    box-shadow: 0 4px 24px 0 rgba(111, 66, 193, 0.10);
+                }
+                .modal-header.bg-primary {
+                    background: linear-gradient(90deg, #6f42c1 0%, #a084e8 100%) !important;
+                    color: #fff !important;
+                    border-radius: 16px 16px 0 0;
+                }
+                .modal-footer .btn {
+                    min-width: 120px;
+                }
+
+                /* Resumo do pagamento e produtos */
+                #resumo-produtos, #payment-summary {
+                    background: #f3e7ff;
+                    border: 1.5px solid #a084e8;
+                    color: #3d246c;
+                    box-shadow: 0 2px 8px 0 rgba(111, 66, 193, 0.04);
+                }
+                #resumo-produtos h5, #payment-summary h4 {
+                    color: #6f42c1;
+                    font-weight: 700;
+                }
+                #valor-total, #payment-total-value {
+                    color: #6f42c1;
+                    font-weight: 700;
+                    font-size: 1.2em;
+                }
+                #peso-total {
+                    color: #a084e8;
+                    font-weight: 600;
+                }
+
+                /* Cards de produtos e caixas */
+                #produtos-cards .card, #caixas-cards .card {
+                    border: 1.5px solid #a084e8;
+                    border-radius: 14px;
+                    background: #faf7ff;
+                    box-shadow: 0 2px 8px 0 rgba(111, 66, 193, 0.04);
+                    margin-bottom: 1.2rem;
+                }
+                #produtos-cards .card-title, #caixas-cards .card-title {
+                    color: #6f42c1;
+                    font-weight: 600;
+                }
+                #produtos-cards .btn-danger, #caixas-cards .btn-danger {
+                    background: #d72660;
+                    border: none;
+                    color: #fff;
+                    font-weight: 600;
+                    border-radius: 8px;
+                }
+                #produtos-cards .btn-danger:hover, #caixas-cards .btn-danger:hover {
+                    background: #a01346;
+                }
+
+                /* Loader de cotação */
+                #cotacao-loader .spinner-border {
+                    color: #a084e8;
+                    width: 2.5rem;
+                    height: 2.5rem;
+                }
+                #cotacao-loader p {
+                    color: #6f42c1;
+                    font-weight: 600;
+                    margin-top: 1rem;
+                }
+
+                /* Seção de logs de depuração */
+                #debug-logs-section {
+                    background: #faf7ff;
+                    border: 1.5px solid #a084e8;
+                    color: #3d246c;
+                    box-shadow: 0 2px 8px 0 rgba(111, 66, 193, 0.04);
+                }
+                #logs-container {
+                    background: #2d1e4a;
+                    color: #aaffee;
+                    border-radius: 8px;
+                    padding: 1rem;
+                }
+                #logs-content .text-white {
+                    background: #6f42c1;
+                    color: #fff;
+                    border-radius: 6px;
+                    padding: 0.5em 1em;
+                }
+            </style>
+
+            <style>
+            /* Estilo delicado e organizado para área de produtos */
+            #produtos-container .form-control,
+            #produtos-container .form-select,
+            #produtos-container .input-group-text,
+            #produtos-container .btn,
+            #busca-descricao,
+            #busca-codigo,
+            #produto-quantidade,
+            #produto-valor,
+            #produto-unidade,
+            #produto-select,
+            #limpar-busca,
+            #adicionar-produto {
+                height: 30px !important;
+                min-height: 30px !important;
+                font-size: 0.92rem !important;
+                padding: 0.12rem 0.6rem !important;
+                border-radius: 5px !important;
+                line-height: 1.2 !important;
+                background: #faf8ff !important;
+                border: 1px solid #e0d7f7 !important;
+                box-shadow: none !important;
+            }
+            #produtos-container .form-control:focus,
+            #produtos-container .form-select:focus {
+                border-color: #bba6e6 !important;
+                box-shadow: 0 0 0 1.5px #e9d6ff !important;
+                background: #fff !important;
+            }
+            #produtos-container .input-group-text {
+                font-size: 0.95rem !important;
+                padding: 0 0.5rem !important;
+                background: #f3eafd !important;
+                color: #7a5fa3 !important;
+                border: none !important;
+            }
+            #produtos-container .input-group {
+                margin-bottom: 0.35rem !important;
+            }
+            #produtos-container .btn,
+            #adicionar-produto {
+                padding: 0 0.8rem !important;
+                font-size: 0.95rem !important;
+                min-width: 0 !important;
+                border-radius: 5px !important;
+                background: linear-gradient(90deg, #bba6e6 0%, #a084e8 100%) !important;
+                color: #fff !important;
+                border: none !important;
+                box-shadow: none !important;
+                transition: background 0.2s;
+            }
+            #produtos-container .btn:hover,
+            #adicionar-produto:hover {
+                background: linear-gradient(90deg, #a084e8 0%, #bba6e6 100%) !important;
+                color: #fff !important;
+            }
+            #produtos-container .position-relative {
+                margin-bottom: 0.3rem !important;
+            }
+            #produtos-container select,
+            #produtos-container input {
+                margin-bottom: 0 !important;
+            }
+            #produtos-container .mb-2,
+            #produtos-container .mb-3 {
+                margin-bottom: 0.3rem !important;
+            }
+            #produtos-container label,
+            #produtos-container .input-group-text {
+                font-weight: 400 !important;
+                letter-spacing: 0.01em;
+            }
+            #produto-select {
+                font-size: 0.92rem !important;
+            }
+            #select-status {
+                font-size: 0.85rem !important;
+                color: #a084e8 !important;
+                margin-top: 2px;
+            }
+            #adicionar-produto {
+                height: 30px !important;
+                font-size: 0.95rem !important;
+                padding: 0 0.8rem !important;
+                border-radius: 5px !important;
+            }
+            /* Ajuste para o botão limpar busca */
+            #limpar-busca {
+                height: 28px !important;
+                width: 32px !important;
+                padding: 0 !important;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                background: #f3eafd !important;
+                color: #a084e8 !important;
+                border: none !important;
+                margin-left: 2px;
+            }
+            #limpar-busca:hover {
+                background: #e9d6ff !important;
+                color: #6f42c1 !important;
+            }
+            /* Espaçamento entre colunas */
+            #produtos-container .row.mb-3 > [class^='col-'] {
+                padding-right: 10px;
+                padding-left: 10px;
+            }
+            /* Select2 dropdown refinado */
+            .select2-container--default .select2-selection--single {
+                height: 30px !important;
+                font-size: 0.92rem !important;
+                border-radius: 5px !important;
+                border: 1px solid #e0d7f7 !important;
+                background: #faf8ff !important;
+            }
+            .select2-container--default .select2-selection--single .select2-selection__rendered {
+                line-height: 28px !important;
+                font-size: 0.92rem !important;
+            }
+            .select2-container--default .select2-selection--single .select2-selection__arrow {
+                height: 28px !important;
+            }
+            .select2-dropdown {
+                border-radius: 5px !important;
+                font-size: 0.92rem !important;
+            }
+            </style>
+
             <div class="row mb-4">
                 <div class="col-12">
-                    <div class="card border-light">
-                        <div class="card-header bg-light d-flex justify-content-between align-items-center">
-                            <h5 class="mb-0">Produtos para Envio</h5>
+                    <div class="card border-light shadow-sm">
+                        <div class="card-header">
+                            <h5 class="mb-0" style="color: white;">
+                                <i class="fas fa-info-circle me-2"></i>
+                                Informações do Envio
+                            </h5>
                         </div>
                         <div class="card-body">
                             <div class="row mb-3">
@@ -188,8 +823,9 @@
             <!-- 2. Dimensões da Caixa (agora como cards) -->
             <div class="row mb-4">
                 <div class="col-12">
-                    <div class="card border-light">
-                        <div class="card-header bg-light">
+                    <div class="card border-light shadow-sm">
+                        <div class="card-header bg-light" style="background: linear-gradient(90deg, #6f42c1 0%, #a084e8 100%) !important; color: #fff;">
+                            <i class="fas fa-ruler-combined me-2"></i>
                             <h5 class="mb-0">Dimensões da Caixa</h5>
                         </div>
                         <div class="card-body">
@@ -242,9 +878,10 @@
             <!-- 3. Informações de Origem e Destino -->
             <div class="row mb-4">
                 <div class="col-md-6 mb-4">
-                    <div class="card h-100 section-card">
-                        <div class="card-header origem-header">
-                            <h5 class="mb-0"><i class="fas fa-home me-2"></i> Origem</h5>
+                    <div class="card h-100 section-card shadow-sm">
+                        <div class="card-header origem-header d-flex align-items-center">
+                            <i class="fas fa-home me-2"></i>
+                            <h5 class="mb-0">Origem</h5>
                         </div>
                         <div class="card-body">
                             <div class="mb-3">
@@ -300,9 +937,10 @@
                 </div>
 
                 <div class="col-md-6 mb-4">
-                    <div class="card h-100 section-card">
-                        <div class="card-header destino-header">
-                            <h5 class="mb-0"><i class="fas fa-map-marker-alt me-2"></i> Destino</h5>
+                    <div class="card h-100 section-card shadow-sm">
+                        <div class="card-header destino-header d-flex align-items-center">
+                            <i class="fas fa-map-marker-alt me-2"></i>
+                            <h5 class="mb-0">Destino</h5>
                         </div>
                         <div class="card-body">
                             <div class="mb-3">
@@ -369,9 +1007,10 @@
             <!-- 4. Serviço de Entrega -->
             <div class="row mb-4">
                 <div class="col-12">
-                    <div class="card border-light">
-                        <div class="card-header bg-light">
-                            <h5 class="mb-0"><i class="fas fa-shipping-fast me-2"></i> Serviço de Entrega FedEx</h5>
+                    <div class="card border-light shadow-sm">
+                        <div class="card-header bg-light" style="background: linear-gradient(90deg, #6f42c1 0%, #a084e8 100%) !important; color: #fff;">
+                            <i class="fas fa-shipping-fast me-2"></i>
+                            <h5 class="mb-0">Serviço de Entrega FedEx</h5>
                         </div>
                         <div class="card-body">
                             <div id="cotacao-loader" class="text-center my-4" style="display: none;">
@@ -398,9 +1037,10 @@
             <!-- 5. Métodos de Pagamento (Nova Seção) -->
             <div class="row mb-4" id="pagamento-section" style="display: none;">
                 <div class="col-12">
-                    <div class="card border-light">
-                        <div class="card-header bg-light">
-                            <h5 class="mb-0"><i class="fas fa-credit-card me-2"></i> Método de Pagamento</h5>
+                    <div class="card border-light shadow-sm">
+                        <div class="card-header bg-light" style="background: linear-gradient(90deg, #6f42c1 0%, #a084e8 100%) !important; color: #fff;">
+                            <i class="fas fa-credit-card me-2"></i>
+                            <h5 class="mb-0">Método de Pagamento</h5>
                         </div>
                         <div class="card-body">
                             <input type="hidden" name="payment_method" id="payment_method">
@@ -534,11 +1174,12 @@
                 </div>
             </div>
 
-            <div class="text-center mt-4">
-                <button type="button" class="btn btn-primary btn-lg" style="background-color: #6f42c1;" id="consultar-servicos">
+            <!-- Botões finais -->
+            <div class="text-center mt-4 mb-5">
+                <button type="button" class="btn btn-primary btn-lg px-5 me-3" style="background: linear-gradient(90deg, #6f42c1 0%, #a084e8 100%); border: none;">
                     <i class="fas fa-search me-2"></i> Consultar Serviços
                 </button>
-                <button type="submit" class="btn btn-success btn-lg" id="submit-button" style="display: none;">
+                <button type="submit" class="btn btn-success btn-lg px-5" id="submit-button" style="display: none; background: linear-gradient(90deg, #43e97b 0%, #38f9d7 100%); border: none;">
                     <i class="fas fa-paper-plane me-2"></i> Processar Envio
                 </button>
             </div>
@@ -3533,16 +4174,8 @@
     });
 
     // Verificar se estamos em ambiente de desenvolvimento
-    const isDev = {
-        {
-            app() - > environment('local') ? 'true' : 'false'
-        }
-    };
-    const isAdmin = {
-        {
-            auth() - > check() && auth() - > user() - > is_admin ? 'true' : 'false'
-        }
-    };
+    const isDev = "{{ app()->environment() }}" === "local";
+    const isAdmin = "{{ auth()->check() && auth()->user()->is_admin ? 'true' : 'false' }}" === "true";
 
     // Mostrar seção de logs apenas em desenvolvimento ou para administradores
     if (isDev || isAdmin) {
@@ -3554,11 +4187,7 @@
 <script>
     // Definição de variáveis de ambiente fornecidas pelo backend
     var appEnvironment = "{{ app()->environment() }}";
-    var isUserAdmin = {
-        {
-            auth() - > check() && auth() - > user() - > is_admin ? 'true' : 'false'
-        }
-    };
+    var isUserAdmin = "{{ auth()->check() && auth()->user()->is_admin ? 'true' : 'false' }}" === "true";
 
     // Verificar se estamos em ambiente de desenvolvimento ou se o usuário é admin
     if (appEnvironment === "local" || isUserAdmin) {
