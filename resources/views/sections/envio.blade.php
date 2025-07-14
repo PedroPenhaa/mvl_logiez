@@ -1,3 +1,6 @@
+@extends('layouts.app')
+
+@section('content')
 <div class="card">
     <div class="card-header">
         <i class="fas fa-shipping-fast me-2"></i> Dados do Envio
@@ -3620,3 +3623,14 @@
         </div>
     </div>
 </div>
+@endsection
+
+@section('scripts')
+<script>
+    $(document).ready(function() {
+        $('.menu-item').removeClass('active');
+        $('.menu-item[data-section="envio"]').addClass('active');
+        $('#content-container').show();
+    });
+</script>
+@endsection

@@ -994,13 +994,14 @@ class SectionController extends Controller
         
         // Tratamento especial para a seção de cotação
         if ($section === 'cotacao') {
-            // Renderizar a view sem usar o helper route() no template
-            $cotacaoView = view('sections.cotacao_alt')->render();
-            return $cotacaoView;
+            // Retornar a view padrão de cotação, igual ao acesso direto
+            $dados = session('dados_fedex', null);
+            $resultado = session('resultado_fedex', null);
+            return view('sections.cotacao', compact('dados', 'resultado'))->render();
         }
         
         // Retorna a view da seção solicitada para outras seções
-        return view('sections.' . $section);
+        return view('sections.' . $section)->render();
     }
 
     /**

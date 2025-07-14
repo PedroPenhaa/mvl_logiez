@@ -1,3 +1,6 @@
+@extends('layouts.app')
+
+@section('content')
 <div class="card">
     <div class="card-header">
         <i class="fas fa-user me-2"></i> Meu Perfil
@@ -397,3 +400,15 @@
         }
     });
 </script> 
+
+@section('scripts')
+<script>
+    $(document).ready(function() {
+        $('.menu-item').removeClass('active');
+        $('.menu-item[data-section="perfil"]').addClass('active');
+        $('#content-container').show();
+    });
+</script>
+@endsection
+
+@endsection 

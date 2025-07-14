@@ -1,3 +1,6 @@
+@extends('layouts.app')
+
+@section('content')
 <div class="card">
     <div class="card-header">
         <i class="fas fa-tag me-2"></i> Etiqueta de Envio
@@ -648,3 +651,15 @@
         $('#download-invoice-pdf-btn').attr('href', `/api/sections/invoice/${invoice.invoice_number.replace('#','')}/pdf`);
     }
 </script> 
+
+@section('scripts')
+<script>
+    $(document).ready(function() {
+        $('.menu-item').removeClass('active');
+        $('.menu-item[data-section="etiqueta"]').addClass('active');
+        $('#content-container').show();
+    });
+</script>
+@endsection
+
+@endsection 

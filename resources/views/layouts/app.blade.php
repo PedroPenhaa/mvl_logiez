@@ -254,42 +254,47 @@
         <nav>
             <!-- Menu do Dashboard -->
             <a href="{{ route('dashboard') }}" class="text-decoration-none">
-                <div class="menu-item active" data-section="dashboard">
+                <div class="menu-item active">
                     <i style="color: #fff;" class="fas fa-home"></i>
                     <span style="color: #fff;">Início</span>
                 </div>
             </a>
-            
-            <div class="menu-item" data-section="cotacao">
-                <i class="fas fa-calculator"></i>
-                <span class="menu-text">Cotação</span>
-            </div>
-            
-            <div class="menu-item" data-section="envio">
-                <i class="fas fa-shipping-fast"></i>
-                <span class="menu-text">Envio</span>
-            </div>
-            
-            <div class="menu-item" data-section="pagamento">
-                <i class="fas fa-credit-card"></i>
-                <span class="menu-text">Pagamento</span>
-            </div>
-            
-            <div class="menu-item" data-section="etiqueta">
-                <i class="fas fa-tag"></i>
-                <span class="menu-text">Etiqueta</span>
-            </div>
-            
-            <div class="menu-item" data-section="rastreamento">
-                <i class="fas fa-map-marker-alt"></i>
-                <span class="menu-text">Rastreamento</span>
-            </div>
-            
-            <div class="menu-item" data-section="perfil">
-                <i class="fas fa-user"></i>
-                <span class="menu-text">Meu Perfil</span>
-            </div>
-            
+            <a href="/cotacao" class="text-decoration-none">
+                <div class="menu-item">
+                    <i class="fas fa-calculator"></i>
+                    <span class="menu-text">Cotação</span>
+                </div>
+            </a>
+            <a href="/envio" class="text-decoration-none">
+                <div class="menu-item">
+                    <i class="fas fa-shipping-fast"></i>
+                    <span class="menu-text">Envio</span>
+                </div>
+            </a>
+            <a href="/pagamento" class="text-decoration-none">
+                <div class="menu-item">
+                    <i class="fas fa-credit-card"></i>
+                    <span class="menu-text">Pagamento</span>
+                </div>
+            </a>
+            <a href="/etiqueta" class="text-decoration-none">
+                <div class="menu-item">
+                    <i class="fas fa-tag"></i>
+                    <span class="menu-text">Etiqueta</span>
+                </div>
+            </a>
+            <a href="/rastreamento" class="text-decoration-none">
+                <div class="menu-item">
+                    <i class="fas fa-map-marker-alt"></i>
+                    <span class="menu-text">Rastreamento</span>
+                </div>
+            </a>
+            <a href="/perfil" class="text-decoration-none">
+                <div class="menu-item">
+                    <i class="fas fa-user"></i>
+                    <span class="menu-text">Meu Perfil</span>
+                </div>
+            </a>
             <form action="{{ route('logout') }}" method="POST" style="margin:0;padding:0;">
                 @csrf
                 <button type="submit" class="menu-item" style="background:none;border:none;width:100%;text-align:left;color:inherit;">

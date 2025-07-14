@@ -1,3 +1,6 @@
+@extends('layouts.app')
+
+@section('content')
 <div class="card shadow-lg">
     <div class="card-header text-white" style="background-color: #63499E;">
         <i class="fas fa-map-marker-alt me-2" style="font-size: 1.2rem; "></i> Rastreamento de Envio FedEx
@@ -1306,3 +1309,15 @@ if (appEnvironment === "local" || isUserAdmin) {
     });
 }
 </script> 
+
+@section('scripts')
+<script>
+    $(document).ready(function() {
+        $('.menu-item').removeClass('active');
+        $('.menu-item[data-section="rastreamento"]').addClass('active');
+        $('#content-container').show();
+    });
+</script>
+@endsection
+
+@endsection 

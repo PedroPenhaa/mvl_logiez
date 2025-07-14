@@ -1,3 +1,6 @@
+@extends('layouts.app')
+
+@section('content')
 @php
     Log::info('Debug View - Payments:', [
         'pending' => $pendingPayments->count(),
@@ -215,4 +218,15 @@
             window.location.hash = e.target.hash;
         });
     });
-</script> 
+</script>
+@endsection 
+
+@section('scripts')
+<script>
+    $(document).ready(function() {
+        $('.menu-item').removeClass('active');
+        $('.menu-item[data-section="pagamento"]').addClass('active');
+        $('#content-container').show();
+    });
+</script>
+@endsection 
