@@ -26,1167 +26,313 @@
         <form id="envio-form" action="{{ route('api.envio.processar') }}" method="POST">
             @csrf
 
-            <!-- Novos campos adicionados -->
-            <div class="row mb-2">
-                <div class="col-12">
-                    <div class="card border-light shadow-sm">
-                   
-                        <div class="card-body">
-                            <div class="row g-4">
-                                <div class="col-md-6 mb-3">
-                                    <label for="tipo_envio" class="form-label required"><i class="fas fa-box me-1"></i> Tipo de Envio</label>
-                                    <select class="form-select" id="tipo_envio" name="tipo_envio" required style="color: #B0B0B0 !important;">
-                                        <option value="">Selecione o tipo de envio</option>
-                                        <option value="venda">Venda</option>
-                                        <option value="amostra">Envio de Amostras</option>
-                                        <option value="pessoal">Envio Pessoal</option>
-                                    </select>
-                                </div>
-                                <div class="col-md-6 mb-3">
-                                    <label for="tipo_pessoa" class="form-label required"><i class="fas fa-user me-1"></i> Tipo de Pessoa</label>
-                                    <select class="form-select" id="tipo_pessoa" name="tipo_pessoa" required style="color: #B0B0B0 !important;">
-                                        <option value="">Selecione o tipo de pessoa</option>
-                                        <option value="pf">Pessoa Física</option>
-                                        <option value="pj">Pessoa Jurídica</option>
-                                    </select>
-                                </div>
-                            </div>
-                        </div>
+            <!-- Wizard Progress Bar -->
+            <div id="etapas-container" class="mb-4">
+                <div class="progress" style="height: 30px;">
+                    <div id="wizard-progress-bar" class="progress-bar bg-primary" role="progressbar" style="width: 16.6%;" aria-valuenow="1" aria-valuemin="1" aria-valuemax="6">
+                        <span id="wizard-progress-label">Etapa 1 de 6</span>
                     </div>
                 </div>
             </div>
-
-            <!-- Adicionar CSS do Select2 -->
-            <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
-
-            <style>
-                /* ===== PADRÃO COTAÇÃO ===== */
-                body {
-                    background: #f6f7fb;
-                    font-family: 'Poppins', 'Segoe UI', Arial, sans-serif;
-                    color: #3d246c;
-                }
-                
-                /* Cards estilo cotação */
-                .card.border-light {
-                    border: none !important;
-                    border-radius: 12px !important;
-                    box-shadow: 0 8px 16px rgba(0,0,0,0.1) !important;
-                    transition: transform 0.3s ease, box-shadow 0.3s ease !important;
-                    background: #fff !important;
-                    margin-bottom: 1.5rem !important;
-                }
-                
-                .card.border-light:hover {
-                    transform: translateY(-5px) !important;
-                    box-shadow: 0 12px 24px rgba(0,0,0,0.15) !important;
-                }
-                
-                .card.border-light .card-header {
-                    background: linear-gradient(135deg, #6f42c1 0%, #8e44ad 100%) !important;
-                    color: white !important;
-                    border-radius: 12px 12px 0 0 !important;
-                    padding: 0.75rem 1rem !important;
-                    border: none !important;
-                }
-                
-                .card.border-light .card-header h5 {
-                    font-size: 1rem !important;
-                    margin: 0 !important;
-                    font-weight: 600 !important;
-                }
-                
-                .card.border-light .card-body {
-                    padding: 1rem !important;
-                    border-radius: 0 0 12px 12px !important;
-                }
-                
-                /* Container principal estilo cotação */
-                .cotacao-container {
-                    max-width: 1200px;
-                    margin: 0 auto;
-                    padding: 0 15px;
-                }
-                
-                /* Cards */
-                .main-card {
-                    border: none;
-                    border-radius: 15px;
-                    box-shadow: 0 8px 16px rgba(0,0,0,0.1);
-                }
-                
-                .feature-card {
-                    border: none;
-                    border-radius: 12px;
-                    transition: transform 0.3s ease, box-shadow 0.3s ease;
-                }
-                
-                .feature-card:hover {
-                    transform: translateY(-5px);
-                    box-shadow: 0 8px 16px rgba(0,0,0,0.1);
-                }
-                
-                .card, .card.border-light, .section-card {
-                    border-radius: 22px !important;
-                    background: #fff !important;
-                    border: none !important;
-                    box-shadow: 0 4px 24px 0 rgba(111,66,193,0.08), 0 1.5px 4px 0 rgba(111,66,193,0.04);
-                    margin-bottom: 32px;
-                }
-                .card-header, .card-header.bg-light, .origem-header, .destino-header {
-                    background: linear-gradient(90deg, #8f5be8 0%, #6f42c1 100%) !important;
-                    color: #fff !important;
-                    font-weight: 700;
-                    font-size: 1.15rem;
-                    border-radius: 22px 22px 0 0 !important;
-                    border: none !important;
-                    display: flex;
-                    align-items: center;
-                    gap: 0.5rem;
-                    min-height: 54px;
-                    padding: 1rem 1.5rem;
-                }
-                .card-body {
-                    background: #fff !important;
-                    border-radius: 0 0 22px 22px !important;
-                    padding: 2rem 1.5rem !important;
-                }
-                /* Inputs/selects padrão cotação */
-                .form-control, .form-select {
-                    border-radius: 14px !important;
-                    border: 1.5px solid #e0e0e0 !important;
-                    background: #fff !important;
-                    color: #3d246c !important;
-                    font-size: 1.08rem !important;
-                    padding: 5px 20px !important;
-                    height: 50px !important;
-                    box-shadow: 0 2px 8px 0 rgba(111,66,193,0.04) !important;
-                    transition: border 0.2s;
-                    display: flex;
-                    align-items: center;
-                    justify-content: center;
-                    text-align: left;
-                    font-size: 14px !important;
-                }
-                .form-control:focus, .form-select:focus {
-                    border-color: #8f5be8 !important;
-                    box-shadow: 0 0 0 2px #e9d6ff !important;
-                    background: #fff !important;
-                    color: #3d246c !important;
-                }
-                .form-control::placeholder {
-                    color: #6f42c1 !important;
-                    opacity: 0.7;
-                    font-weight: 400;
-                }
-                label.form-label, .form-floating > label {
-                    color: #6f42c1 !important;
-                    font-weight: 600 !important;
-                    margin-bottom: 0.35rem !important;
-                    font-size: 1.01rem !important;
-                    left: 1.1rem !important;
-                    top: 0.7rem !important;
-                    background: transparent !important;
-                    padding: 0 0.2rem;
-                }
-                .form-label.required:after {
-                    content: '*';
-                    color: #d72660;
-                    margin-left: 3px;
-                    font-size: 1.1em;
-                }
-                .form-floating > .form-control:focus ~ label,
-                .form-floating > .form-control:not(:placeholder-shown) ~ label {
-                    color: #8f5be8 !important;
-                    font-size: 0.98rem !important;
-                    top: -0.7rem !important;
-                    left: 0.9rem !important;
-                    background: #fff !important;
-                    padding: 0 0.4rem;
-                }
-                .form-floating {
-                    position: relative;
-                }
-                .form-floating > label {
-                    position: absolute;
-                    pointer-events: none;
-                    transition: 0.2s;
-                    z-index: 2;
-                }
-                /* Input group */
-                .input-group-text {
-                    background: #f3e7ff !important;
-                    color: #6f42c1 !important;
-                    border: none !important;
-                    font-weight: 600 !important;
-                    border-radius: 14px 0 0 14px !important;
-                    display: flex;
-                    align-items: center;
-                }
-                /* Botões padrão cotação */
-                .btn-primary, .btn-success, .btn-outline-primary {
-                    background: linear-gradient(90deg, #8f5be8 0%, #6f42c1 100%) !important;
-                    border: none !important;
-                    color: #fff !important;
-                    font-weight: 600 !important;
-                    border-radius: 14px !important;
-                    box-shadow: 0 2px 8px 0 rgba(111, 66, 193, 0.10) !important;
-                    transition: background 0.2s, box-shadow 0.2s;
-                    min-height: 56px;
-                    font-size: 1.08rem;
-                    padding: 0 2.5rem;
-                }
-                .btn-primary:hover, .btn-success:hover, .btn-outline-primary:hover {
-                    background: linear-gradient(90deg, #6f42c1 0%, #8f5be8 100%) !important;
-                    color: #fff !important;
-                    box-shadow: 0 4px 16px 0 rgba(111, 66, 193, 0.18) !important;
-                }
-                .btn-outline-secondary {
-                    border-color: #8f5be8 !important;
-                    color: #6f42c1 !important;
-                    background: #f3e7ff !important;
-                    font-weight: 500 !important;
-                    border-radius: 14px !important;
-                    min-height: 56px;
-                    font-size: 1.08rem;
-                }
-                .btn-outline-secondary:hover {
-                    background: #8f5be8 !important;
-                    color: #fff !important;
-                }
-                /* Sombra leve nos campos */
-                .form-control, .form-select, .input-group-text {
-                    box-shadow: 0 2px 8px 0 rgba(111,66,193,0.04) !important;
-                }
-                /* Responsividade */
-                @media (max-width: 767px) {
-                    .card-body {
-                        padding: 1.2rem 0.7rem !important;
-                    }
-                    .form-control, .form-select {
-                        font-size: 1rem !important;
-                        padding: 0.7rem 0.8rem !important;
-                        height: 44px !important;
-                    }
-                    .input-group-text {
-                        height: 44px !important;
-                    }
-                    .btn-primary, .btn-success, .btn-outline-primary, .btn-outline-secondary {
-                        min-height: 44px !important;
-                        font-size: 1rem !important;
-                        padding: 0 1.2rem;
-                    }
-                }
-
-                /* Títulos das seções */
-                h5.mb-0, h4.mb-3, h3.text-lg {
-                    color: #6f42c1;
-                    font-weight: 700;
-                    letter-spacing: 0.5px;
-                    margin-bottom: 1rem;
-                }
-
-                /* Botões principais */
-                .btn-primary, .btn-success, .btn-outline-primary {
-                    background: linear-gradient(90deg, #6f42c1 0%, #a084e8 100%);
-                    border: none;
-                    color: #fff;
-                    font-weight: 600;
-                    border-radius: 8px;
-                    box-shadow: 0 2px 8px 0 rgba(111, 66, 193, 0.10);
-                    transition: background 0.2s, box-shadow 0.2s;
-                }
-                .btn-primary:hover, .btn-success:hover, .btn-outline-primary:hover {
-                    background: linear-gradient(90deg, #a084e8 0%, #6f42c1 100%);
-                    color: #fff;
-                    box-shadow: 0 4px 16px 0 rgba(111, 66, 193, 0.18);
-                }
-                .btn-outline-secondary {
-                    border-color: #a084e8;
-                    color: #6f42c1;
-                    background: #f3e7ff;
-                    font-weight: 500;
-                    border-radius: 8px;
-                }
-                .btn-outline-secondary:hover {
-                    background: #a084e8;
-                    color: #fff;
-                }
-
-                /* Inputs e selects */
-                .form-control, .form-select {
-                    border-radius: 8px;
-                    border: 1.5px solid #a084e8;
-                    font-size: 1rem;
-                    padding: 0.6rem 1rem;
-                    color: #3d246c;
-                    background: #f8f9fa;
-                    transition: border 0.2s;
-                }
-                .form-control:focus, .form-select:focus {
-                    border-color: #6f42c1;
-                    box-shadow: 0 0 0 2px #e9d6ff;
-                    background: #fff;
-                    color: #3d246c;
-                }
-                label.form-label {
-                    color: #6f42c1;
-                    font-weight: 500;
-                    margin-bottom: 0.3rem;
-                }
-                .form-label.required:after {
-                    content: '*';
-                    color: #d72660;
-                    margin-left: 3px;
-                    font-size: 1.1em;
-                }
-
-                /* Espaçamento entre linhas e colunas */
-                .row.mb-4 {
-                    margin-bottom: 2.5rem !important;
-                }
-                .mb-3 {
-                    margin-bottom: 1.2rem !important;
-                }
-                .input-group-text {
-                    background: #e9d6ff;
-                    color: #6f42c1;
-                    border: none;
-                    font-weight: 600;
-                }
-
-                /* Select2 customização */
-                .select2-container--default .select2-selection--single {
-                    background: #f8f9fa;
-                    border: 1.5px solid #a084e8;
-                    border-radius: 8px;
-                    height: 38px;
-                    color: #3d246c;
-                    font-size: 1rem;
-                    padding: 0.4rem 1rem;
-                }
-                .select2-container--default .select2-selection--single .select2-selection__rendered {
-                    color: #3d246c;
-                    line-height: 36px;
-                }
-                .select2-container--default .select2-selection--single .select2-selection__arrow {
-                    height: 38px;
-                }
-                .select2-dropdown {
-                    border-radius: 8px;
-                    border: 1.5px solid #a084e8;
-                }
-                .select2-results__option--highlighted {
-                    background: #a084e8 !important;
-                    color: #fff !important;
-                }
-
-                /* Removendo estilos anteriores */
-                #produto-select {
-                    max-height: 300px;
-                }
-
-                .select2-container {
-                    width: 100% !important;
-                }
-
-                .select2-selection {
-                    height: 38px !important;
-                    border-radius: 0.375rem !important;
-                    border: 1px solid #dee2e6 !important;
-                    padding: 0.375rem 0.75rem !important;
-                }
-
-                .select2-selection__arrow {
-                    height: 38px !important;
-                }
-
-                .select2-search__field {
-                    padding: 8px !important;
-                }
-
-                .select2-results__option {
-                    padding: 8px;
-                    border-bottom: 1px solid #eee;
-                }
-
-                .select2-results__option:hover {
-                    background-color: #f0f7ff;
-                }
-
-                .select2-container--default .select2-results__option[aria-disabled=true] {
-                    color: #999;
-                    font-style: italic;
-                    background-color: #f9f9f9;
-                }
-
-                /* Estilos específicos para a seção de envio */
-                .origem-header {
-                    background-color: #e3f2fd;
-                }
-
-                .destino-header {
-                    background-color: #fff8e1;
-                }
-
-                /* Estilo para o indicador de carregamento */
-                .loading {
-                    background-image: url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMzgiIGhlaWdodD0iMzgiIHZpZXdCb3g9IjAgMCAzOCAzOCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIiBzdHJva2U9IiM2NjY2NjYiPiAgICA8ZyBmaWxsPSJub25lIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiPiAgICAgICAgPGcgdHJhbnNmb3JtPSJ0cmFuc2xhdGUoMSAxKSIgc3Ryb2tlLXdpZHRoPSIyIj4gICAgICAgICAgICA8Y2lyY2xlIHN0cm9rZS1vcGFjaXR5PSIuNSIgY3g9IjE4IiBjeT0iMTgiIHI9IjE4Ii8+ICAgICAgICAgICAgPHBhdGggZD0iTTM2IDE4YzAtOS45NC04LjA2LTE4LTE4LTE4Ij4gICAgICAgICAgICAgICAgPGFuaW1hdGVUcmFuc2Zvcm0gICAgICAgICAgICAgICAgICAgIGF0dHJpYnV0ZU5hbWU9InRyYW5zZm9ybSIgICAgICAgICAgICAgICAgICAgIHR5cGU9InJvdGF0ZSIgICAgICAgICAgICAgICAgICAgIGZyb209IjAgMTggMTgiICAgICAgICAgICAgICAgICAgICB0bz0iMzYwIDE4IDE4IiAgICAgICAgICAgICAgICAgICAgZHVyPSIxcyIgICAgICAgICAgICAgICAgICAgIHJlcGVhdENvdW50PSJpbmRlZmluaXRlIi8+ICAgICAgICAgICAgPC9wYXRoPiAgICAgICAgPC9nPiAgICA8L2c+PC9zdmc+');
-                    background-position: calc(100% - 10px) center;
-                    background-repeat: no-repeat;
-                    background-size: 20px 20px;
-                    padding-right: 40px !important;
-                }
-
-                /* Aumentar o tamanho dos cards de produtos */
-            </style>
-
-            <style>
-                /* Cards internos e seções especiais */
-                .card.border-light {
-                    border: 1.5px solid #e9d6ff !important;
-                    background: #faf7ff;
-                }
-                .section-card {
-                    border: 1.5px solid #e9d6ff;
-                    background: #f8f6ff;
-                    box-shadow: 0 2px 8px 0 rgba(111, 66, 193, 0.04);
-                }
-                .origem-header {
-                    background: linear-gradient(90deg, #e3d7ff 0%, #f3e7ff 100%) !important;
-                    color: #6f42c1 !important;
-                }
-                .destino-header {
-                    background: linear-gradient(90deg, #fff8e1 0%, #f3e7ff 100%) !important;
-                    color: #6f42c1 !important;
-                }
-
-                /* Alertas */
-                .alert-info {
-                    background: #e9d6ff;
-                    color: #6f42c1;
-                    border: none;
-                    font-weight: 500;
-                }
-                .alert-success {
-                    background: #d1ffe7;
-                    color: #1b7c4b;
-                    border: none;
-                }
-                .alert-warning {
-                    background: #fff3cd;
-                    color: #856404;
-                    border: none;
-                }
-                .alert-danger {
-                    background: #ffe1e1;
-                    color: #c82333;
-                    border: none;
-                }
-
-                /* Badges e status */
-                .badge.bg-info {
-                    background: #a084e8 !important;
-                    color: #fff !important;
-                    font-weight: 600;
-                    font-size: 0.95em;
-                    border-radius: 6px;
-                    padding: 0.3em 0.7em;
-                }
-
-                /* Tabela de serviços */
-                .table {
-                    border-radius: 12px;
-                    overflow: hidden;
-                    background: #fff;
-                    box-shadow: 0 2px 8px 0 rgba(111, 66, 193, 0.04);
-                }
-                .table th {
-                    background: #f3e7ff;
-                    color: #6f42c1;
-                    font-weight: 700;
-                    border: none;
-                }
-                .table td {
-                    border: none;
-                    color: #3d246c;
-                    vertical-align: middle;
-                }
-                .table-striped > tbody > tr:nth-of-type(odd) {
-                    background: #faf7ff;
-                }
-                .table-hover > tbody > tr:hover {
-                    background: #e9d6ff;
-                    color: #6f42c1;
-                }
-
-                /* Modais */
-                .modal-content {
-                    border-radius: 16px;
-                    border: 2px solid #a084e8;
-                    box-shadow: 0 4px 24px 0 rgba(111, 66, 193, 0.10);
-                }
-                .modal-header.bg-primary {
-                    background: linear-gradient(90deg, #6f42c1 0%, #a084e8 100%) !important;
-                    color: #fff !important;
-                    border-radius: 16px 16px 0 0;
-                }
-                .modal-footer .btn {
-                    min-width: 120px;
-                }
-
-                /* Resumo do pagamento e produtos */
-                #resumo-produtos, #payment-summary {
-                    background: #f3e7ff;
-                    border: 1.5px solid #a084e8;
-                    color: #3d246c;
-                    box-shadow: 0 2px 8px 0 rgba(111, 66, 193, 0.04);
-                }
-                #resumo-produtos h5, #payment-summary h4 {
-                    color: #6f42c1;
-                    font-weight: 700;
-                }
-                #valor-total, #payment-total-value {
-                    color: #6f42c1;
-                    font-weight: 700;
-                    font-size: 1.2em;
-                }
-                #peso-total {
-                    color: #a084e8;
-                    font-weight: 600;
-                }
-
-                /* Cards de produtos e caixas */
-                #produtos-cards .card, #caixas-cards .card {
-                    border: 1.5px solid #a084e8;
-                    border-radius: 14px;
-                    background: #faf7ff;
-                    box-shadow: 0 2px 8px 0 rgba(111, 66, 193, 0.04);
-                    margin-bottom: 1.2rem;
-                }
-                #produtos-cards .card-title, #caixas-cards .card-title {
-                    color: #6f42c1;
-                    font-weight: 600;
-                }
-                #produtos-cards .btn-danger, #caixas-cards .btn-danger {
-                    background: #d72660;
-                    border: none;
-                    color: #fff;
-                    font-weight: 600;
-                    border-radius: 8px;
-                }
-                #produtos-cards .btn-danger:hover, #caixas-cards .btn-danger:hover {
-                    background: #a01346;
-                }
-
-                /* Loader de cotação */
-                #cotacao-loader .spinner-border {
-                    color: #a084e8;
-                    width: 2.5rem;
-                    height: 2.5rem;
-                }
-                #cotacao-loader p {
-                    color: #6f42c1;
-                    font-weight: 600;
-                    margin-top: 1rem;
-                }
-
-                /* Seção de logs de depuração */
-                #debug-logs-section {
-                    background: #faf7ff;
-                    border: 1.5px solid #a084e8;
-                    color: #3d246c;
-                    box-shadow: 0 2px 8px 0 rgba(111, 66, 193, 0.04);
-                }
-                #logs-container {
-                    background: #2d1e4a;
-                    color: #aaffee;
-                    border-radius: 8px;
-                    padding: 1rem;
-                }
-                #logs-content .text-white {
-                    background: #6f42c1;
-                    color: #fff;
-                    border-radius: 6px;
-                    padding: 0.5em 1em;
-                }
-            </style>
-
-            <style>
-            /* Estilo delicado e organizado para área de produtos */
-            #produtos-container .form-control,
-            #produtos-container .form-select,
-            #produtos-container .input-group-text,
-            #produtos-container .btn,
-            #busca-descricao,
-            #busca-codigo,
-            #produto-quantidade,
-            #produto-valor,
-            #produto-unidade,
-            #produto-select,
-            #limpar-busca,
-            #adicionar-produto {
-                height: 30px !important;
-                min-height: 30px !important;
-                font-size: 0.92rem !important;
-                padding: 0.12rem 0.6rem !important;
-                border-radius: 5px !important;
-                line-height: 1.2 !important;
-                background: #faf8ff !important;
-                border: 1px solid #e0d7f7 !important;
-                box-shadow: none !important;
-            }
-            #produtos-container .form-control:focus,
-            #produtos-container .form-select:focus {
-                border-color: #bba6e6 !important;
-                box-shadow: 0 0 0 1.5px #e9d6ff !important;
-                background: #fff !important;
-            }
-            #produtos-container .input-group-text {
-                font-size: 0.95rem !important;
-                padding: 0 0.5rem !important;
-                background: #f3eafd !important;
-                color: #7a5fa3 !important;
-                border: none !important;
-            }
-            #produtos-container .input-group {
-                margin-bottom: 0.35rem !important;
-            }
-            #produtos-container .btn,
-            #adicionar-produto {
-                padding: 0 0.8rem !important;
-                font-size: 0.95rem !important;
-                min-width: 0 !important;
-                border-radius: 5px !important;
-                background: linear-gradient(90deg, #bba6e6 0%, #a084e8 100%) !important;
-                color: #fff !important;
-                border: none !important;
-                box-shadow: none !important;
-                transition: background 0.2s;
-            }
-            #produtos-container .btn:hover,
-            #adicionar-produto:hover {
-                background: linear-gradient(90deg, #a084e8 0%, #bba6e6 100%) !important;
-                color: #fff !important;
-            }
-            #produtos-container .position-relative {
-                margin-bottom: 0.3rem !important;
-            }
-            #produtos-container select,
-            #produtos-container input {
-                margin-bottom: 0 !important;
-            }
-            #produtos-container .mb-2,
-            #produtos-container .mb-3 {
-                margin-bottom: 0.3rem !important;
-            }
-            #produtos-container label,
-            #produtos-container .input-group-text {
-                font-weight: 400 !important;
-                letter-spacing: 0.01em;
-            }
-            #produto-select {
-                font-size: 0.92rem !important;
-            }
-            #select-status {
-                font-size: 0.85rem !important;
-                color: #a084e8 !important;
-                margin-top: 2px;
-            }
-            #adicionar-produto {
-                height: 30px !important;
-                font-size: 0.95rem !important;
-                padding: 0 0.8rem !important;
-                border-radius: 5px !important;
-            }
-            /* Ajuste para o botão limpar busca */
-            #limpar-busca {
-                height: 28px !important;
-                width: 32px !important;
-                padding: 0 !important;
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                background: #f3eafd !important;
-                color: #a084e8 !important;
-                border: none !important;
-                margin-left: 2px;
-            }
-            #limpar-busca:hover {
-                background: #e9d6ff !important;
-                color: #6f42c1 !important;
-            }
-            /* Espaçamento entre colunas */
-            #produtos-container .row.mb-3 > [class^='col-'] {
-                padding-right: 10px;
-                padding-left: 10px;
-            }
-            /* Select2 dropdown refinado */
-            .select2-container--default .select2-selection--single {
-                height: 30px !important;
-                font-size: 0.92rem !important;
-                border-radius: 5px !important;
-                border: 1px solid #e0d7f7 !important;
-                background: #faf8ff !important;
-            }
-            .select2-container--default .select2-selection--single .select2-selection__rendered {
-                line-height: 28px !important;
-                font-size: 0.92rem !important;
-            }
-            .select2-container--default .select2-selection--single .select2-selection__arrow {
-                height: 28px !important;
-            }
-            .select2-dropdown {
-                border-radius: 5px !important;
-                font-size: 0.92rem !important;
-            }
-            </style>
-
-            <div class="row mb-4">
-                <div class="col-12">
-                    <div class="card border-light shadow-sm">
-                        <div class="card-header">
-                            <h5 class="mb-0" style="color: white;">
-                                <i class="fas fa-info-circle me-2"></i>
-                                Informações do Envio
-                            </h5>
-                        </div>
-                        <div class="card-body">
-                            <div class="row mb-3">
-                                <div class="col-lg-5 col-md-5">
-                                    <div class="mb-2">
-                                        <div class="input-group mb-2">
-                                            <span class="input-group-text"><i class="fas fa-search"></i></span>
-                                            <input type="text" class="form-control" id="busca-descricao" placeholder="Buscar por descrição...">
-                                            <button class="btn btn-outline-secondary" type="button" id="limpar-busca">
-                                                <i class="fas fa-times"></i>
-                                            </button>
+            <!-- Etapas do Wizard -->
+            <div id="wizard-steps">
+                <!-- Etapa 1: Tipo de Envio -->
+                <div id="step-1" data-step="1">
+                    <div class="row mb-2">
+                        <div class="col-12">
+                            <div class="card border-light shadow-sm">
+                                <div class="card-body">
+                                    <div class="row g-4">
+                                        <div class="col-md-6 mb-3">
+                                            <label for="tipo_envio" class="form-label required"><i class="fas fa-box me-1"></i> Tipo de Envio</label>
+                                            <select class="form-select" id="tipo_envio" name="tipo_envio" required style="color: #B0B0B0 !important;">
+                                                <option value="">Selecione o tipo de envio</option>
+                                                <option value="venda">Venda</option>
+                                                <option value="amostra">Envio de Amostras</option>
+                                                <option value="pessoal">Envio Pessoal</option>
+                                            </select>
                                         </div>
-                                        <div class="input-group mb-2">
-                                            <span class="input-group-text"><i class="fas fa-barcode"></i></span>
-                                            <input type="text" class="form-control" id="busca-codigo" placeholder="Buscar por NCM...">
+                                        <div class="col-md-6 mb-3">
+                                            <label for="tipo_pessoa" class="form-label required"><i class="fas fa-user me-1"></i> Tipo de Pessoa</label>
+                                            <select class="form-select" id="tipo_pessoa" name="tipo_pessoa" required style="color: #B0B0B0 !important;">
+                                                <option value="">Selecione o tipo de pessoa</option>
+                                                <option value="pf">Pessoa Física</option>
+                                                <option value="pj">Pessoa Jurídica</option>
+                                            </select>
                                         </div>
                                     </div>
-                                    <div class="position-relative">
-                                        <select class="form-select produto-select-dropdown" id="produto-select">
-                                            <option value="" selected disabled>Selecione um produto</option>
-                                        </select>
-                                        <small class="text-muted" id="select-status">Carregando produtos...</small>
-                                        <button type="button" class="btn btn-sm btn-outline-secondary position-absolute"
-                                            style="top: 0; right: 40px; display: none;"
-                                            id="reload-produtos"
-                                            title="Recarregar produtos">
-                                            <i class="fas fa-sync-alt"></i>
-                                        </button>
+                                    <div class="text-end">
+                                        <button type="button" class="btn btn-primary" id="btn-step-1-next">Continuar</button>
                                     </div>
-                                </div>
-                                <div class="col-lg-4 col-md-4">
-                                    <div class="input-group mb-2">
-                                        <span class="input-group-text">Quantidade</span>
-                                        <input type="number" class="form-control" id="produto-quantidade" min="1" value="1">
-                                    </div>
-                                    <div class="input-group mb-2">
-                                        <span class="input-group-text">Valor R$</span>
-                                        <input type="number" class="form-control" id="produto-valor" step="0.01" value="0.00">
-                                    </div>
-                                    <div class="input-group">
-                                        <span class="input-group-text">Unidade</span>
-                                        <input type="text" class="form-control" id="produto-unidade" readonly>
-                                    </div>
-                                </div>
-                                <div class="col-lg-3 col-md-3">
-                                    <button type="button" class="btn btn-primary w-100" id="adicionar-produto" style="background-color: #6f42c1;">
-                                        <i class="fas fa-plus me-2"></i>Adicionar
-                                    </button>
-                                </div>
-                            </div>
-
-                            <div id="produtos-container" class="mt-4">
-                                <div class="alert alert-info" id="sem-produtos-alert">
-                                    <i class="fas fa-info-circle me-2"></i> Adicione produtos à sua lista de envio.
-                                </div>
-                                <div id="produtos-cards" class="row g-3">
-                                    <!-- Os cards de produtos serão adicionados aqui dinamicamente -->
-                                </div>
-                            </div>
-
-                            <div class="mt-3 p-3 bg-light rounded d-none" id="resumo-produtos">
-                                <div class="d-flex justify-content-between">
-                                    <h5>Resumo do Envio</h5>
-                                    <h5>Total: R$ <span id="valor-total">0.00</span></h5>
-                                </div>
-                                <p class="mb-0">Peso total estimado: <span id="peso-total">0.00</span> kg</p>
-                                <input type="hidden" name="produtos_json" id="produtos-json">
-                                <input type="hidden" name="valor_total" id="valor-total-input">
-                                <input type="hidden" name="peso_total" id="peso-total-input">
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- 2. Dimensões da Caixa (agora como cards) -->
-            <div class="row mb-4">
-                <div class="col-12">
-                    <div class="card border-light shadow-sm">
-                        <div class="card-header bg-light" style="background: linear-gradient(90deg, #6f42c1 0%, #a084e8 100%) !important; color: #fff;">
-                            <i class="fas fa-ruler-combined me-2"></i>
-                            <h5 class="mb-0" style="color: white;">Dimensões da Caixa</h5>
-                        </div>
-                        <div class="card-body">
-                            <div class="row">
-                                <div class="col-md-2 col-6 mb-3">
-                                    <label for="altura" class="form-label">Altura (cm)</label>
-                                    <input type="number" step="0.1" min="1" class="form-control" id="altura" name="altura_temp" value="10">
-                                </div>
-                                <div class="col-md-2 col-6 mb-3">
-                                    <label for="largura" class="form-label">Largura (cm)</label>
-                                    <input type="number" step="0.1" min="1" class="form-control" id="largura" name="largura_temp" value="20">
-                                </div>
-                                <div class="col-md-2 col-6 mb-3">
-                                    <label for="comprimento" class="form-label">Comprimento (cm)</label>
-                                    <input type="number" step="0.1" min="1" class="form-control" id="comprimento" name="comprimento_temp" value="30">
-                                </div>
-                                <div class="col-md-2 col-6 mb-3">
-                                    <label for="peso_caixa" class="form-label">Peso (kg)</label>
-                                    <input type="number" step="0.1" min="0.1" class="form-control" id="peso_caixa" name="peso_caixa_temp" value="0.5">
-                                </div>
-                                <div class="col-md-4 col-12 mb-3 d-flex align-items-end">
-                                    <button type="button" class="btn btn-primary w-100" id="adicionar-caixa" style="background-color: #6f42c1;">
-                                        <i class="fas fa-plus me-2"></i>Adicionar Caixa
-                                    </button>
-                                </div>
-                            </div>
-
-                            <div id="caixas-container" class="mt-4">
-                                <div class="alert alert-info" id="sem-caixas-alert">
-                                    <i class="fas fa-info-circle me-2"></i> Adicione pelo menos uma caixa para o envio.
-                                </div>
-                                <div id="caixas-cards" class="row g-3">
-                                    <!-- Os cards de caixas serão adicionados aqui dinamicamente -->
-                                </div>
-                            </div>
-
-                            <!-- Campos ocultos para enviar os dados das caixas -->
-                            <input type="hidden" name="caixas_json" id="caixas-json">
-
-                            <!-- Campos ocultos para dimensões -->
-                            <input type="hidden" name="altura" id="altura-hidden">
-                            <input type="hidden" name="largura" id="largura-hidden">
-                            <input type="hidden" name="comprimento" id="comprimento-hidden">
-                            <input type="hidden" name="peso_caixa" id="peso-caixa-hidden">
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- 3. Informações de Origem e Destino -->
-            <div class="row mb-4">
-                <div class="col-md-6 mb-4">
-                    <div class="card h-100 section-card shadow-sm">
-                        <div class="card-header origem-header d-flex align-items-center">
-                            <i class="fas fa-home me-2"></i>
-                            <h5 class="mb-0">Origem</h5>
-                        </div>
-                        <div class="card-body">
-                            <div class="mb-3">
-                                <label for="origem_nome" class="form-label required">Descrição</label>
-                                <input type="text" class="form-control" id="origem_nome" name="origem_nome" required placeholder="Ex: João da Silva">
-                            </div>
-
-                            <div class="mb-3">
-                                <label for="origem_telefone" class="form-label required">Telefone</label>
-                                <input type="text" class="form-control" id="origem_telefone" name="origem_telefone" required placeholder="+55 11 98765-4321">
-                            </div>
-
-                            <div class="mb-3">
-                                <label for="origem_email" class="form-label required">E-mail</label>
-                                <input type="email" class="form-control" id="origem_email" name="origem_email" required placeholder="email@exemplo.com">
-                            </div>
-
-                            <div class="mb-3">
-                                <label for="origem_endereco" class="form-label required">Endereço</label>
-                                <input type="text" class="form-control" id="origem_endereco" name="origem_endereco" required placeholder="Ex: Rua das Flores, 123">
-                            </div>
-
-                            <div class="mb-3">
-                                <label for="origem_complemento" class="form-label">Complemento</label>
-                                <input type="text" class="form-control" id="origem_complemento" name="origem_complemento" placeholder="Ex: Apto 45">
-                            </div>
-
-                            <div class="row">
-                                <div class="col-6 mb-3">
-                                    <label for="origem_cidade" class="form-label required">Cidade</label>
-                                    <input type="text" class="form-control" id="origem_cidade" name="origem_cidade" required placeholder="Ex: São Paulo">
-                                </div>
-                                <div class="col-6 mb-3">
-                                    <label for="origem_estado" class="form-label required">Estado</label>
-                                    <input type="text" class="form-control" id="origem_estado" name="origem_estado" required maxlength="2" placeholder="Ex: SP">
-                                </div>
-                            </div>
-
-                            <div class="row">
-                                <div class="col-6 mb-3">
-                                    <label for="origem_cep" class="form-label required">CEP</label>
-                                    <input type="text" class="form-control" id="origem_cep" name="origem_cep" required placeholder="Ex: 01001-000">
-                                </div>
-                                <div class="col-6 mb-3">
-                                    <label for="origem_pais" class="form-label required">País</label>
-                                    <select class="form-select" id="origem_pais" name="origem_pais" required>
-                                        <option value="BR" selected>Brasil</option>
-                                    </select>
                                 </div>
                             </div>
                         </div>
                     </div>
                 </div>
-
-                <div class="col-md-6 mb-4">
-                    <div class="card h-100 section-card shadow-sm">
-                        <div class="card-header destino-header d-flex align-items-center">
-                            <i class="fas fa-map-marker-alt me-2"></i>
-                            <h5 class="mb-0">Destino</h5>
+                <!-- Etapa 2: Produtos e Caixas -->
+                <div id="step-2" data-step="2" class="d-none">
+                    <!-- Bloco de seleção de produto (copiado do original) -->
+                    <div class="row g-3 align-items-end mb-3">
+                        <div class="col-md-5">
+                            <label for="busca-descricao" class="form-label">Descrição do Produto</label>
+                            <input type="text" class="form-control" id="busca-descricao" placeholder="Digite o nome do produto para buscar">
                         </div>
-                        <div class="card-body">
-                            <div class="mb-3">
-                                <label for="destino_nome" class="form-label required">Descrição</label>
-                                <input type="text" class="form-control" id="destino_nome" name="destino_nome" required placeholder="Ex: Maria Oliveira">
-                            </div>
-
-                            <div class="mb-3">
-                                <label for="destino_telefone" class="form-label required">Telefone</label>
-                                <input type="text" class="form-control" id="destino_telefone" name="destino_telefone" required placeholder="+1 555 123-4567">
-                            </div>
-
-                            <div class="mb-3">
-                                <label for="destino_email" class="form-label required">E-mail</label>
-                                <input type="email" class="form-control" id="destino_email" name="destino_email" required placeholder="email@exemplo.com">
-                            </div>
-
-                            <div class="mb-3">
-                                <label for="destino_endereco" class="form-label required">Endereço</label>
-                                <input type="text" class="form-control" id="destino_endereco" name="destino_endereco" required placeholder="Ex: 123 Main St, Apt 4B">
-                            </div>
-
-                            <div class="mb-3">
-                                <label for="destino_complemento" class="form-label">Complemento</label>
-                                <input type="text" class="form-control" id="destino_complemento" name="destino_complemento" placeholder="Ex: Suite 200">
-                            </div>
-
-                            <div class="row">
-                                <div class="col-6 mb-3">
-                                    <label for="destino_cidade" class="form-label required">Cidade</label>
-                                    <input type="text" class="form-control" id="destino_cidade" name="destino_cidade" required placeholder="Ex: New York">
-                                </div>
-                                <div class="col-6 mb-3">
-                                    <label for="destino_estado" class="form-label required">Estado</label>
-                                    <input type="text" class="form-control" id="destino_estado" name="destino_estado" required maxlength="2" placeholder="Ex: NY">
-                                </div>
-                            </div>
-
-                            <div class="row">
-                                <div class="col-6 mb-3">
-                                    <label for="destino_cep" class="form-label required">CEP</label>
-                                    <input type="text" class="form-control" id="destino_cep" name="destino_cep" required placeholder="Ex: 10001">
-                                </div>
-                                <div class="col-6 mb-3">
-                                    <label for="destino_pais" class="form-label required">País</label>
-                                    <select class="form-select" id="destino_pais" name="destino_pais" required>
-                                        <option value="US" selected>Estados Unidos</option>
-                                        <option value="CA">Canadá</option>
-                                        <option value="MX">México</option>
-                                        <option value="PT">Portugal</option>
-                                        <option value="ES">Espanha</option>
-                                        <option value="IT">Itália</option>
-                                        <option value="FR">França</option>
-                                        <option value="DE">Alemanha</option>
-                                        <option value="UK">Reino Unido</option>
-                                    </select>
-                                </div>
-                            </div>
+                        <div class="col-md-2">
+                            <label for="busca-codigo" class="form-label">NCM</label>
+                            <input type="text" class="form-control" id="busca-codigo" placeholder="NCM" maxlength="10">
+                        </div>
+                        <div class="col-md-3">
+                            <label for="produto-select" class="form-label">Produto</label>
+                            <select class="form-select" id="produto-select" style="width: 100%"></select>
+                        </div>
+                        <div class="col-md-2 d-flex align-items-end">
+                            <button type="button" class="btn btn-outline-secondary w-100" id="limpar-busca"><i class="fas fa-eraser me-1"></i> Limpar</button>
                         </div>
                     </div>
-                </div>
-            </div>
-
-            <!-- 4. Serviço de Entrega -->
-            <div class="row mb-4">
-                <div class="col-12">
-                    <div class="card border-light shadow-sm">
-                        <div class="card-header bg-light" style="background: linear-gradient(90deg, #6f42c1 0%, #a084e8 100%) !important; color: #fff;">
-                            <i class="fas fa-shipping-fast me-2"></i>
-                            <h5 class="mb-0" style="color: white;">Serviço de Entrega FedEx</h5>
+                    <div class="row g-3 mb-2">
+                        <div class="col-md-2">
+                            <label for="produto-quantidade" class="form-label">Quantidade</label>
+                            <input type="number" class="form-control" id="produto-quantidade" min="1" value="1">
                         </div>
-                        <div class="card-body">
-                            <div id="cotacao-loader" class="text-center my-4" style="display: none;">
-                                <div class="spinner-border text-primary" role="status">
-                                    <span class="visually-hidden">Carregando...</span>
-                                </div>
-                                <p>Calculando as melhores opções de envio...</p>
-                            </div>
-
-                            <div id="servicos-container">
-                                <div class="alert alert-info" id="servicos-info">
-                                    <i class="fas fa-info-circle me-2"></i> Preencha os dados de origem, destino e caixas, e clique em "Consultar Serviços" para visualizar as opções disponíveis.
-                                </div>
-
-                                <div id="servicos-lista" class="mt-3" style="display: none;">
-                                    <!-- Aqui serão exibidos os serviços disponíveis -->
-                                </div>
-                            </div>
+                        <div class="col-md-2">
+                            <label for="produto-valor" class="form-label">Valor Unitário (R$)</label>
+                            <input type="number" class="form-control" id="produto-valor" min="0" step="0.01" value="0.00">
+                        </div>
+                        <div class="col-md-2">
+                            <label for="produto-unidade" class="form-label">Unidade</label>
+                            <input type="text" class="form-control" id="produto-unidade" placeholder="UN ou KG">
+                        </div>
+                        <div class="col-md-3 d-flex align-items-end">
+                            <button type="button" class="btn btn-success w-100" id="adicionar-produto"><i class="fas fa-plus me-1"></i> Adicionar Produto</button>
+                        </div>
+                        <div class="col-md-3 d-flex align-items-end">
+                            <button type="button" class="btn btn-outline-primary w-100 d-none" id="reload-produtos"><i class="fas fa-sync-alt me-1"></i> Recarregar Produtos</button>
                         </div>
                     </div>
-                </div>
-            </div>
-
-            <!-- 5. Métodos de Pagamento (Nova Seção) -->
-            <div class="row mb-4" id="pagamento-section" style="display: none;">
-                <div class="col-12">
-                    <div class="card border-light shadow-sm">
-                        <div class="card-header bg-light" style="background: linear-gradient(90deg, #6f42c1 0%, #a084e8 100%) !important; color: #fff;">
-                            <i class="fas fa-credit-card me-2"></i>
-                            <h5 class="mb-0">Método de Pagamento</h5>
+                    <div class="mb-2" id="select-status"></div>
+                    <div class="alert alert-warning d-none" id="sem-produtos-alert">Nenhum produto adicionado.</div>
+                    <div id="resumo-produtos" class="mb-3 d-none">
+                        <div class="row" id="produtos-cards"></div>
+                        <div class="mt-2 text-end">
+                            <span class="fw-bold">Valor Total: R$ <span id="valor-total">0.00</span></span> |
+                            <span class="fw-bold">Peso Total: <span id="peso-total">0.00</span> kg</span>
                         </div>
-                        <div class="card-body">
-                            <input type="hidden" name="payment_method" id="payment_method">
-                            <input type="hidden" name="payment_currency" id="payment_currency" value="BRL">
-                            <input type="hidden" name="payment_amount" id="payment_amount">
-                            <input type="hidden" name="installment_value" id="installment_value">
+                    </div>
+                    <input type="hidden" id="produtos-json" name="produtos_json">
+                    <input type="hidden" id="valor-total-input" name="valor_total">
+                    <input type="hidden" id="peso-total-input" name="peso_total">
 
-                            <div class="row">
-                                <!--  
-
-                                <div class="col-md-4 mb-3">
-                                    <div class="card h-100 payment-method-card" data-method="boleto">
-                                        <div class="card-body text-center">
-                                            <i class="fas fa-barcode fa-3x text-primary mb-3"></i>
-                                            <h5 class="card-title">Boleto Bancário</h5>
-                                            <p class="card-text">Pague em qualquer banco ou casa lotérica até a data de vencimento.</p>
-                                            <p class="text-muted small">Prazo de compensação: 1-3 dias úteis</p>
-                                        </div>
-                                        <div class="card-footer bg-transparent border-top-0 text-center">
-                                            <button type="button" class="btn btn-outline-primary select-payment-method" data-method="boleto">Selecionar</button>
-                                        </div>
-                                    </div>
+                    <!-- Bloco de caixas (copiado do original) -->
+                    <div class="row g-3 align-items-end mb-3">
+                        <div class="col-md-2">
+                            <label for="altura" class="form-label">Altura (cm)</label>
+                            <input type="number" class="form-control" id="altura" min="1" value="10">
+                        </div>
+                        <div class="col-md-2">
+                            <label for="largura" class="form-label">Largura (cm)</label>
+                            <input type="number" class="form-control" id="largura" min="1" value="20">
+                        </div>
+                        <div class="col-md-2">
+                            <label for="comprimento" class="form-label">Comprimento (cm)</label>
+                            <input type="number" class="form-control" id="comprimento" min="1" value="30">
+                        </div>
+                        <div class="col-md-2">
+                            <label for="peso_caixa" class="form-label">Peso (kg)</label>
+                            <input type="number" class="form-control" id="peso_caixa" min="0.01" step="0.01" value="0.5">
+                        </div>
+                        <div class="col-md-2 d-flex align-items-end">
+                            <button type="button" class="btn btn-success w-100" id="adicionar-caixa"><i class="fas fa-plus me-1"></i> Adicionar Caixa</button>
+                        </div>
+                    </div>
+                    <div class="alert alert-warning d-none" id="sem-caixas-alert">Nenhuma caixa adicionada.</div>
+                    <div class="row" id="caixas-cards"></div>
+                    <input type="hidden" id="caixas-json" name="caixas_json">
+                    <input type="hidden" id="altura-hidden" name="altura">
+                    <input type="hidden" id="largura-hidden" name="largura">
+                    <input type="hidden" id="comprimento-hidden" name="comprimento">
+                    <input type="hidden" id="peso-caixa-hidden" name="peso_caixa">
+                    <div class="text-end mt-3">
+                        <button type="button" class="btn btn-primary" id="btn-step-2-next">Continuar</button>
+                    </div>
+                </div>
+                <!-- Etapa 3: Endereço de Origem e Destino -->
+                <div id="step-3" data-step="3" class="d-none">
+                    <div class="row mb-4">
+                        <div class="col-md-6 mb-4">
+                            <!-- Bloco de origem (copiado do original) -->
+                            <div class="card border-light shadow-sm">
+                                <div class="card-header bg-light" style="background: linear-gradient(90deg, #6f42c1 0%, #a084e8 100%) !important; color: #fff;">
+                                    <i class="fas fa-map-marker-alt me-2"></i>
+                                    <h5 class="mb-0" style="color: white; display: inline;">Endereço de Origem</h5>
                                 </div>
-                
-                                
-
-                                <div class="col-md-4 mb-3">
-                                    <div class="card h-100 payment-method-card" data-method="pix">
-                                        <div class="card-body text-center">
-                                            <i class="fas fa-qrcode fa-3x text-primary mb-3"></i>
-                                            <h5 class="card-title">Pix</h5>
-                                            <p class="card-text">Pagamento instantâneo usando QR Code ou chave Pix.</p>
-                                            <p class="text-muted small">Confirmação imediata</p>
+                                <div class="card-body">
+                                    <div class="mb-3">
+                                        <label for="origem_nome" class="form-label">Nome/Razão Social</label>
+                                        <input type="text" class="form-control" id="origem_nome" name="origem_nome" required>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label for="origem_endereco" class="form-label">Endereço</label>
+                                        <input type="text" class="form-control" id="origem_endereco" name="origem_endereco" required>
+                                    </div>
+                                    <div class="row g-2 mb-3">
+                                        <div class="col-md-4">
+                                            <label for="origem_cep" class="form-label">CEP</label>
+                                            <div class="input-group">
+                                                <input type="text" class="form-control" id="origem_cep" name="origem_cep" maxlength="9" required>
+                                                <button type="button" class="btn btn-outline-secondary" id="origem_buscar_cep">Buscar CEP</button>
+                                            </div>
                                         </div>
-                                        <div class="card-footer bg-transparent border-top-0 text-center">
-                                            <button type="button" class="btn btn-outline-primary select-payment-method" data-method="pix">Selecionar</button>
+                                        <div class="col-md-4">
+                                            <label for="origem_pais" class="form-label">País</label>
+                                            <select class="form-select pais-select" id="origem_pais" name="origem_pais" required>
+                                                <option value="">Selecione o país</option>
+                                            </select>
+                                        </div>
+                                        <div class="col-md-4">
+                                            <label for="origem_estado" class="form-label">Estado</label>
+                                            <select class="form-select estado-select" id="origem_estado" name="origem_estado" required>
+                                                <option value="">Selecione o estado</option>
+                                            </select>
                                         </div>
                                     </div>
-                                </div>
- -->
-                                <div class="col-md-4 mb-3">
-                                    <div class="card h-100 payment-method-card" data-method="credit_card">
-                                        <div class="card-body text-center">
-                                            <i class="fas fa-credit-card fa-3x text-primary mb-3"></i>
-                                            <h5 class="card-title">Cartão de Crédito</h5>
-                                            <p class="card-text">Pagamento seguro com seu cartão de crédito.</p>
-                                            <p class="text-muted small">Confirmação em poucos segundos</p>
-                                        </div>
-                                        <div class="card-footer bg-transparent border-top-0 text-center">
-                                            <button type="button" class="btn btn-outline-primary select-payment-method" data-method="credit_card">Selecionar</button>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <!-- Área para formulário de cartão de crédito (aparece apenas quando cartão for selecionado) -->
-                            <div id="credit-card-form" class="mt-4" style="display: none;">
-                                <h4 class="mb-3">Dados do Cartão</h4>
-                                <div class="row">
-                                    <div class="col-md-6 mb-3">
-                                        <label for="card_name" class="form-label">Nome no Cartão</label>
-                                        <input type="text" class="form-control" id="card_name" name="card_name" placeholder="Nome como aparece no cartão">
-                                    </div>
-                                    <div class="col-md-6 mb-3">
-                                        <label for="card_number" class="form-label">Número do Cartão</label>
-                                        <input type="text" class="form-control" id="card_number" name="card_number" placeholder="1234 5678 9012 3456">
-                                    </div>
-                                </div>
-                                <div class="row">
-                                    <div class="col-md-4 mb-3">
-                                        <label for="card_expiry_month" class="form-label">Mês de Validade</label>
-                                        <select class="form-select" id="card_expiry_month" name="card_expiry_month">
-                                            <option value="">Mês</option>
-                                            @for ($i = 1; $i <= 12; $i++)
-                                                <option value="{{ sprintf('%02d', $i) }}">{{ sprintf('%02d', $i) }}</option>
-                                                @endfor
+                                    <div class="mb-3" id="origem_cidade_container">
+                                        <label for="origem_cidade" class="form-label">Cidade</label>
+                                        <select class="form-select cidade-select" id="origem_cidade" name="origem_cidade" required>
+                                            <option value="">Selecione o estado primeiro</option>
                                         </select>
                                     </div>
-                                    <div class="col-md-4 mb-3">
-                                        <label for="card_expiry_year" class="form-label">Ano de Validade</label>
-                                        <select class="form-select" id="card_expiry_year" name="card_expiry_year">
-                                            <option value="">Ano</option>
-                                            @for ($i = date('Y'); $i <= date('Y') + 10; $i++)
-                                                <option value="{{ $i }}">{{ $i }}</option>
-                                                @endfor
-                                        </select>
-                                    </div>
-                                    <div class="col-md-4 mb-3">
-                                        <label for="card_cvv" class="form-label">CVV</label>
-                                        <input type="text" class="form-control" id="card_cvv" name="card_cvv" placeholder="123">
-                                    </div>
-                                </div>
-                                <div class="row">
-                                    <div class="col-md-6 mb-3">
-                                        <label for="card_cpf" class="form-label">CPF do Titular</label>
-                                        <input type="text" class="form-control" id="card_cpf" name="card_cpf" placeholder="123.456.789-00">
-                                    </div>
-                                    <div class="col-md-6 mb-3">
-                                        <label for="installments" class="form-label">Parcelas</label>
-                                        <select class="form-select" id="installments" name="installments">
-                                            <option value="1">À vista</option>
-                                            <option value="2">2x sem juros</option>
-                                            <option value="3">3x sem juros</option>
-                                        </select>
+                                    <div class="row g-2 mb-3">
+                                        <div class="col-md-6">
+                                            <label for="origem_telefone" class="form-label">Telefone</label>
+                                            <input type="text" class="form-control" id="origem_telefone" name="origem_telefone" required>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <label for="origem_email" class="form-label">E-mail</label>
+                                            <input type="email" class="form-control" id="origem_email" name="origem_email" required>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
-
-                            <!-- Área para resumo do pagamento -->
-                            <div id="payment-summary" class="mt-4 p-3 bg-light rounded" style="display: none;">
-                                <h4 class="mb-3">Resumo do Pagamento</h4>
-                                <div class="d-flex justify-content-between">
-                                    <span>Serviço de Envio:</span>
-                                    <span id="payment-service-name">-</span>
+                            <!-- Bloco de destino (copiado do original) -->
+                            <div class="card border-light shadow-sm">
+                                <div class="card-header bg-light" style="background: linear-gradient(90deg, #6f42c1 0%, #a084e8 100%) !important; color: #fff;">
+                                    <i class="fas fa-map-marker me-2"></i>
+                                    <h5 class="mb-0" style="color: white; display: inline;">Endereço de Destino</h5>
                                 </div>
-                                <div class="d-flex justify-content-between">
-                                    <span>Valor do Envio:</span>
-                                    <span id="payment-service-value">-</span>
+                                <div class="card-body">
+                                    <div class="mb-3">
+                                        <label for="destino_nome" class="form-label">Nome/Razão Social</label>
+                                        <input type="text" class="form-control" id="destino_nome" name="destino_nome" required>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label for="destino_endereco" class="form-label">Endereço</label>
+                                        <input type="text" class="form-control" id="destino_endereco" name="destino_endereco" required>
+                                    </div>
+                                    <div class="row g-2 mb-3">
+                                        <div class="col-md-4">
+                                            <label for="destino_cep" class="form-label">CEP</label>
+                                            <div class="input-group">
+                                                <input type="text" class="form-control" id="destino_cep" name="destino_cep" maxlength="9" required>
+                                                <button type="button" class="btn btn-outline-secondary" id="destino_buscar_cep">Buscar CEP</button>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-4">
+                                            <label for="destino_pais" class="form-label">País</label>
+                                            <select class="form-select pais-select" id="destino_pais" name="destino_pais" required>
+                                                <option value="">Selecione o país</option>
+                                            </select>
+                                        </div>
+                                        <div class="col-md-4">
+                                            <label for="destino_estado" class="form-label">Estado</label>
+                                            <select class="form-select estado-select" id="destino_estado" name="destino_estado" required>
+                                                <option value="">Selecione o estado</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                    <div class="mb-3" id="destino_cidade_container">
+                                        <label for="destino_cidade" class="form-label">Cidade</label>
+                                        <select class="form-select cidade-select" id="destino_cidade" name="destino_cidade" required>
+                                            <option value="">Selecione o estado primeiro</option>
+                                        </select>
+                                    </div>
+                                    <div class="row g-2 mb-3">
+                                        <div class="col-md-6">
+                                            <label for="destino_telefone" class="form-label">Telefone</label>
+                                            <input type="text" class="form-control" id="destino_telefone" name="destino_telefone" required>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <label for="destino_email" class="form-label">E-mail</label>
+                                            <input type="email" class="form-control" id="destino_email" name="destino_email" required>
+                                        </div>
+                                    </div>
                                 </div>
-                                <div class="d-flex justify-content-between">
-                                    <span>Método de Pagamento:</span>
-                                    <span id="payment-method-name">-</span>
+                            </div>
+                        </div>
+                        <div class="col-md-6 mb-4">
+                            <!-- ... cole aqui o HTML do bloco de destino ... -->
+                        </div>
+                    </div>
+                    <div class="text-end">
+                        <button type="button" class="btn btn-primary" id="btn-step-3-next">Continuar</button>
+                    </div>
+                </div>
+                <!-- Etapa 4: Revisão Final (modal será aberto via JS) -->
+                <!-- Etapa 5: Serviços -->
+                <div id="step-5" data-step="5" class="d-none">
+                    <div class="row mb-4">
+                        <div class="col-12">
+                            <div class="card border-light shadow-sm">
+                                <div class="card-header bg-light" style="background: linear-gradient(90deg, #6f42c1 0%, #a084e8 100%) !important; color: #fff;">
+                                    <i class="fas fa-shipping-fast me-2"></i>
+                                    <h5 class="mb-0" style="color: white;">Serviço de Entrega FedEx</h5>
                                 </div>
-                                <div class="d-flex justify-content-between mt-2">
-                                    <strong>Total a Pagar:</strong>
-                                    <strong id="payment-total-value">-</strong>
+                                <div class="card-body">
+                                    <!-- Bloco de serviços (copiado do original) -->
+                                    <!-- ... cole aqui o HTML do bloco de serviços ... -->
+                                    <div class="text-end mt-3">
+                                        <button type="button" class="btn btn-primary" id="btn-step-5-next">Continuar</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <!-- Etapa 6: Pagamento -->
+                <div id="step-6" data-step="6" class="d-none">
+                    <div class="row mb-4" id="pagamento-section">
+                        <div class="col-12">
+                            <div class="card border-light shadow-sm">
+                                <div class="card-header bg-light" style="background: linear-gradient(90deg, #6f42c1 0%, #a084e8 100%) !important; color: #fff;">
+                                    <i class="fas fa-credit-card me-2"></i>
+                                    <h5 class="mb-0">Método de Pagamento</h5>
+                                </div>
+                                <div class="card-body">
+                                    <!-- Bloco de pagamento (copiado do original) -->
+                                    <!-- ... cole aqui o HTML do bloco de pagamento ... -->
                                 </div>
                             </div>
                         </div>
                     </div>
                 </div>
             </div>
-
-            <!-- Botões finais -->
-            <div class="text-center mt-4 mb-5">
-                <button type="button" class="btn btn-primary btn-lg px-5 me-3" style="background: linear-gradient(90deg, #6f42c1 0%, #a084e8 100%); border: none;">
-                    <i class="fas fa-search me-2"></i> Consultar Serviços
-                </button>
-                <button type="submit" class="btn btn-success btn-lg px-5" id="submit-button" style="display: none; background: linear-gradient(90deg, #43e97b 0%, #38f9d7 100%); border: none;">
-                    <i class="fas fa-paper-plane me-2"></i> Processar Envio
-                </button>
+            <!-- Modal de Revisão Final (Etapa 4) -->
+            <div class="modal fade" id="modal-revisao-final" tabindex="-1" aria-labelledby="modalRevisaoFinalLabel" aria-hidden="true">
+                <div class="modal-dialog modal-lg modal-dialog-centered">
+                    <div class="modal-content">
+                        <div class="modal-header bg-primary text-white">
+                            <h5 class="modal-title" id="modalRevisaoFinalLabel">Revisão Final</h5>
+                            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Fechar"></button>
+                        </div>
+                        <div class="modal-body">
+                            <!-- Aqui você pode montar o resumo dos dados preenchidos -->
+                            <div id="resumo-revisao-final"></div>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-outline-secondary" id="btn-editar-etapas">Editar</button>
+                            <button type="button" class="btn btn-success" id="btn-confirmar-revisao">Confirmar e Continuar</button>
+                        </div>
+                    </div>
+                </div>
             </div>
         </form>
     </div>
@@ -3773,6 +2919,166 @@
             }
         });
 
+        // ===== WIZARD FUNCTIONS =====
+        let etapaAtual = 1;
+        const totalEtapas = 6;
+
+        function mostrarEtapa(etapa) {
+            // Esconder todas as etapas
+            for (let i = 1; i <= totalEtapas; i++) {
+                $('#step-' + i).addClass('d-none');
+            }
+            
+            // Mostrar a etapa atual
+            $('#step-' + etapa).removeClass('d-none');
+            
+            // Atualizar progress bar
+            const percent = (etapa / totalEtapas) * 100;
+            $('#wizard-progress-bar').css('width', percent + '%');
+            $('#wizard-progress-bar').attr('aria-valuenow', etapa);
+            $('#wizard-progress-label').text('Etapa ' + etapa + ' de ' + totalEtapas);
+            
+            // Rolar para o topo da página
+            $('html, body').animate({
+                scrollTop: 0
+            }, 300);
+        }
+
+        // Inicializar wizard
+        mostrarEtapa(etapaAtual);
+
+        // Eventos dos botões do wizard
+        $('#btn-step-1-next').on('click', function() {
+            // Validar campos da etapa 1
+            if (!$('#tipo_envio').val()) {
+                showAlert('Por favor, selecione o tipo de envio.', 'warning');
+                return;
+            }
+            if (!$('#tipo_pessoa').val()) {
+                showAlert('Por favor, selecione o tipo de pessoa.', 'warning');
+                return;
+            }
+            
+            etapaAtual = 2;
+            mostrarEtapa(etapaAtual);
+        });
+
+        $('#btn-step-2-next').on('click', function() {
+            // Validar se há produtos e caixas
+            if (produtos.length === 0) {
+                showAlert('Por favor, adicione pelo menos um produto.', 'warning');
+                return;
+            }
+            if (caixas.length === 0) {
+                showAlert('Por favor, adicione pelo menos uma caixa.', 'warning');
+                return;
+            }
+            
+            etapaAtual = 3;
+            mostrarEtapa(etapaAtual);
+        });
+
+        $('#btn-step-3-next').on('click', function() {
+            // Validar campos de origem e destino
+            if (!$('#origem_nome').val() || !$('#origem_endereco').val() || !$('#origem_cidade').val() ||
+                !$('#origem_estado').val() || !$('#origem_cep').val() || !$('#origem_pais').val() ||
+                !$('#origem_telefone').val() || !$('#origem_email').val()) {
+                showAlert('Por favor, preencha todos os campos de origem.', 'warning');
+                return;
+            }
+
+            if (!$('#destino_nome').val() || !$('#destino_endereco').val() || !$('#destino_cidade').val() ||
+                !$('#destino_estado').val() || !$('#destino_cep').val() || !$('#destino_pais').val() ||
+                !$('#destino_telefone').val() || !$('#destino_email').val()) {
+                showAlert('Por favor, preencha todos os campos de destino.', 'warning');
+                return;
+            }
+            
+            // Abrir modal de revisão
+            const modal = new bootstrap.Modal(document.getElementById('modal-revisao-final'));
+            modal.show();
+            
+            // Montar resumo dos dados
+            montarResumoRevisao();
+        });
+
+        $('#btn-confirmar-revisao').on('click', function() {
+            const modal = bootstrap.Modal.getInstance(document.getElementById('modal-revisao-final'));
+            modal.hide();
+            etapaAtual = 5;
+            mostrarEtapa(etapaAtual);
+        });
+
+        $('#btn-step-5-next').on('click', function() {
+            // Validar se um serviço foi selecionado
+            if (!$('#servico_entrega').val()) {
+                showAlert('Por favor, selecione um serviço de entrega.', 'warning');
+                return;
+            }
+            
+            etapaAtual = 6;
+            mostrarEtapa(etapaAtual);
+        });
+
+        $('#btn-editar-etapas').on('click', function() {
+            const modal = bootstrap.Modal.getInstance(document.getElementById('modal-revisao-final'));
+            modal.hide();
+            etapaAtual = 1;
+            mostrarEtapa(etapaAtual);
+        });
+
+        // Função para montar o resumo da revisão
+        function montarResumoRevisao() {
+            let resumo = '<div class="row">';
+            
+            // Informações básicas
+            resumo += '<div class="col-md-6"><h6><i class="fas fa-info-circle me-2"></i>Informações Básicas</h6>';
+            resumo += '<ul class="list-unstyled">';
+            resumo += '<li><strong>Tipo de Envio:</strong> ' + $('#tipo_envio option:selected').text() + '</li>';
+            resumo += '<li><strong>Tipo de Pessoa:</strong> ' + $('#tipo_pessoa option:selected').text() + '</li>';
+            resumo += '</ul></div>';
+            
+            // Produtos
+            resumo += '<div class="col-md-6"><h6><i class="fas fa-box me-2"></i>Produtos (' + produtos.length + ')</h6>';
+            resumo += '<ul class="list-unstyled">';
+            produtos.forEach(function(produto) {
+                resumo += '<li>' + produto.nome + ' - Qtd: ' + produto.quantidade + ' - R$ ' + (produto.valor * produto.quantidade).toFixed(2) + '</li>';
+            });
+            resumo += '</ul></div>';
+            
+            // Caixas
+            resumo += '<div class="col-md-6"><h6><i class="fas fa-cube me-2"></i>Caixas (' + caixas.length + ')</h6>';
+            resumo += '<ul class="list-unstyled">';
+            caixas.forEach(function(caixa, index) {
+                resumo += '<li>Caixa ' + (index + 1) + ': ' + caixa.altura + '×' + caixa.largura + '×' + caixa.comprimento + 'cm - ' + caixa.peso + 'kg</li>';
+            });
+            resumo += '</ul></div>';
+            
+            // Origem
+            resumo += '<div class="col-md-6"><h6><i class="fas fa-map-marker-alt me-2"></i>Origem</h6>';
+            resumo += '<ul class="list-unstyled">';
+            resumo += '<li><strong>' + $('#origem_nome').val() + '</strong></li>';
+            resumo += '<li>' + $('#origem_endereco').val() + '</li>';
+            resumo += '<li>' + $('#origem_cidade').val() + ' - ' + $('#origem_estado').val() + '</li>';
+            resumo += '<li>CEP: ' + $('#origem_cep').val() + '</li>';
+            resumo += '</ul></div>';
+            
+            // Destino
+            resumo += '<div class="col-md-6"><h6><i class="fas fa-map-marker me-2"></i>Destino</h6>';
+            resumo += '<ul class="list-unstyled">';
+            resumo += '<li><strong>' + $('#destino_nome').val() + '</strong></li>';
+            resumo += '<li>' + $('#destino_endereco').val() + '</li>';
+            resumo += '<li>' + $('#destino_cidade').val() + ' - ' + $('#destino_estado').val() + '</li>';
+            resumo += '<li>CEP: ' + $('#destino_cep').val() + '</li>';
+            resumo += '</ul></div>';
+            
+            resumo += '</div>';
+            
+            $('#resumo-revisao-final').html(resumo);
+        }
+
+        // ===== FIM WIZARD FUNCTIONS =====
+
         // Adicionar função para buscar CEP e preencher campos automaticamente
         $(document).ready(function() {
             // Função para mostrar alertas
@@ -4257,6 +3563,7 @@
         </div>
     </div>
 </div>
+
 @endsection
 
 @section('scripts')
