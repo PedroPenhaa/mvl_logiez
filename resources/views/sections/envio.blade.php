@@ -2,6 +2,137 @@
 
 @section('styles')
 <link rel="stylesheet" href="{{ asset('css/cotacao.css') }}">
+<style>
+    /* Padrão de roxo para toda a interface */
+    :root {
+        --roxo-principal: #764ba2;
+        --roxo-secundario: #6f42c1;
+        --roxo-claro: #a084e8;
+        --roxo-escuro: #4b2c6f;
+        --roxo-bg: #f5f3fa;
+        --roxo-badge: #8f5fd6;
+    }
+    body, .page-header-wrapper {
+        background: var(--roxo-bg) !important;
+    }
+    .bg-gradient-primary, .btn-primary, .card-header.bg-gradient-primary, .progress-bar.bg-primary {
+        background: var(--roxo-principal) !important;
+        background-color: var(--roxo-principal) !important;
+        color: #fff !important;
+        border: none;
+    }
+    .bg-gradient-secondary, .btn-secondary, .card-header.bg-gradient-secondary {
+        background: var(--roxo-secundario) !important;
+        background-color: var(--roxo-secundario) !important;
+        color: #fff !important;
+        border: none;
+    }
+    .btn-primary:hover, .btn-secondary:hover {
+        background: var(--roxo-escuro) !important;
+        color: #fff !important;
+    }
+    .btn-success, .btn-success:hover {
+        background: var(--roxo-claro) !important;
+        color: #fff !important;
+        border: none;
+    }
+    .btn-outline-primary {
+        color: var(--roxo-principal) !important;
+        border-color: var(--roxo-principal) !important;
+        background: #fff !important;
+    }
+    .btn-outline-primary:hover {
+        background: var(--roxo-principal) !important;
+        color: #fff !important;
+    }
+    .btn-outline-secondary {
+        color: var(--roxo-secundario) !important;
+        border-color: var(--roxo-secundario) !important;
+        background: #fff !important;
+    }
+    .btn-outline-secondary:hover {
+        background: var(--roxo-secundario) !important;
+        color: #fff !important;
+    }
+    .badge.bg-success, .badge.bg-info, .badge.bg-secondary {
+        background: var(--roxo-badge) !important;
+        color: #fff !important;
+    }
+    .badge.bg-primary {
+        background: var(--roxo-principal) !important;
+        color: #fff !important;
+    }
+    .card-header {
+        border-radius: 0.5rem 0.5rem 0 0 !important;
+    }
+    .card {
+        background: #fff;
+        border: 1px solid #e9e3f7;
+        border-radius: 0.75rem;
+        box-shadow: 0 2px 8px rgba(120, 90, 180, 0.06);
+    }
+    .input-group-text {
+        border-color: #e9e3f7;
+        background-color: #f5f3fa;
+        color: var(--roxo-principal);
+    }
+    .form-control:focus, .form-select:focus {
+        border-color: var(--roxo-principal);
+        box-shadow: 0 0 0 0.2rem rgba(118, 75, 162, 0.15);
+    }
+    .alert-info, .alert-success, .alert-warning, .alert-danger {
+        background: var(--roxo-bg) !important;
+        color: var(--roxo-principal) !important;
+        border: 1px solid var(--roxo-claro) !important;
+    }
+    .alert .fa-info-circle, .alert .fa-check-circle, .alert .fa-exclamation-triangle, .alert .fa-times-circle {
+        color: var(--roxo-principal) !important;
+    }
+    .select2-container--default .select2-selection--single {
+        border-color: #e9e3f7;
+        border-radius: 0.375rem;
+    }
+    .select2-container--default .select2-selection--single:focus {
+        border-color: var(--roxo-principal);
+        box-shadow: 0 0 0 0.2rem rgba(118, 75, 162, 0.15);
+    }
+    .select2-container--default .select2-results__option--highlighted[aria-selected] {
+        background-color: var(--roxo-principal);
+    }
+    /* Responsividade melhorada */
+    @media (max-width: 768px) {
+        .card-body {
+            padding: 1rem !important;
+        }
+        .btn-group-sm .btn {
+            padding: 0.25rem 0.5rem;
+            font-size: 0.875rem;
+        }
+        .d-flex.gap-3 {
+            flex-direction: column;
+            gap: 0.5rem !important;
+        }
+        .badge.fs-6 {
+            font-size: 0.875rem !important;
+        }
+    }
+    @media (max-width: 576px) {
+        .col-sm-12 {
+            margin-bottom: 1rem;
+        }
+        .btn-lg {
+            padding: 0.75rem 1.5rem;
+            font-size: 1rem;
+        }
+    }
+    .hover-shadow {
+        transition: all 0.3s ease;
+    }
+    .hover-shadow:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 25px rgba(120, 90, 180, 0.10) !important;
+    }
+</style>
 @endsection
 
 @section('content')
@@ -71,88 +202,236 @@
                 </div>
                 <!-- Etapa 2: Produtos e Caixas -->
                 <div id="step-2" data-step="2" class="d-none">
-                    <!-- Bloco de seleção de produto (copiado do original) -->
-                    <div class="row g-3 align-items-end mb-3">
-                        <div class="col-md-5">
-                            <label for="busca-descricao" class="form-label">Descrição do Produto</label>
-                            <input type="text" class="form-control" id="busca-descricao" placeholder="Digite o nome do produto para buscar">
-                        </div>
-                        <div class="col-md-2">
-                            <label for="busca-codigo" class="form-label">NCM</label>
-                            <input type="text" class="form-control" id="busca-codigo" placeholder="NCM" maxlength="10">
-                        </div>
-                        <div class="col-md-3">
-                            <label for="produto-select" class="form-label">Produto</label>
-                            <select class="form-select" id="produto-select" style="width: 100%"></select>
-                        </div>
-                        <div class="col-md-2 d-flex align-items-end">
-                            <button type="button" class="btn btn-outline-secondary w-100" id="limpar-busca"><i class="fas fa-eraser me-1"></i> Limpar</button>
+                    <!-- Seção de Produtos -->
+                    <div class="row mb-4">
+                        <div class="col-12">
+                            <div class="card border-0 shadow-sm">
+                                <div class="card-header bg-gradient-primary text-white py-3">
+                                    <div class="d-flex align-items-center">
+                                        <i class="fas fa-box-open me-3 fs-4"></i>
+                                        <div>
+                                            <h5 class="mb-0 fw-bold">Produtos do Envio</h5>
+                                            <small class="opacity-75">Adicione os produtos que serão enviados</small>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="card-body p-4">
+                                    <!-- Busca de Produtos -->
+                                    <div class="row g-3 mb-4">
+                                        <div class="col-lg-5 col-md-6">
+                                            <label for="busca-descricao" class="form-label fw-semibold">
+                                                <i class="fas fa-search me-1 text-primary"></i>Descrição do Produto
+                                            </label>
+                                            <div class="input-group">
+                                                <span class="input-group-text bg-light border-end-0">
+                                                    <i class="fas fa-tag text-muted"></i>
+                                                </span>
+                                                <input type="text" class="form-control border-start-0" id="busca-descricao" 
+                                                       placeholder="Ex: Havaianas, eletrônicos, roupas...">
+                                            </div>
+                                        </div>
+                                        <div class="col-lg-2 col-md-3">
+                                            <label for="busca-codigo" class="form-label fw-semibold">
+                                                <i class="fas fa-barcode me-1 text-primary"></i>NCM
+                                            </label>
+                                            <input type="text" class="form-control text-center" id="busca-codigo" 
+                                                   placeholder="NCM" maxlength="10">
+                                        </div>
+                                        <div class="col-lg-3 col-md-3">
+                                            <label for="produto-select" class="form-label fw-semibold">
+                                                <i class="fas fa-list me-1 text-primary"></i>Selecionar Produto
+                                            </label>
+                                            <select class="form-select" id="produto-select" style="width: 100%"></select>
+                                        </div>
+                                        <div class="col-lg-2 col-md-12 d-flex align-items-end">
+                                            <button type="button" class="btn btn-outline-secondary w-100" id="limpar-busca">
+                                                <i class="fas fa-eraser me-1"></i> Limpar
+                                            </button>
+                                        </div>
+                                    </div>
+
+                                    <!-- Status da Busca -->
+                                    <div class="mb-3" id="select-status">
+                                        <div class="alert alert-info border-0 bg-light">
+                                            <i class="fas fa-info-circle me-2 text-primary"></i>
+                                            Digite o nome de um produto para buscar
+                                        </div>
+                                    </div>
+
+                                    <!-- Detalhes do Produto -->
+                                    <div class="row g-3 mb-4">
+                                        <div class="col-lg-2 col-md-3 col-sm-6">
+                                            <label for="produto-quantidade" class="form-label fw-semibold">
+                                                <i class="fas fa-sort-numeric-up me-1 text-primary"></i>Quantidade
+                                            </label>
+                                            <div class="input-group">
+                                                <span class="input-group-text bg-light">Qtd</span>
+                                                <input type="number" class="form-control" id="produto-quantidade" min="1" value="1">
+                                            </div>
+                                        </div>
+                                        <div class="col-lg-3 col-md-4 col-sm-6">
+                                            <label for="produto-valor" class="form-label fw-semibold">
+                                                <i class="fas fa-dollar-sign me-1 text-primary"></i>Valor Unitário
+                                            </label>
+                                            <div class="input-group">
+                                                <span class="input-group-text bg-light">R$</span>
+                                                <input type="number" class="form-control" id="produto-valor" min="0" step="0.01" value="0.00">
+                                            </div>
+                                        </div>
+                                        <div class="col-lg-2 col-md-3 col-sm-6">
+                                            <label for="produto-unidade" class="form-label fw-semibold">
+                                                <i class="fas fa-balance-scale me-1 text-primary"></i>Unidade
+                                            </label>
+                                            <select class="form-select" id="produto-unidade">
+                                                <option value="">Selecione</option>
+                                                <option value="UN">UN - Unidade</option>
+                                                <option value="KG">KG - Quilograma</option>
+                                            </select>
+                                        </div>
+                                        <div class="col-lg-3 col-md-2 col-sm-6 d-flex align-items-end">
+                                            <button type="button" class="btn btn-success w-100" id="adicionar-produto">
+                                                <i class="fas fa-plus-circle me-2"></i>Adicionar Produto
+                                            </button>
+                                        </div>
+                                        <div class="col-lg-2 col-md-12 d-flex align-items-end">
+                                            <button type="button" class="btn btn-outline-primary w-100 d-none" id="reload-produtos">
+                                                <i class="fas fa-sync-alt me-1"></i> Recarregar
+                                            </button>
+                                        </div>
+                                    </div>
+
+                                    <!-- Alertas -->
+                                    <div class="alert alert-warning border-0 d-none" id="sem-produtos-alert">
+                                        <i class="fas fa-exclamation-triangle me-2"></i>
+                                        Nenhum produto adicionado. Adicione pelo menos um produto para continuar.
+                                    </div>
+
+                                    <!-- Resumo dos Produtos -->
+                                    <div id="resumo-produtos" class="mb-4 d-none">
+                                        <div class="d-flex justify-content-between align-items-center mb-3">
+                                            <h6 class="mb-0 fw-bold text-primary">
+                                                <i class="fas fa-boxes me-2"></i>Produtos Adicionados
+                                            </h6>
+                                            <div class="d-flex gap-3">
+                                                <span class="badge bg-success fs-6">
+                                                    <i class="fas fa-dollar-sign me-1"></i>
+                                                    Total: R$ <span id="valor-total">0.00</span>
+                                                </span>
+                                                <span class="badge bg-info fs-6">
+                                                    <i class="fas fa-weight-hanging me-1"></i>
+                                                    Peso: <span id="peso-total">0.00</span> kg
+                                                </span>
+                                            </div>
+                                        </div>
+                                        <div class="row g-3" id="produtos-cards"></div>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                     </div>
-                    <div class="row g-3 mb-2">
-                        <div class="col-md-2">
-                            <label for="produto-quantidade" class="form-label">Quantidade</label>
-                            <input type="number" class="form-control" id="produto-quantidade" min="1" value="1">
-                        </div>
-                        <div class="col-md-2">
-                            <label for="produto-valor" class="form-label">Valor Unitário (R$)</label>
-                            <input type="number" class="form-control" id="produto-valor" min="0" step="0.01" value="0.00">
-                        </div>
-                        <div class="col-md-2">
-                            <label for="produto-unidade" class="form-label">Unidade</label>
-                            <input type="text" class="form-control" id="produto-unidade" placeholder="UN ou KG">
-                        </div>
-                        <div class="col-md-3 d-flex align-items-end">
-                            <button type="button" class="btn btn-success w-100" id="adicionar-produto"><i class="fas fa-plus me-1"></i> Adicionar Produto</button>
-                        </div>
-                        <div class="col-md-3 d-flex align-items-end">
-                            <button type="button" class="btn btn-outline-primary w-100 d-none" id="reload-produtos"><i class="fas fa-sync-alt me-1"></i> Recarregar Produtos</button>
+
+                    <!-- Seção de Caixas -->
+                    <div class="row mb-4">
+                        <div class="col-12">
+                            <div class="card border-0 shadow-sm">
+                                <div class="card-header bg-gradient-secondary text-white py-3">
+                                    <div class="d-flex align-items-center">
+                                        <i class="fas fa-cube me-3 fs-4"></i>
+                                        <div>
+                                            <h5 class="mb-0 fw-bold">Caixas e Embalagem</h5>
+                                            <small class="opacity-75">Defina as dimensões e peso das caixas</small>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="card-body p-4">
+                                    <!-- Formulário de Caixa -->
+                                    <div class="row g-3 mb-4">
+                                        <div class="col-lg-2 col-md-3 col-sm-6">
+                                            <label for="altura" class="form-label fw-semibold">
+                                                <i class="fas fa-arrows-alt-v me-1 text-secondary"></i>Altura
+                                            </label>
+                                            <div class="input-group">
+                                                <input type="number" class="form-control" id="altura" min="1" value="10">
+                                                <span class="input-group-text bg-light">cm</span>
+                                            </div>
+                                        </div>
+                                        <div class="col-lg-2 col-md-3 col-sm-6">
+                                            <label for="largura" class="form-label fw-semibold">
+                                                <i class="fas fa-arrows-alt-h me-1 text-secondary"></i>Largura
+                                            </label>
+                                            <div class="input-group">
+                                                <input type="number" class="form-control" id="largura" min="1" value="20">
+                                                <span class="input-group-text bg-light">cm</span>
+                                            </div>
+                                        </div>
+                                        <div class="col-lg-2 col-md-3 col-sm-6">
+                                            <label for="comprimento" class="form-label fw-semibold">
+                                                <i class="fas fa-arrows-alt-h me-1 text-secondary"></i>Comprimento
+                                            </label>
+                                            <div class="input-group">
+                                                <input type="number" class="form-control" id="comprimento" min="1" value="30">
+                                                <span class="input-group-text bg-light">cm</span>
+                                            </div>
+                                        </div>
+                                        <div class="col-lg-2 col-md-3 col-sm-6">
+                                            <label for="peso_caixa" class="form-label fw-semibold">
+                                                <i class="fas fa-weight-hanging me-1 text-secondary"></i>Peso
+                                            </label>
+                                            <div class="input-group">
+                                                <input type="number" class="form-control" id="peso_caixa" min="0.01" step="0.01" value="0.5">
+                                                <span class="input-group-text bg-light">kg</span>
+                                            </div>
+                                        </div>
+                                        <div class="col-lg-4 col-md-12 d-flex align-items-end">
+                                            <button type="button" class="btn btn-secondary w-100" id="adicionar-caixa">
+                                                <i class="fas fa-plus-circle me-2"></i>Adicionar Caixa
+                                            </button>
+                                        </div>
+                                    </div>
+
+                                    <!-- Alertas -->
+                                    <div class="alert alert-warning border-0 d-none" id="sem-caixas-alert">
+                                        <i class="fas fa-exclamation-triangle me-2"></i>
+                                        Nenhuma caixa adicionada. Adicione pelo menos uma caixa para continuar.
+                                    </div>
+
+                                    <!-- Resumo das Caixas -->
+                                    <div id="resumo-caixas" class="d-none">
+                                        <div class="d-flex justify-content-between align-items-center mb-3">
+                                            <h6 class="mb-0 fw-bold text-secondary">
+                                                <i class="fas fa-cubes me-2"></i>Caixas Adicionadas
+                                            </h6>
+                                            <span class="badge bg-secondary fs-6">
+                                                <i class="fas fa-cube me-1"></i>
+                                                <span id="total-caixas">0</span> caixa(s)
+                                            </span>
+                                        </div>
+                                        <div class="row g-3" id="caixas-cards"></div>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                     </div>
-                    <div class="mb-2" id="select-status"></div>
-                    <div class="alert alert-warning d-none" id="sem-produtos-alert">Nenhum produto adicionado.</div>
-                    <div id="resumo-produtos" class="mb-3 d-none">
-                        <div class="row" id="produtos-cards"></div>
-                        <div class="mt-2 text-end">
-                            <span class="fw-bold">Valor Total: R$ <span id="valor-total">0.00</span></span> |
-                            <span class="fw-bold">Peso Total: <span id="peso-total">0.00</span> kg</span>
-                        </div>
-                    </div>
+
+                    <!-- Campos Ocultos -->
                     <input type="hidden" id="produtos-json" name="produtos_json">
                     <input type="hidden" id="valor-total-input" name="valor_total">
                     <input type="hidden" id="peso-total-input" name="peso_total">
-
-                    <!-- Bloco de caixas (copiado do original) -->
-                    <div class="row g-3 align-items-end mb-3">
-                        <div class="col-md-2">
-                            <label for="altura" class="form-label">Altura (cm)</label>
-                            <input type="number" class="form-control" id="altura" min="1" value="10">
-                        </div>
-                        <div class="col-md-2">
-                            <label for="largura" class="form-label">Largura (cm)</label>
-                            <input type="number" class="form-control" id="largura" min="1" value="20">
-                        </div>
-                        <div class="col-md-2">
-                            <label for="comprimento" class="form-label">Comprimento (cm)</label>
-                            <input type="number" class="form-control" id="comprimento" min="1" value="30">
-                        </div>
-                        <div class="col-md-2">
-                            <label for="peso_caixa" class="form-label">Peso (kg)</label>
-                            <input type="number" class="form-control" id="peso_caixa" min="0.01" step="0.01" value="0.5">
-                        </div>
-                        <div class="col-md-2 d-flex align-items-end">
-                            <button type="button" class="btn btn-success w-100" id="adicionar-caixa"><i class="fas fa-plus me-1"></i> Adicionar Caixa</button>
-                        </div>
-                    </div>
-                    <div class="alert alert-warning d-none" id="sem-caixas-alert">Nenhuma caixa adicionada.</div>
-                    <div class="row" id="caixas-cards"></div>
                     <input type="hidden" id="caixas-json" name="caixas_json">
                     <input type="hidden" id="altura-hidden" name="altura">
                     <input type="hidden" id="largura-hidden" name="largura">
                     <input type="hidden" id="comprimento-hidden" name="comprimento">
                     <input type="hidden" id="peso-caixa-hidden" name="peso_caixa">
-                    <div class="text-end mt-3">
-                        <button type="button" class="btn btn-primary" id="btn-step-2-next">Continuar</button>
+
+                    <!-- Botão de Continuar -->
+                    <div class="row">
+                        <div class="col-12">
+                            <div class="d-flex justify-content-end">
+                                <button type="button" class="btn btn-primary btn-lg px-4" id="btn-step-2-next">
+                                    <i class="fas fa-arrow-right me-2"></i>Continuar
+                                </button>
+                            </div>
+                        </div>
                     </div>
                 </div>
                 <!-- Etapa 3: Endereço de Origem e Destino -->
@@ -370,7 +649,8 @@
         // Função para mostrar alertas
         function showAlert(message, type) {
             const alertHtml = `
-                <div class="alert alert-${type} alert-dismissible fade show" role="alert">
+                <div class="alert alert-${type} alert-dismissible fade show border-0" role="alert">
+                    <i class="fas fa-${type === 'success' ? 'check-circle' : type === 'warning' ? 'exclamation-triangle' : type === 'danger' ? 'times-circle' : 'info-circle'} me-2"></i>
                     ${message}
                     <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
                 </div>
@@ -1212,7 +1492,12 @@
 
         // Função para realizar a busca baseada nos campos de busca
         function realizarBusca() {
-            $('#select-status').text('Buscando produtos...');
+            $('#select-status').html(`
+                <div class="alert alert-info border-0 bg-light">
+                    <i class="fas fa-spinner fa-spin me-2 text-primary"></i>
+                    Buscando produtos...
+                </div>
+            `);
 
             const buscaDescricao = $('#busca-descricao').val();
             const buscaNCM = $('#busca-codigo').val();
@@ -1231,7 +1516,12 @@
 
             // Se tiver uma descrição de produto e não tiver um NCM, consultar o Gemini
             if (buscaDescricao && !buscaNCM) {
-                $('#select-status').text('Consultando IA para identificar NCM e unidade...');
+                $('#select-status').html(`
+                    <div class="alert alert-info border-0 bg-light">
+                        <i class="fas fa-robot me-2 text-primary"></i>
+                        Consultando IA para identificar NCM e unidade...
+                    </div>
+                `);
 
                 // Mostrar indicador de carregamento
                 $('#busca-descricao').addClass('loading');
@@ -1266,7 +1556,12 @@
                             if (ncmExtraido) {
                                 //console.log("NCM extraído:", ncmExtraido);
                                 //console.log("Unidade extraída:", unidadeExtraida);
-                                $('#select-status').text('NCM identificado: ' + ncmExtraido + '. Unidade: ' + unidadeExtraida + '. Buscando produtos...');
+                                $('#select-status').html(`
+                                    <div class="alert alert-success border-0 bg-light">
+                                        <i class="fas fa-check-circle me-2 text-success"></i>
+                                        NCM identificado: <strong>${ncmExtraido}</strong>. Unidade: <strong>${unidadeExtraida}</strong>. Buscando produtos...
+                                    </div>
+                                `);
 
                                 // Atualizar o campo NCM e unidade
                                 $('#busca-codigo').val(ncmExtraido);
@@ -1278,14 +1573,24 @@
                                     descricao: buscaDescricao
                                 });
                             } else {
-                                $('#select-status').text('Não foi possível identificar o NCM. Tentando busca direta...');
+                                $('#select-status').html(`
+                                    <div class="alert alert-warning border-0 bg-light">
+                                        <i class="fas fa-exclamation-triangle me-2 text-warning"></i>
+                                        Não foi possível identificar o NCM. Tentando busca direta...
+                                    </div>
+                                `);
                                 // Continuar com a busca normal
                                 buscarProdutos({
                                     descricao: buscaDescricao
                                 });
                             }
                         } else {
-                            $('#select-status').text('Erro na consulta da IA. Tentando busca direta...');
+                            $('#select-status').html(`
+                                <div class="alert alert-warning border-0 bg-light">
+                                    <i class="fas fa-exclamation-triangle me-2 text-warning"></i>
+                                    Erro na consulta da IA. Tentando busca direta...
+                                </div>
+                            `);
                             //console.error("Erro na consulta Gemini:", response.error);
                             // Continuar com a busca normal
                             buscarProdutos({
@@ -1297,7 +1602,12 @@
                         // Ocultar indicador de carregamento
                         $('#busca-descricao').removeClass('loading');
 
-                        $('#select-status').text('Erro na consulta da IA. Tentando busca direta...');
+                        $('#select-status').html(`
+                            <div class="alert alert-warning border-0 bg-light">
+                                <i class="fas fa-exclamation-triangle me-2 text-warning"></i>
+                                Erro na consulta da IA. Tentando busca direta...
+                            </div>
+                        `);
                         //console.error("Erro ao consultar a IA:", error);
                         // Continuar com a busca normal
                         buscarProdutos({
@@ -1509,7 +1819,12 @@
         // Função para buscar produtos (extraída da busca original)
         function buscarProdutos(searchParams) {
             // Garantir que a interface limpe completamente os resultados anteriores
-            $('#select-status').text('Buscando produtos...');
+            $('#select-status').html(`
+                <div class="alert alert-info border-0 bg-light">
+                    <i class="fas fa-spinner fa-spin me-2 text-primary"></i>
+                    Buscando produtos...
+                </div>
+            `);
 
             // Destruir completamente a instância atual do Select2
             if ($('#produto-select').hasClass('select2-hidden-accessible')) {
@@ -1562,7 +1877,12 @@
 
                         // Mostrar quantos produtos foram encontrados e o NCM identificado
                         if (searchParams.codigo) {
-                            $('#select-status').html('<strong>' + data.produtos.length + ' produtos encontrados</strong> com NCM: ' + searchParams.codigo);
+                            $('#select-status').html(`
+                                <div class="alert alert-success border-0 bg-light">
+                                    <i class="fas fa-check-circle me-2 text-success"></i>
+                                    <strong>${data.produtos.length} produtos encontrados</strong> com NCM: <strong>${searchParams.codigo}</strong>
+                                </div>
+                            `);
 
                             // Selecionar automaticamente o primeiro produto da lista se houver apenas um
                             if (data.produtos.length === 1) {
@@ -1570,7 +1890,12 @@
                                 //console.log("Produto único selecionado automaticamente:", data.produtos[0]);
                             }
                         } else {
-                            $('#select-status').text(data.produtos.length + ' produtos encontrados');
+                            $('#select-status').html(`
+                                <div class="alert alert-success border-0 bg-light">
+                                    <i class="fas fa-check-circle me-2 text-success"></i>
+                                    <strong>${data.produtos.length} produtos encontrados</strong>
+                                </div>
+                            `);
                         }
 
                         // Esconder o botão de reload, pois os produtos foram carregados com sucesso
@@ -1681,12 +2006,27 @@
                                 $('#produto-select').val(searchParams.codigo).trigger('change');
 
                                 // Mostrar mensagem informativa
-                                $('#select-status').html('<strong>Produto criado com descrição do Gemini</strong> - NCM: ' + searchParams.codigo);
+                                $('#select-status').html(`
+                                    <div class="alert alert-info border-0 bg-light">
+                                        <i class="fas fa-info-circle me-2 text-info"></i>
+                                        <strong>Produto criado com descrição do Gemini</strong> - NCM: <strong>${searchParams.codigo}</strong>
+                                    </div>
+                                `);
                             } else {
-                                $('#select-status').html('<strong>Nenhum produto encontrado</strong> com NCM: ' + searchParams.codigo);
+                                $('#select-status').html(`
+                                    <div class="alert alert-warning border-0 bg-light">
+                                        <i class="fas fa-exclamation-triangle me-2 text-warning"></i>
+                                        <strong>Nenhum produto encontrado</strong> com NCM: <strong>${searchParams.codigo}</strong>
+                                    </div>
+                                `);
                             }
                         } else {
-                            $('#select-status').text('Nenhum produto encontrado');
+                            $('#select-status').html(`
+                                <div class="alert alert-warning border-0 bg-light">
+                                    <i class="fas fa-exclamation-triangle me-2 text-warning"></i>
+                                    <strong>Nenhum produto encontrado</strong>
+                                </div>
+                            `);
                         }
                         // Mostrar o botão de reload, pois não há produtos
                         $('#reload-produtos').show();
@@ -1694,7 +2034,12 @@
                 },
                 error: function(error) {
                     console.error("Erro ao buscar produtos:", error);
-                    $('#select-status').text('Erro ao buscar produtos');
+                    $('#select-status').html(`
+                        <div class="alert alert-danger border-0 bg-light">
+                            <i class="fas fa-times-circle me-2 text-danger"></i>
+                            <strong>Erro ao buscar produtos</strong>
+                        </div>
+                    `);
                     // Mostrar o botão de reload em caso de erro
                     $('#reload-produtos').show();
                 }
@@ -1739,7 +2084,12 @@
             $('#busca-descricao').val('').focus();
             $('#busca-codigo').val(''); // Limpar o campo de NCM
             $('#produto-unidade').val(''); // Limpar também a unidade
-            $('#select-status').text('Digite um produto para buscar');
+            $('#select-status').html(`
+                <div class="alert alert-info border-0 bg-light">
+                    <i class="fas fa-info-circle me-2 text-primary"></i>
+                    Digite o nome de um produto para buscar
+                </div>
+            `);
 
             // Limpar a descrição do Gemini
             ultimaDescricaoGemini = '';
@@ -1766,7 +2116,12 @@
 
         // Evento do botão de recarregar produtos
         $('#reload-produtos').on('click', function() {
-            $('#select-status').text('Recarregando produtos...');
+            $('#select-status').html(`
+                <div class="alert alert-info border-0 bg-light">
+                    <i class="fas fa-spinner fa-spin me-2 text-primary"></i>
+                    Recarregando produtos...
+                </div>
+            `);
             $(this).prop('disabled', true).addClass('disabled');
 
             // Limpar os campos de busca
@@ -1818,13 +2173,22 @@
                 $('#peso-caixa-hidden').val(caixas[0].peso);
             }
 
-            // Mostrar ou esconder o resumo
+            // Mostrar ou esconder o resumo de produtos
             if (produtos.length > 0) {
                 $('#resumo-produtos').removeClass('d-none');
                 $('#sem-produtos-alert').addClass('d-none');
             } else {
                 $('#resumo-produtos').addClass('d-none');
                 $('#sem-produtos-alert').removeClass('d-none');
+            }
+
+            // Mostrar ou esconder o resumo de caixas
+            if (caixas.length > 0) {
+                $('#resumo-caixas').removeClass('d-none');
+                $('#sem-caixas-alert').addClass('d-none');
+            } else {
+                $('#resumo-caixas').addClass('d-none');
+                $('#sem-caixas-alert').removeClass('d-none');
             }
         }
 
@@ -1835,32 +2199,67 @@
 
             produtos.forEach(function(produto, index) {
                 const card = `
-                    <div class="col-lg-4 col-md-6">
-                        <div class="card h-100">
-                            <div class="card-body">
-                                <h5 class="card-title">${produto.nome}</h5>
-                                <p class="card-text">
-                                    <small class="text-muted">Ncm: ${produto.codigo || 'N/A'}</small><br>
-                                    <small class="text-muted">Peso unitário: ${produto.peso} kg</small><br>
-                                    <small class="text-muted">Valor unitário: R$ ${produto.valor.toFixed(2)} <span class="text-info">(informado pelo usuário)</span></small>
-                                    ${produto.unidade ? `<br><small class="text-muted">Unidade: ${produto.unidade}</small>` : ''}
-                                </p>
-                                <div class="d-flex justify-content-between align-items-center mt-3">
-                                    <div class="btn-group" role="group">
-                                        <button type="button" class="btn btn-outline-secondary btn-diminuir" data-index="${index}">
-                                            <i class="fas fa-minus"></i>
-                                        </button>
-                                        <span class="btn btn-outline-secondary disabled">${produto.quantidade}</span>
-                                        <button type="button" class="btn btn-outline-secondary btn-aumentar" data-index="${index}">
-                                            <i class="fas fa-plus"></i>
-                                        </button>
+                    <div class="col-lg-4 col-md-6 col-sm-12">
+                        <div class="card h-100 border-0 shadow-sm hover-shadow">
+                            <div class="card-header bg-primary bg-opacity-10 border-0 py-3">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <h6 class="mb-0 fw-bold text-primary">
+                                        <i class="fas fa-box me-2"></i>${produto.nome}
+                                    </h6>
+                                    <span class="badge bg-primary">#${index + 1}</span>
+                                </div>
+                            </div>
+                            <div class="card-body p-3">
+                                <div class="row g-2 mb-3">
+                                    <div class="col-6">
+                                        <small class="text-muted d-block">
+                                            <i class="fas fa-barcode me-1"></i>NCM
+                                        </small>
+                                        <strong class="text-dark">${produto.codigo || 'N/A'}</strong>
                                     </div>
-                                    <button type="button" class="btn btn-danger btn-remover" data-index="${index}">
+                                    <div class="col-6">
+                                        <small class="text-muted d-block">
+                                            <i class="fas fa-balance-scale me-1"></i>Unidade
+                                        </small>
+                                        <strong class="text-dark">${produto.unidade || 'UN'}</strong>
+                                    </div>
+                                    <div class="col-6">
+                                        <small class="text-muted d-block">
+                                            <i class="fas fa-weight-hanging me-1"></i>Peso Unit.
+                                        </small>
+                                        <strong class="text-dark">${produto.peso} kg</strong>
+                                    </div>
+                                    <div class="col-6">
+                                        <small class="text-muted d-block">
+                                            <i class="fas fa-dollar-sign me-1"></i>Valor Unit.
+                                        </small>
+                                        <strong class="text-success">R$ ${produto.valor.toFixed(2)}</strong>
+                                    </div>
+                                </div>
+                                
+                                <div class="bg-light rounded p-2 mb-3">
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <span class="text-muted small">Quantidade:</span>
+                                        <div class="btn-group btn-group-sm" role="group">
+                                            <button type="button" class="btn btn-outline-secondary btn-diminuir" data-index="${index}">
+                                                <i class="fas fa-minus"></i>
+                                            </button>
+                                            <span class="btn btn-outline-secondary disabled px-3 fw-bold">${produto.quantidade}</span>
+                                            <button type="button" class="btn btn-outline-secondary btn-aumentar" data-index="${index}">
+                                                <i class="fas fa-plus"></i>
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <div class="text-end">
+                                        <small class="text-muted d-block">Subtotal</small>
+                                        <strong class="text-success fs-6">R$ ${(produto.valor * produto.quantidade).toFixed(2)}</strong>
+                                    </div>
+                                    <button type="button" class="btn btn-outline-danger btn-sm btn-remover" data-index="${index}">
                                         <i class="fas fa-trash"></i>
                                     </button>
-                                </div>
-                                <div class="mt-2 text-end">
-                                    <strong>Subtotal: R$ ${(produto.valor * produto.quantidade).toFixed(2)}</strong>
                                 </div>
                             </div>
                         </div>
@@ -2018,19 +2417,58 @@
             container.empty();
 
             caixas.forEach(function(caixa, index) {
+                const volume = (caixa.altura * caixa.largura * caixa.comprimento / 1000).toFixed(2);
                 const card = `
-                    <div class="col-lg-4 col-md-6">
-                        <div class="card h-100">
-                            <div class="card-body">
-                                <h5 class="card-title">Caixa #${index + 1}</h5>
-                                <p class="card-text">
-                                    <small class="text-muted">Dimensões: ${caixa.altura} × ${caixa.largura} × ${caixa.comprimento} cm</small><br>
-                                    <small class="text-muted">Volume: ${(caixa.altura * caixa.largura * caixa.comprimento / 1000).toFixed(2)} litros</small><br>
-                                    <small class="text-muted">Peso: ${caixa.peso} kg</small>
-                                </p>
-                                <div class="d-flex justify-content-end mt-3">
-                                    <button type="button" class="btn btn-danger btn-remover-caixa" data-index="${index}">
-                                        <i class="fas fa-trash"></i> Remover
+                    <div class="col-lg-4 col-md-6 col-sm-12">
+                        <div class="card h-100 border-0 shadow-sm hover-shadow">
+                            <div class="card-header bg-secondary bg-opacity-10 border-0 py-3">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <h6 class="mb-0 fw-bold text-secondary">
+                                        <i class="fas fa-cube me-2"></i>Caixa #${index + 1}
+                                    </h6>
+                                    <span class="badge bg-secondary">${index + 1}</span>
+                                </div>
+                            </div>
+                            <div class="card-body p-3">
+                                <div class="row g-2 mb-3">
+                                    <div class="col-6">
+                                        <small class="text-muted d-block">
+                                            <i class="fas fa-arrows-alt-v me-1"></i>Altura
+                                        </small>
+                                        <strong class="text-dark">${caixa.altura} cm</strong>
+                                    </div>
+                                    <div class="col-6">
+                                        <small class="text-muted d-block">
+                                            <i class="fas fa-arrows-alt-h me-1"></i>Largura
+                                        </small>
+                                        <strong class="text-dark">${caixa.largura} cm</strong>
+                                    </div>
+                                    <div class="col-6">
+                                        <small class="text-muted d-block">
+                                            <i class="fas fa-arrows-alt-h me-1"></i>Comprimento
+                                        </small>
+                                        <strong class="text-dark">${caixa.comprimento} cm</strong>
+                                    </div>
+                                    <div class="col-6">
+                                        <small class="text-muted d-block">
+                                            <i class="fas fa-weight-hanging me-1"></i>Peso
+                                        </small>
+                                        <strong class="text-dark">${caixa.peso} kg</strong>
+                                    </div>
+                                </div>
+                                
+                                <div class="bg-light rounded p-2 mb-3">
+                                    <div class="text-center">
+                                        <small class="text-muted d-block">
+                                            <i class="fas fa-calculator me-1"></i>Volume
+                                        </small>
+                                        <strong class="text-info fs-6">${volume} litros</strong>
+                                    </div>
+                                </div>
+                                
+                                <div class="d-flex justify-content-end">
+                                    <button type="button" class="btn btn-outline-danger btn-sm btn-remover-caixa" data-index="${index}">
+                                        <i class="fas fa-trash me-1"></i>Remover
                                     </button>
                                 </div>
                             </div>
@@ -2040,6 +2478,9 @@
 
                 container.append(card);
             });
+
+            // Atualizar contador de caixas
+            $('#total-caixas').text(caixas.length);
 
             // Adicionar eventos após renderizar
             $('.btn-remover-caixa').on('click', function() {
@@ -2051,6 +2492,7 @@
                 // Atualizar visualização de alertas
                 if (caixas.length === 0) {
                     $('#sem-caixas-alert').removeClass('d-none');
+                    $('#resumo-caixas').addClass('d-none');
                 }
             });
         }
@@ -2065,7 +2507,7 @@
             // Validação básica
             if (isNaN(altura) || isNaN(largura) || isNaN(comprimento) || isNaN(peso) ||
                 altura <= 0 || largura <= 0 || comprimento <= 0 || peso <= 0) {
-                alert('Por favor, preencha todas as dimensões da caixa com valores válidos.');
+                showAlert('Por favor, preencha todas as dimensões da caixa com valores válidos.', 'warning');
                 return;
             }
 
@@ -2095,7 +2537,6 @@
 
             // Renderizar as caixas e atualizar o resumo
             renderizarCaixas();
-            $('#sem-caixas-alert').addClass('d-none');
             atualizarResumo();
         });
 
