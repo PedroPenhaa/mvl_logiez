@@ -1,6 +1,292 @@
 @extends('layouts.app')
 
+@section('styles')
+<link rel="stylesheet" href="{{ asset('css/cotacao.css') }}">
+<style>
+    /* Estilos específicos para a tela de pagamentos */
+    body {
+        background: #f6f7fb;
+        font-family: 'Poppins', 'Segoe UI', Arial, sans-serif;
+        color: #3d246c;
+    }
+    
+    /* Cards estilo cotação */
+    .card {
+        border: none !important;
+        border-radius: 12px !important;
+        box-shadow: 0 8px 16px rgba(0,0,0,0.1) !important;
+        transition: transform 0.3s ease, box-shadow 0.3s ease !important;
+        background: #fff !important;
+        margin-bottom: 1.5rem !important;
+    }
+    
+    .card:hover {
+        transform: translateY(-5px) !important;
+        box-shadow: 0 12px 24px rgba(0,0,0,0.15) !important;
+    }
+    
+    .card-header {
+        background: linear-gradient(135deg, #6f42c1 0%, #8e44ad 100%) !important;
+        color: white !important;
+        border-radius: 12px 12px 0 0 !important;
+        padding: 0.75rem 1rem !important;
+        border: none !important;
+    }
+    
+    .card-header h5 {
+        font-size: 1rem !important;
+        margin: 0 !important;
+        font-weight: 600 !important;
+    }
+    
+    .card-body {
+        padding: 1rem !important;
+        border-radius: 0 0 12px 12px !important;
+    }
+    
+    /* Inputs/selects padrão cotação */
+    .form-control, .form-select {
+        border-radius: 14px !important;
+        border: 1.5px solid #e0e0e0 !important;
+        background: #fff !important;
+        color: #3d246c !important;
+        font-size: 1.08rem !important;
+        padding: 5px 20px !important;
+        height: 50px !important;
+        box-shadow: 0 2px 8px 0 rgba(111,66,193,0.04) !important;
+        transition: border 0.2s;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        text-align: left;
+        font-size: 14px !important;
+    }
+    .form-control:focus, .form-select:focus {
+        border-color: #8f5be8 !important;
+        box-shadow: 0 0 0 2px #e9d6ff !important;
+        background: #fff !important;
+        color: #3d246c !important;
+    }
+    .form-control::placeholder {
+        color: #6f42c1 !important;
+        opacity: 0.7;
+        font-weight: 400;
+    }
+    
+    /* Botões padrão cotação */
+    .btn-primary, .btn-success, .btn-outline-primary {
+        background: linear-gradient(90deg, #8f5be8 0%, #6f42c1 100%) !important;
+        border: none !important;
+        color: #fff !important;
+        font-weight: 600 !important;
+        border-radius: 14px !important;
+        box-shadow: 0 2px 8px 0 rgba(111, 66, 193, 0.10) !important;
+        transition: background 0.2s, box-shadow 0.2s;
+        min-height: 56px;
+        font-size: 1.08rem;
+        padding: 0 2.5rem;
+    }
+    .btn-primary:hover, .btn-success:hover, .btn-outline-primary:hover {
+        background: linear-gradient(90deg, #6f42c1 0%, #8f5be8 100%) !important;
+        color: #fff !important;
+        box-shadow: 0 4px 16px 0 rgba(111, 66, 193, 0.18) !important;
+    }
+    .btn-outline-secondary {
+        border-color: #8f5be8 !important;
+        color: #6f42c1 !important;
+        background: #f3e7ff !important;
+        font-weight: 500 !important;
+        border-radius: 14px !important;
+        min-height: 56px;
+        font-size: 1.08rem;
+    }
+    .btn-outline-secondary:hover {
+        background: #8f5be8 !important;
+        color: #fff !important;
+    }
+    
+    /* Tabela de pagamentos */
+    .table {
+        border-radius: 12px;
+        overflow: hidden;
+        background: #fff;
+        box-shadow: 0 2px 8px 0 rgba(111, 66, 193, 0.04);
+    }
+    .table th {
+        background: #f3e7ff;
+        color: #6f42c1;
+        font-weight: 700;
+        border: none;
+    }
+    .table td {
+        border: none;
+        color: #3d246c;
+        vertical-align: middle;
+    }
+    .table-striped > tbody > tr:nth-of-type(odd) {
+        background: #faf7ff;
+    }
+    .table-hover > tbody > tr:hover {
+        background: #e9d6ff;
+        color: #6f42c1;
+    }
+    
+    /* Badges e status */
+    .badge.bg-success {
+        background: #28a745 !important;
+        color: #fff !important;
+        font-weight: 600;
+        font-size: 0.95em;
+        border-radius: 6px;
+        padding: 0.3em 0.7em;
+    }
+    .badge.bg-warning {
+        background: #ffc107 !important;
+        color: #000 !important;
+        font-weight: 600;
+        font-size: 0.95em;
+        border-radius: 6px;
+        padding: 0.3em 0.7em;
+    }
+    .badge.bg-danger {
+        background: #dc3545 !important;
+        color: #fff !important;
+        font-weight: 600;
+        font-size: 0.95em;
+        border-radius: 6px;
+        padding: 0.3em 0.7em;
+    }
+    .badge.bg-info {
+        background: #17a2b8 !important;
+        color: #fff !important;
+        font-weight: 600;
+        font-size: 0.95em;
+        border-radius: 6px;
+        padding: 0.3em 0.7em;
+    }
+    .badge.bg-secondary {
+        background: #6c757d !important;
+        color: #fff !important;
+        font-weight: 600;
+        font-size: 0.95em;
+        border-radius: 6px;
+        padding: 0.3em 0.7em;
+    }
+    .badge.bg-primary {
+        background: #007bff !important;
+        color: #fff !important;
+        font-weight: 600;
+        font-size: 0.95em;
+        border-radius: 6px;
+        padding: 0.3em 0.7em;
+    }
+    .badge.bg-light {
+        background: #f8f9fa !important;
+        color: #000 !important;
+        font-weight: 600;
+        font-size: 0.95em;
+        border-radius: 6px;
+        padding: 0.3em 0.7em;
+    }
+    
+    /* Alertas */
+    .alert-info {
+        background: #e9d6ff;
+        color: #6f42c1;
+        border: none;
+        font-weight: 500;
+    }
+    .alert-success {
+        background: #d1ffe7;
+        color: #1b7c4b;
+        border: none;
+    }
+    .alert-warning {
+        background: #fff3cd;
+        color: #856404;
+        border: none;
+    }
+    .alert-danger {
+        background: #ffe1e1;
+        color: #c82333;
+        border: none;
+    }
+    .alert-light {
+        background: #f8f9fa;
+        color: #6c757d;
+        border: none;
+    }
+    
+    /* Navegação por abas */
+    .nav-tabs {
+        border-bottom: 2px solid #e9d6ff;
+    }
+    .nav-tabs .nav-link {
+        border: none;
+        color: #6f42c1;
+        font-weight: 500;
+        border-radius: 8px 8px 0 0;
+        margin-right: 5px;
+        transition: all 0.3s ease;
+    }
+    .nav-tabs .nav-link:hover {
+        background: #f3e7ff;
+        color: #6f42c1;
+        border: none;
+    }
+    .nav-tabs .nav-link.active {
+        background: linear-gradient(90deg, #6f42c1 0%, #a084e8 100%);
+        color: #fff;
+        border: none;
+        font-weight: 600;
+    }
+    
+    /* Conteúdo das abas */
+    .tab-content {
+        background: #fff;
+        border-radius: 0 0 12px 12px;
+        padding: 1rem;
+    }
+    
+    /* Responsividade */
+    @media (max-width: 767px) {
+        .card-body {
+            padding: 1.2rem 0.7rem !important;
+        }
+        .form-control, .form-select {
+            font-size: 1rem !important;
+            padding: 0.7rem 0.8rem !important;
+            height: 44px !important;
+        }
+        .btn-primary, .btn-success, .btn-outline-primary, .btn-outline-secondary {
+            min-height: 44px !important;
+            font-size: 1rem !important;
+            padding: 0 1.2rem;
+        }
+        .nav-tabs .nav-link {
+            font-size: 0.9rem;
+            padding: 0.5rem 0.75rem;
+        }
+    }
+</style>
+@endsection
+
 @section('content')
+<!-- Header Section -->
+<div class="page-header-wrapper">
+    <div class="page-header-content">
+        <div class="header-content">
+            <div class="title-section">
+                <div class="title-area">
+                    <i class="fas fa-credit-card me-2"></i>
+                    <h1>Meus Pagamentos</h1>
+                </div>
+                <p class="description">Visualize todos os seus pagamentos, acompanhe o status e acesse os meios de pagamento</p>
+            </div>
+        </div>
+    </div>
+</div>
+
 @php
     Log::info('Debug View - Payments:', [
         'pending' => $pendingPayments->count(),
@@ -10,9 +296,6 @@
 @endphp
 
 <div class="card">
-    <div class="card-header bg-primary text-white">
-        <i class="fas fa-credit-card me-2"></i> Meus Pagamentos
-    </div>
     <div class="card-body">
         <div class="alert alert-info">
             <i class="fas fa-info-circle me-2"></i> Aqui você pode visualizar todos os seus pagamentos, acompanhar o status e acessar os meios de pagamento quando necessário.

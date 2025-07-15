@@ -1,10 +1,237 @@
 @extends('layouts.app')
 
+@section('styles')
+<link rel="stylesheet" href="{{ asset('css/cotacao.css') }}">
+<style>
+    /* Estilos específicos para a tela de etiqueta */
+    body {
+        background: #f6f7fb;
+        font-family: 'Poppins', 'Segoe UI', Arial, sans-serif;
+        color: #3d246c;
+    }
+    
+    /* Cards estilo cotação */
+    .card.border-light {
+        border: none !important;
+        border-radius: 12px !important;
+        box-shadow: 0 8px 16px rgba(0,0,0,0.1) !important;
+        transition: transform 0.3s ease, box-shadow 0.3s ease !important;
+        background: #fff !important;
+        margin-bottom: 1.5rem !important;
+    }
+    
+    .card.border-light:hover {
+        transform: translateY(-5px) !important;
+        box-shadow: 0 12px 24px rgba(0,0,0,0.15) !important;
+    }
+    
+    .card.border-light .card-header {
+        background: linear-gradient(135deg, #6f42c1 0%, #8e44ad 100%) !important;
+        color: white !important;
+        border-radius: 12px 12px 0 0 !important;
+        padding: 0.75rem 1rem !important;
+        border: none !important;
+    }
+    
+    .card.border-light .card-header h5 {
+        font-size: 1rem !important;
+        margin: 0 !important;
+        font-weight: 600 !important;
+    }
+    
+    .card.border-light .card-body {
+        padding: 1rem !important;
+        border-radius: 0 0 12px 12px !important;
+    }
+    
+    /* Inputs/selects padrão cotação */
+    .form-control, .form-select {
+        border-radius: 14px !important;
+        border: 1.5px solid #e0e0e0 !important;
+        background: #fff !important;
+        color: #3d246c !important;
+        font-size: 1.08rem !important;
+        padding: 5px 20px !important;
+        height: 50px !important;
+        box-shadow: 0 2px 8px 0 rgba(111,66,193,0.04) !important;
+        transition: border 0.2s;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        text-align: left;
+        font-size: 14px !important;
+    }
+    .form-control:focus, .form-select:focus {
+        border-color: #8f5be8 !important;
+        box-shadow: 0 0 0 2px #e9d6ff !important;
+        background: #fff !important;
+        color: #3d246c !important;
+    }
+    .form-control::placeholder {
+        color: #6f42c1 !important;
+        opacity: 0.7;
+        font-weight: 400;
+    }
+    
+    /* Botões padrão cotação */
+    .btn-primary, .btn-success, .btn-outline-primary {
+        background: linear-gradient(90deg, #8f5be8 0%, #6f42c1 100%) !important;
+        border: none !important;
+        color: #fff !important;
+        font-weight: 600 !important;
+        border-radius: 14px !important;
+        box-shadow: 0 2px 8px 0 rgba(111, 66, 193, 0.10) !important;
+        transition: background 0.2s, box-shadow 0.2s;
+        min-height: 56px;
+        font-size: 1.08rem;
+        padding: 0 2.5rem;
+    }
+    .btn-primary:hover, .btn-success:hover, .btn-outline-primary:hover {
+        background: linear-gradient(90deg, #6f42c1 0%, #8f5be8 100%) !important;
+        color: #fff !important;
+        box-shadow: 0 4px 16px 0 rgba(111, 66, 193, 0.18) !important;
+    }
+    .btn-outline-secondary {
+        border-color: #8f5be8 !important;
+        color: #6f42c1 !important;
+        background: #f3e7ff !important;
+        font-weight: 500 !important;
+        border-radius: 14px !important;
+        min-height: 56px;
+        font-size: 1.08rem;
+    }
+    .btn-outline-secondary:hover {
+        background: #8f5be8 !important;
+        color: #fff !important;
+    }
+    
+    /* Tabela de etiquetas */
+    .table {
+        border-radius: 12px;
+        overflow: hidden;
+        background: #fff;
+        box-shadow: 0 2px 8px 0 rgba(111, 66, 193, 0.04);
+    }
+    .table th {
+        background: #f3e7ff;
+        color: #6f42c1;
+        font-weight: 700;
+        border: none;
+    }
+    .table td {
+        border: none;
+        color: #3d246c;
+        vertical-align: middle;
+    }
+    .table-striped > tbody > tr:nth-of-type(odd) {
+        background: #faf7ff;
+    }
+    .table-hover > tbody > tr:hover {
+        background: #e9d6ff;
+        color: #6f42c1;
+    }
+    
+    /* Badges e status */
+    .badge.bg-success {
+        background: #28a745 !important;
+        color: #fff !important;
+        font-weight: 600;
+        font-size: 0.95em;
+        border-radius: 6px;
+        padding: 0.3em 0.7em;
+    }
+    
+    /* Alertas */
+    .alert-info {
+        background: #e9d6ff;
+        color: #6f42c1;
+        border: none;
+        font-weight: 500;
+    }
+    .alert-success {
+        background: #d1ffe7;
+        color: #1b7c4b;
+        border: none;
+    }
+    .alert-warning {
+        background: #fff3cd;
+        color: #856404;
+        border: none;
+    }
+    .alert-danger {
+        background: #ffe1e1;
+        color: #c82333;
+        border: none;
+    }
+    
+    /* Modais */
+    .modal-content {
+        border-radius: 16px;
+        border: 2px solid #a084e8;
+        box-shadow: 0 4px 24px 0 rgba(111, 66, 193, 0.10);
+    }
+    .modal-header {
+        background: linear-gradient(90deg, #6f42c1 0%, #a084e8 100%) !important;
+        color: #fff !important;
+        border-radius: 16px 16px 0 0;
+    }
+    .modal-footer .btn {
+        min-width: 120px;
+    }
+    
+    /* Paginação */
+    .pagination .page-link {
+        color: #6f42c1;
+        border-color: #e9d6ff;
+        background: #fff;
+    }
+    .pagination .page-link:hover {
+        color: #fff;
+        background: #6f42c1;
+        border-color: #6f42c1;
+    }
+    .pagination .page-item.active .page-link {
+        background: linear-gradient(90deg, #6f42c1 0%, #a084e8 100%);
+        border-color: #6f42c1;
+        color: #fff;
+    }
+    
+    /* Responsividade */
+    @media (max-width: 767px) {
+        .card-body {
+            padding: 1.2rem 0.7rem !important;
+        }
+        .form-control, .form-select {
+            font-size: 1rem !important;
+            padding: 0.7rem 0.8rem !important;
+            height: 44px !important;
+        }
+        .btn-primary, .btn-success, .btn-outline-primary, .btn-outline-secondary {
+            min-height: 44px !important;
+            font-size: 1rem !important;
+            padding: 0 1.2rem;
+        }
+    }
+</style>
+@endsection
+
 @section('content')
-<div class="card">
-    <div class="card-header">
-        <i class="fas fa-tag me-2"></i> Etiqueta de Envio
+<!-- Header Section -->
+<div class="page-header-wrapper">
+    <div class="page-header-content">
+        <div class="header-content">
+            <div class="title-section">
+                <div class="title-area">
+                    <i class="fas fa-tag me-2"></i>
+                    <h1>Etiqueta de Envio</h1>
+                </div>
+                <p class="description">Gere e imprima etiquetas para seus envios realizados ou busque por código de envio</p>
+            </div>
+        </div>
     </div>
+</div>
+
+<div class="card">
     <div class="card-body">
         <div class="alert alert-info mb-4">
             <i class="fas fa-info-circle me-2"></i> Gere e imprima etiquetas para seus envios realizados ou busque por código de envio.
@@ -12,9 +239,14 @@
         
         <!-- Formulário de busca de etiqueta -->
         <div id="busca-etiqueta" class="mb-4">
-            <div class="card bg-light">
+            <div class="card border-light shadow-sm">
+                <div class="card-header">
+                    <h5 class="mb-0" style="color: white;">
+                        <i class="fas fa-search me-2"></i>
+                        Buscar Etiqueta
+                    </h5>
+                </div>
                 <div class="card-body">
-                    <h5 class="card-title">Buscar Etiqueta</h5>
                     <div class="row">
                         <div class="col-md-8">
                             <div class="input-group mb-3">
@@ -36,51 +268,63 @@
         
         <!-- Etiquetas disponíveis -->
         <div id="etiquetas-disponiveis">
-            <h5 class="mb-3">Etiquetas Disponíveis</h5>
-            
-            <div class="table-responsive">
-                <table class="table table-hover">
-                    <thead class="table-light">
-                        <tr>
-                            <th>Código de Envio</th>
-                            <th>Data</th>
-                            <th>Destinatário</th>
-                            <th>Destino</th>
-                            <th>Status</th>
-                            <th>Visualizar</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <!-- Nenhuma etiqueta fixa. Use o campo de busca acima para consultar etiquetas reais da FedEx. -->
-                    </tbody>
-                </table>
-            </div>
-            
-            <div class="mt-3">
-                <nav aria-label="Paginação de etiquetas">
-                    <ul class="pagination justify-content-center">
-                        <li class="page-item disabled">
-                            <a class="page-link" href="#" tabindex="-1" aria-disabled="true">Anterior</a>
-                        </li>
-                        <li class="page-item active"><a class="page-link" href="#">1</a></li>
-                        <li class="page-item"><a class="page-link" href="#">2</a></li>
-                        <li class="page-item"><a class="page-link" href="#">3</a></li>
-                        <li class="page-item">
-                            <a class="page-link" href="#">Próximo</a>
-                        </li>
-                    </ul>
-                </nav>
+            <div class="card border-light shadow-sm">
+                <div class="card-header">
+                    <h5 class="mb-0" style="color: white;">
+                        <i class="fas fa-tags me-2"></i>
+                        Etiquetas Disponíveis
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Código de Envio</th>
+                                    <th>Data</th>
+                                    <th>Destinatário</th>
+                                    <th>Destino</th>
+                                    <th>Status</th>
+                                    <th>Visualizar</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <!-- Nenhuma etiqueta fixa. Use o campo de busca acima para consultar etiquetas reais da FedEx. -->
+                            </tbody>
+                        </table>
+                    </div>
+                    
+                    <div class="mt-3">
+                        <nav aria-label="Paginação de etiquetas">
+                            <ul class="pagination justify-content-center">
+                                <li class="page-item disabled">
+                                    <a class="page-link" href="#" tabindex="-1" aria-disabled="true">Anterior</a>
+                                </li>
+                                <li class="page-item active"><a class="page-link" href="#">1</a></li>
+                                <li class="page-item"><a class="page-link" href="#">2</a></li>
+                                <li class="page-item"><a class="page-link" href="#">3</a></li>
+                                <li class="page-item">
+                                    <a class="page-link" href="#">Próximo</a>
+                                </li>
+                            </ul>
+                        </nav>
+                    </div>
+                </div>
             </div>
         </div>
         
         <!-- Sem Etiquetas Encontradas (inicialmente oculto) -->
         <div id="sem-etiquetas" class="text-center py-5" style="display: none;">
-            <i class="fas fa-tag fa-4x text-muted mb-3"></i>
-            <h5>Nenhuma etiqueta encontrada</h5>
-            <p>Não encontramos etiquetas com o código informado.</p>
-            <button class="btn btn-outline-primary mt-2" id="voltar-etiquetas-btn">
-                <i class="fas fa-arrow-left me-2"></i> Voltar para todas etiquetas
-            </button>
+            <div class="card border-light shadow-sm">
+                <div class="card-body">
+                    <i class="fas fa-tag fa-4x text-muted mb-3"></i>
+                    <h5>Nenhuma etiqueta encontrada</h5>
+                    <p>Não encontramos etiquetas com o código informado.</p>
+                    <button class="btn btn-outline-primary mt-2" id="voltar-etiquetas-btn">
+                        <i class="fas fa-arrow-left me-2"></i> Voltar para todas etiquetas
+                    </button>
+                </div>
+            </div>
         </div>
     </div>
 </div>
