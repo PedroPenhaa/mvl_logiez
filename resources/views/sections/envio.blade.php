@@ -35,7 +35,7 @@
                             <div class="row g-4">
                                 <div class="col-md-6 mb-3">
                                     <label for="tipo_envio" class="form-label required"><i class="fas fa-box me-1"></i> Tipo de Envio</label>
-                                    <select class="form-select" id="tipo_envio" name="tipo_envio" required>
+                                    <select class="form-select" id="tipo_envio" name="tipo_envio" required style="color: #B0B0B0 !important;">
                                         <option value="">Selecione o tipo de envio</option>
                                         <option value="venda">Venda</option>
                                         <option value="amostra">Envio de Amostras</option>
@@ -44,7 +44,7 @@
                                 </div>
                                 <div class="col-md-6 mb-3">
                                     <label for="tipo_pessoa" class="form-label required"><i class="fas fa-user me-1"></i> Tipo de Pessoa</label>
-                                    <select class="form-select" id="tipo_pessoa" name="tipo_pessoa" required>
+                                    <select class="form-select" id="tipo_pessoa" name="tipo_pessoa" required style="color: #B0B0B0 !important;">
                                         <option value="">Selecione o tipo de pessoa</option>
                                         <option value="pf">Pessoa Física</option>
                                         <option value="pj">Pessoa Jurídica</option>
@@ -158,10 +158,15 @@
                     background: #fff !important;
                     color: #3d246c !important;
                     font-size: 1.08rem !important;
-                    padding: 1.1rem 1.1rem 0.4rem 1.1rem !important;
-                    height: 56px !important;
+                    padding: 5px 20px !important;
+                    height: 50px !important;
                     box-shadow: 0 2px 8px 0 rgba(111,66,193,0.04) !important;
                     transition: border 0.2s;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    text-align: left;
+                    font-size: 14px !important;
                 }
                 .form-control:focus, .form-select:focus {
                     border-color: #8f5be8 !important;
@@ -826,7 +831,7 @@
                     <div class="card border-light shadow-sm">
                         <div class="card-header bg-light" style="background: linear-gradient(90deg, #6f42c1 0%, #a084e8 100%) !important; color: #fff;">
                             <i class="fas fa-ruler-combined me-2"></i>
-                            <h5 class="mb-0">Dimensões da Caixa</h5>
+                            <h5 class="mb-0" style="color: white;">Dimensões da Caixa</h5>
                         </div>
                         <div class="card-body">
                             <div class="row">
@@ -1010,7 +1015,7 @@
                     <div class="card border-light shadow-sm">
                         <div class="card-header bg-light" style="background: linear-gradient(90deg, #6f42c1 0%, #a084e8 100%) !important; color: #fff;">
                             <i class="fas fa-shipping-fast me-2"></i>
-                            <h5 class="mb-0">Serviço de Entrega FedEx</h5>
+                            <h5 class="mb-0" style="color: white;">Serviço de Entrega FedEx</h5>
                         </div>
                         <div class="card-body">
                             <div id="cotacao-loader" class="text-center my-4" style="display: none;">
