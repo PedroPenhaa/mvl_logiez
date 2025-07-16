@@ -15,6 +15,56 @@
     body, .page-header-wrapper {
         background: var(--roxo-bg) !important;
     }
+    
+    /* Header Styles - Aplicando o mesmo padrão da cotação */
+    .page-header-wrapper {
+        background: var(--primary-gradient) !important;
+        border-radius: 15px;
+        padding: 1rem 1.5rem;
+        margin-bottom: 1.5rem;
+    }
+
+    .page-header-content {
+        width: 100%;
+    }
+
+    .header-content {
+        width: 100%;
+    }
+
+    .title-section {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        width: 100%;
+    }
+
+    .title-area {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+    }
+
+    .title-area i {
+        font-size: 1.25rem;
+        color: white;
+    }
+
+    .title-area h1 {
+        color: white;
+        font-size: 1.25rem;
+        font-weight: 600;
+        margin: 0;
+    }
+
+    .description {
+        color: rgba(255, 255, 255, 0.9);
+        font-size: 0.875rem;
+        margin: 0;
+        text-align: right;
+        max-width: 100%;
+    }
+    
     .bg-gradient-primary, .btn-primary, .card-header.bg-gradient-primary, .progress-bar.bg-primary {
         background: var(--roxo-principal) !important;
         background-color: var(--roxo-principal) !important;
@@ -115,6 +165,21 @@
         .badge.fs-6 {
             font-size: 0.875rem !important;
         }
+        
+        /* Responsividade do header */
+        .page-header-wrapper {
+            padding: 0.75rem 1rem;
+        }
+        
+        .title-section {
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 0.5rem;
+        }
+        
+        .description {
+            text-align: left;
+        }
     }
     @media (max-width: 576px) {
         .col-sm-12 {
@@ -131,6 +196,167 @@
     .hover-shadow:hover {
         transform: translateY(-2px);
         box-shadow: 0 8px 25px rgba(120, 90, 180, 0.10) !important;
+    }
+    
+    /* Estilos para o card informativo colapsável */
+    #info-card {
+        transition: all 0.3s ease;
+    }
+    
+    #info-card-header {
+        transition: all 0.3s ease;
+    }
+    
+    #info-card-header:hover {
+        background: rgba(255, 255, 255, 0.1);
+        border-radius: 8px;
+        padding: 0.5rem;
+        margin: -0.5rem;
+    }
+    
+    #info-card-content {
+        transition: all 0.3s ease;
+        overflow: hidden;
+    }
+    
+    #info-card.collapsed #info-card-content {
+        display: none;
+    }
+    
+    #info-card.collapsed #info-card-icon {
+        transform: rotate(-90deg);
+    }
+    
+    #info-card.expanded #info-card-icon {
+        transform: rotate(0deg);
+    }
+    
+    /* Animação suave para o conteúdo */
+    .info-content-enter {
+        max-height: 0;
+        opacity: 0;
+    }
+    
+    .info-content-enter-active {
+        max-height: 500px;
+        opacity: 1;
+        transition: max-height 0.3s ease, opacity 0.3s ease;
+    }
+    
+    .info-content-exit {
+        max-height: 500px;
+        opacity: 1;
+    }
+    
+    .info-content-exit-active {
+        max-height: 0;
+        opacity: 0;
+        transition: max-height 0.3s ease, opacity 0.3s ease;
+    }
+    
+    /* Melhorias para o card colapsado */
+    #info-card.collapsed {
+        padding: 0.75rem 1rem;
+    }
+    
+    #info-card.collapsed #info-card-header {
+        margin: 0;
+        padding: 0;
+    }
+    
+    #info-card.expanded {
+        padding: 1rem 1.5rem;
+    }
+    
+    /* Efeito hover mais suave */
+    #info-card.collapsed #info-card-header:hover {
+        padding: 0.5rem;
+        margin: -0.5rem;
+    }
+    
+    /* Estilos específicos para cards de produtos */
+    #produtos-cards .card {
+        transition: all 0.3s ease;
+        border: none;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.07), 0 1px 3px rgba(0, 0, 0, 0.06);
+    }
+    
+    #produtos-cards .card:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 12px 24px rgba(0, 0, 0, 0.15), 0 4px 8px rgba(0, 0, 0, 0.1);
+    }
+    
+    #produtos-cards .card-header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+        color: white !important;
+        border: none !important;
+    }
+    
+    #produtos-cards .btn-group {
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
+    
+    #produtos-cards .btn-group .btn {
+        border: 1px solid #dee2e6;
+        transition: all 0.2s ease;
+    }
+    
+    #produtos-cards .btn-group .btn:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.15);
+    }
+    
+    #produtos-cards .btn-outline-primary {
+        color: var(--roxo-principal) !important;
+        border-color: var(--roxo-principal) !important;
+        background: white !important;
+    }
+    
+    #produtos-cards .btn-outline-primary:hover {
+        background: var(--roxo-principal) !important;
+        color: white !important;
+        border-color: var(--roxo-principal) !important;
+    }
+    
+    #produtos-cards .btn-primary {
+        background: var(--roxo-principal) !important;
+        border-color: var(--roxo-principal) !important;
+        color: white !important;
+    }
+    
+    #produtos-cards .btn-outline-danger {
+        border-color: #dc3545 !important;
+        color: #dc3545 !important;
+        background: white !important;
+    }
+    
+    #produtos-cards .btn-outline-danger:hover {
+        background: #dc3545 !important;
+        color: white !important;
+        border-color: #dc3545 !important;
+    }
+    
+    /* Garantir que os botões de quantidade fiquem sempre dentro do card */
+    #produtos-cards .btn-group {
+        max-width: 120px !important;
+        width: 100% !important;
+    }
+    
+    #produtos-cards .btn-group .btn {
+        flex: 1;
+        min-width: 0;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+    
+    #produtos-cards .btn-group .btn:not(.disabled) {
+        min-width: 40px;
+    }
+    
+    #produtos-cards .btn-group .btn.disabled {
+        min-width: 50px;
+        max-width: 60px;
     }
 </style>
 @endsection
@@ -165,6 +391,54 @@
                     </div>
                 </div>
             </div>
+            
+            <!-- Balãozinho Informativo -->
+            <div class="alert alert-info border-0 mb-4" role="alert" id="info-card" style="background: linear-gradient(135deg, #e3f2fd 0%, #f3e5f5 100%); border-left: 4px solid var(--roxo-principal) !important;">
+                <!-- Cabeçalho Colapsável -->
+                <div class="d-flex align-items-center justify-content-between" id="info-card-header" style="cursor: pointer;">
+                    <div class="d-flex align-items-center">
+                        <i class="fas fa-lightbulb text-warning me-2" style="font-size: 1.25rem;"></i>
+                        <h6 class="mb-0 fw-bold text-primary">
+                            <i class="fas fa-info-circle me-2"></i>Como funciona o processo de envio
+                        </h6>
+                    </div>
+                    <div class="d-flex align-items-center">
+                        <span class="badge bg-primary me-2" id="info-card-badge">Etapa 1 de 6</span>
+                        <i class="fas fa-chevron-down text-primary" id="info-card-icon" style="transition: transform 0.3s ease;"></i>
+                    </div>
+                </div>
+                
+                <!-- Conteúdo Colapsável -->
+                <div id="info-card-content" class="mt-3">
+                    <p class="mb-2 text-dark">
+                        Para facilitar o processo de envio internacional, dividimos as informações em <strong>6 etapas simples</strong>:
+                    </p>
+                    <div class="row g-2">
+                        <div class="col-md-6">
+                            <ul class="list-unstyled mb-0">
+                                <li class="mb-1"><i class="fas fa-check-circle text-success me-2"></i><strong>Etapa 1:</strong> Tipo de envio e pessoa</li>
+                                <li class="mb-1"><i class="fas fa-box text-primary me-2"></i><strong>Etapa 2:</strong> Produtos e embalagens</li>
+                                <li class="mb-1"><i class="fas fa-map-marker-alt text-info me-2"></i><strong>Etapa 3:</strong> Endereços de origem e destino</li>
+                            </ul>
+                        </div>
+                        <div class="col-md-6">
+                            <ul class="list-unstyled mb-0">
+                                <li class="mb-1"><i class="fas fa-eye text-warning me-2"></i><strong>Etapa 4:</strong> Revisão dos dados</li>
+                                <li class="mb-1"><i class="fas fa-shipping-fast text-secondary me-2"></i><strong>Etapa 5:</strong> Serviço de entrega</li>
+                                <li class="mb-1"><i class="fas fa-credit-card text-success me-2"></i><strong>Etapa 6:</strong> Pagamento</li>
+                            </ul>
+                        </div>
+                    </div>
+                    <div class="mt-3 p-2 bg-white rounded border">
+                        <small class="text-muted">
+                            <i class="fas fa-clock me-1"></i>
+                            <strong>Dica:</strong> Você pode navegar entre as etapas usando os botões "Continuar" e "Voltar". 
+                            Todas as informações são salvas automaticamente durante o processo.
+                        </small>
+                    </div>
+                </div>
+            </div>
+            
             <!-- Etapas do Wizard -->
             <div id="wizard-steps">
                 <!-- Etapa 1: Tipo de Envio -->
@@ -2199,53 +2473,53 @@
 
             produtos.forEach(function(produto, index) {
                 const card = `
-                    <div class="col-lg-4 col-md-6 col-sm-12">
-                        <div class="card h-100 border-0 shadow-sm hover-shadow">
-                            <div class="card-header bg-primary bg-opacity-10 border-0 py-3">
+                    <div class="col-lg-4 col-md-6 col-sm-12 mb-3">
+                        <div class="card h-100 border-0 shadow-lg hover-shadow" style="border-radius: 12px; overflow: hidden;">
+                            <div class="card-header border-0 py-3" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white;">
                                 <div class="d-flex justify-content-between align-items-center">
-                                    <h6 class="mb-0 fw-bold text-primary">
-                                        <i class="fas fa-box me-2"></i>${produto.nome}
+                                    <h6 class="mb-0 fw-bold text-white">
+                                        <i class="fas fa-box me-2"></i>${produto.nome.length > 30 ? produto.nome.substring(0, 30) + '...' : produto.nome}
                                     </h6>
-                                    <span class="badge bg-primary">#${index + 1}</span>
+                                    <span class="badge bg-white text-primary fw-bold">#${index + 1}</span>
                                 </div>
                             </div>
-                            <div class="card-body p-3">
-                                <div class="row g-2 mb-3">
+                            <div class="card-body p-4">
+                                <div class="row g-3 mb-3">
                                     <div class="col-6">
-                                        <small class="text-muted d-block">
+                                        <small class="text-muted d-block fw-semibold">
                                             <i class="fas fa-barcode me-1"></i>NCM
                                         </small>
-                                        <strong class="text-dark">${produto.codigo || 'N/A'}</strong>
+                                        <strong class="text-dark fs-6">${produto.codigo || 'N/A'}</strong>
                                     </div>
                                     <div class="col-6">
-                                        <small class="text-muted d-block">
+                                        <small class="text-muted d-block fw-semibold">
                                             <i class="fas fa-balance-scale me-1"></i>Unidade
                                         </small>
-                                        <strong class="text-dark">${produto.unidade || 'UN'}</strong>
+                                        <strong class="text-dark fs-6">${produto.unidade || 'UN'}</strong>
                                     </div>
                                     <div class="col-6">
-                                        <small class="text-muted d-block">
+                                        <small class="text-muted d-block fw-semibold">
                                             <i class="fas fa-weight-hanging me-1"></i>Peso Unit.
                                         </small>
-                                        <strong class="text-dark">${produto.peso} kg</strong>
+                                        <strong class="text-dark fs-6">${produto.peso} kg</strong>
                                     </div>
                                     <div class="col-6">
-                                        <small class="text-muted d-block">
+                                        <small class="text-muted d-block fw-semibold">
                                             <i class="fas fa-dollar-sign me-1"></i>Valor Unit.
                                         </small>
-                                        <strong class="text-success">R$ ${produto.valor.toFixed(2)}</strong>
+                                        <strong class="text-success fs-6">R$ ${produto.valor.toFixed(2)}</strong>
                                     </div>
                                 </div>
                                 
-                                <div class="bg-light rounded p-2 mb-3">
+                                <div class="bg-light rounded-3 p-3 mb-3" style="border: 1px solid #e9ecef;">
                                     <div class="d-flex justify-content-between align-items-center">
-                                        <span class="text-muted small">Quantidade:</span>
-                                        <div class="btn-group btn-group-sm" role="group">
-                                            <button type="button" class="btn btn-outline-secondary btn-diminuir" data-index="${index}">
+                                        <span class="text-muted fw-semibold">Quantidade:</span>
+                                        <div class="btn-group btn-group-sm" role="group" style="max-width: 120px;">
+                                            <button type="button" class="btn btn-outline-primary btn-diminuir" data-index="${index}" style="border-radius: 6px 0 0 6px;">
                                                 <i class="fas fa-minus"></i>
                                             </button>
-                                            <span class="btn btn-outline-secondary disabled px-3 fw-bold">${produto.quantidade}</span>
-                                            <button type="button" class="btn btn-outline-secondary btn-aumentar" data-index="${index}">
+                                            <span class="btn btn-primary disabled px-3 fw-bold" style="border-radius: 0; min-width: 50px;">${produto.quantidade}</span>
+                                            <button type="button" class="btn btn-outline-primary btn-aumentar" data-index="${index}" style="border-radius: 0 6px 6px 0;">
                                                 <i class="fas fa-plus"></i>
                                             </button>
                                         </div>
@@ -2254,11 +2528,11 @@
                                 
                                 <div class="d-flex justify-content-between align-items-center">
                                     <div class="text-end">
-                                        <small class="text-muted d-block">Subtotal</small>
-                                        <strong class="text-success fs-6">R$ ${(produto.valor * produto.quantidade).toFixed(2)}</strong>
+                                        <small class="text-muted d-block fw-semibold">Subtotal</small>
+                                        <strong class="text-success fs-5">R$ ${(produto.valor * produto.quantidade).toFixed(2)}</strong>
                                     </div>
-                                    <button type="button" class="btn btn-outline-danger btn-sm btn-remover" data-index="${index}">
-                                        <i class="fas fa-trash"></i>
+                                    <button type="button" class="btn btn-outline-danger btn-sm btn-remover" data-index="${index}" style="border-radius: 8px;">
+                                        <i class="fas fa-trash me-1"></i>Remover
                                     </button>
                                 </div>
                             </div>
@@ -3379,11 +3653,49 @@
             $('#wizard-progress-bar').attr('aria-valuenow', etapa);
             $('#wizard-progress-label').text('Etapa ' + etapa + ' de ' + totalEtapas);
             
+            // Gerenciar o card informativo
+            gerenciarCardInformativo(etapa);
+            
             // Rolar para o topo da página
             $('html, body').animate({
                 scrollTop: 0
             }, 300);
         }
+
+        // Função para gerenciar o card informativo
+        function gerenciarCardInformativo(etapa) {
+            const infoCard = $('#info-card');
+            const infoCardBadge = $('#info-card-badge');
+            
+            // Atualizar o badge com a etapa atual
+            infoCardBadge.text('Etapa ' + etapa + ' de ' + totalEtapas);
+            
+            // Na primeira etapa: expandido
+            if (etapa === 1) {
+                infoCard.removeClass('collapsed').addClass('expanded');
+                $('#info-card-content').show();
+            } else {
+                // Nas outras etapas: colapsado
+                infoCard.removeClass('expanded').addClass('collapsed');
+                $('#info-card-content').hide();
+            }
+        }
+
+        // Evento de clique no cabeçalho do card informativo
+        $('#info-card-header').on('click', function() {
+            const infoCard = $('#info-card');
+            const infoCardContent = $('#info-card-content');
+            
+            if (infoCard.hasClass('collapsed')) {
+                // Expandir
+                infoCard.removeClass('collapsed').addClass('expanded');
+                infoCardContent.slideDown(300);
+            } else {
+                // Colapsar
+                infoCard.removeClass('expanded').addClass('collapsed');
+                infoCardContent.slideUp(300);
+            }
+        });
 
         // Inicializar wizard
         mostrarEtapa(etapaAtual);
