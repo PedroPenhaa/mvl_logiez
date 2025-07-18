@@ -43,6 +43,11 @@ return [
         'shipper_account' => env('FEDEX_USE_PRODUCTION', false) ? env('FEDEX_PROD_SHIPPER_ACCOUNT') : env('FEDEX_HOM_SHIPPER_ACCOUNT'),
         'auth_endpoint' => '/oauth/token',
         'rate_endpoint' => '/rate/v1/rates/quotes',
+        'ship_endpoint' => '/ship/v1/shipments',
+        'track_endpoint' => '/track/v1/trackingnumbers',
+        // Credenciais específicas para rastreamento
+        'tracking_client_id' => env('FEDEX_USE_PRODUCTION', false) ? env('FEDEX_PROD_TRACKING_CLIENT_ID') : env('FEDEX_HOM_CLIENT_ID'),
+        'tracking_client_secret' => env('FEDEX_USE_PRODUCTION', false) ? env('FEDEX_PROD_TRACKING_CLIENT_SECRET') : env('FEDEX_HOM_CLIENT_SECRET'),
         'special_tracking' => [
             '794616896420' => [
                 'client_id' => 'l76ba883d77f744aecb0a0d2d944f64e83',

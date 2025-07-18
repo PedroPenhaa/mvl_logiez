@@ -273,6 +273,30 @@ class SectionController extends Controller
                     );
                     
                     if ($resultado['success']) {
+                        // Processar cotações para adicionar conversão de moeda se necessário
+                        $cotacoesProcessadas = [];
+                        foreach ($resultado['cotacoesFedEx'] as $cotacao) {
+                            $cotacaoProcessada = $cotacao;
+                            
+                            // Se a moeda for BRL, converter para USD e adicionar valor em BRL
+                            if ($cotacao['moeda'] === 'BRL') {
+                                $valorUSD = $cotacao['valorTotal'] / $valorDolar;
+                                $cotacaoProcessada['valorTotal'] = number_format($valorUSD, 2, '.', '');
+                                $cotacaoProcessada['moeda'] = 'USD';
+                                $cotacaoProcessada['valorTotalBRL'] = number_format($cotacao['valorTotal'], 2, ',', '.');
+                            } 
+                            // Se a moeda for USD, adicionar valor em BRL
+                            else if ($cotacao['moeda'] === 'USD') {
+                                $valorBRL = $cotacao['valorTotal'] * $valorDolar;
+                                $cotacaoProcessada['valorTotalBRL'] = number_format($valorBRL, 2, ',', '.');
+                            }
+                            
+                            $cotacoesProcessadas[] = $cotacaoProcessada;
+                        }
+                        
+                        $resultado['cotacoesFedEx'] = $cotacoesProcessadas;
+                        $resultado['cotacaoDolar'] = $valorDolar;
+                        
                         // Salvar cotação no cache e obter hash
                         $hash = $this->saveCotacaoToCache($request, $resultado);
                         return response()->json(array_merge($resultado, ['hash' => $hash]));

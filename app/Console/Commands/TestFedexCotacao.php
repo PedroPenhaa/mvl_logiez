@@ -31,12 +31,12 @@ class TestFedexCotacao extends Command
         $this->info('----------------------------------');
 
         // Valores fixos para o teste
-        $origem = '01310100';    // CEP de São Paulo (Av. Paulista)
-        $destino = '33131';      // CEP de Miami, FL
-        $altura = 10;            // 10 cm
-        $largura = 20;           // 20 cm
-        $comprimento = 30;       // 30 cm
-        $peso = 10;              // 10 kg
+        $origem = '01310-100';   // CEP válido de São Paulo (Av. Paulista)
+        $destino = '34747';      // CEP fornecido pelo usuário
+        $altura = 20;            // 20 cm
+        $largura = 10;           // 10 cm
+        $comprimento = 20;       // 20 cm
+        $peso = 5;               // 5 kg
 
         $this->info("📦 Dados do pacote:");
         $this->info("Origem: $origem");
@@ -49,11 +49,17 @@ class TestFedexCotacao extends Command
         $this->info('⏳ Enviando requisição para calcular cotação...');
         
         try {
-            // Usar as novas credenciais fornecidas
-            $apiUrl = "https://apis-sandbox.fedex.com";
-            $clientId = "l774cb4034be8346eb9e3a476a633764e3";
-            $clientSecret = "1e939e0d9e8747eb92319e28970b5bc0";
-            $shipperAccount = "740561073";
+            // Usar as credenciais configuradas no sistema
+            $apiUrl = config('services.fedex.api_url');
+            $clientId = config('services.fedex.client_id');
+            $clientSecret = config('services.fedex.client_secret');
+            $shipperAccount = config('services.fedex.shipper_account');
+            
+            $this->info('🔧 Configurações do sistema:');
+            $this->line('   Ambiente: ' . (config('services.fedex.use_production') ? 'Produção' : 'Homologação'));
+            $this->line('   API URL: ' . $apiUrl);
+            $this->line('   Client ID: ' . substr($clientId, 0, 5) . '...' . substr($clientId, -5));
+            $this->line('   Shipper Account: ' . $shipperAccount);
             
             // Obter token de autenticação
             $authUrl = $apiUrl . '/oauth/token';
@@ -117,13 +123,13 @@ class TestFedexCotacao extends Command
             $rateUrl = $apiUrl . '/rate/v1/rates/quotes';
             $transactionId = uniqid('logiez_rate_');
             $shipDate = date('Y-m-d');
-    
+
             // Extrair códigos postais
             $postalCodeOrigem = $origem;
             $postalCodeDestino = $destino;
             $countryCodeOrigem = 'BR';
             $countryCodeDestino = 'US';
-    
+
             $rateRequest = [
                 'accountNumber' => [
                     'value' => $shipperAccount
@@ -137,6 +143,9 @@ class TestFedexCotacao extends Command
                 'requestedShipment' => [
                     'shipper' => [
                         'address' => [
+                            'streetLines' => ['Rua Teste, 123'],
+                            'city' => 'São Paulo',
+                            'stateOrProvinceCode' => 'SP',
                             'postalCode' => substr($postalCodeOrigem, 0, 10),
                             'countryCode' => $countryCodeOrigem,
                             'residential' => false
@@ -144,6 +153,9 @@ class TestFedexCotacao extends Command
                     ],
                     'recipient' => [
                         'address' => [
+                            'streetLines' => ['Test Street, 456'],
+                            'city' => 'Orlando',
+                            'stateOrProvinceCode' => 'FL',
                             'postalCode' => substr($postalCodeDestino, 0, 10),
                             'countryCode' => $countryCodeDestino,
                             'residential' => false
@@ -154,6 +166,50 @@ class TestFedexCotacao extends Command
                     'shipDateStamp' => $shipDate,
                     'pickupType' => 'DROPOFF_AT_FEDEX_LOCATION',
                     'packagingType' => 'YOUR_PACKAGING',
+                    'shippingChargesPayment' => [
+                        'paymentType' => 'SENDER',
+                        'payor' => [
+                            'responsibleParty' => [
+                                'accountNumber' => [
+                                    'value' => $shipperAccount
+                                ]
+                            ]
+                        ]
+                    ],
+                    'customsClearanceDetail' => [
+                        'dutiesPayment' => [
+                            'paymentType' => 'SENDER',
+                            'payor' => [
+                                'responsibleParty' => [
+                                    'accountNumber' => [
+                                        'value' => $shipperAccount
+                                    ]
+                                ]
+                            ]
+                        ],
+                        'commodities' => [
+                            [
+                                'description' => 'Sample Product',
+                                'weight' => [
+                                    'units' => 'KG',
+                                    'value' => $peso
+                                ],
+                                'quantity' => 1,
+                                'customsValue' => [
+                                    'amount' => '100',
+                                    'currency' => 'USD'
+                                ],
+                                'unitPrice' => [
+                                    'amount' => '100',
+                                    'currency' => 'USD'
+                                ],
+                                'numberOfPieces' => 1,
+                                'countryOfManufacture' => 'BR',
+                                'quantityUnits' => 'PCS',
+                                'name' => 'Sample Product'
+                            ]
+                        ]
+                    ],
                     'requestedPackageLineItems' => [
                         [
                             'weight' => [
@@ -169,46 +225,9 @@ class TestFedexCotacao extends Command
                             'groupPackageCount' => 1
                         ]
                     ],
-                    'totalPackageCount' => 1,
-                    'documentShipment' => false,
-                    'customsClearanceDetail' => [
-                        'dutiesPayment' => [
-                            'paymentType' => 'SENDER',
-                            'payor' => [
-                                'responsibleParty' => [
-                                    'accountNumber' => [
-                                        'value' => $shipperAccount
-                                    ]
-                                ]
-                            ]
-                        ],
-                        'commodities' => [
-                            [
-                                'description' => 'Test Product',
-                                'weight' => [
-                                    'units' => 'KG',
-                                    'value' => $peso
-                                ],
-                                'quantity' => 1,
-                                'quantityUnits' => 'PCS',
-                                'unitPrice' => [
-                                    'amount' => 100,
-                                    'currency' => 'USD'
-                                ],
-                                'customsValue' => [
-                                    'amount' => 100,
-                                    'currency' => 'USD'
-                                ],
-                                'countryOfManufacture' => $countryCodeOrigem,
-                                'harmonizedCode' => '123456'
-                            ]
-                        ],
-                        'commercialInvoice' => [
-                            'purpose' => 'SAMPLE'
-                        ]
-                    ]
+                    'totalPackageCount' => 1
                 ],
-                'carrierCodes' => ['FDXE']
+                'carrierCodes' => ['FDXE', 'FDXG']
             ];
     
             // Fazer a requisição
@@ -238,8 +257,6 @@ class TestFedexCotacao extends Command
             $rateHttpCode = curl_getinfo($rateCurl, CURLINFO_HTTP_CODE);
             $rateErr = curl_error($rateCurl);
             
-
-            dd($rateResponse . ' - ' . $rateHttpCode . ' - ' . $rateErr);
             curl_close($rateCurl);
 
             // Log da resposta detalhada para debug

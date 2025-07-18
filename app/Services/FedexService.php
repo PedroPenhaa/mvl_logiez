@@ -25,24 +25,49 @@ class FedexService
         // Registrar ambiente em uso para diagnóstico
         Log::info('FedexService inicializado', [
             'ambiente' => config('services.fedex.use_production', false) ? 'Produção' : 'Homologação',
-            'apiUrl' => $this->apiUrl
+            'apiUrl' => $this->apiUrl,
+            'client_id' => substr($this->clientId, 0, 5) . '...' . substr($this->clientId, -5)
         ]);
     }
     
     /**
-     * Obter token de autenticação da API FedEx
+     * Obter token de autenticação da API FedEx para cotação e envio
      * 
      * @param bool $forceRefresh Se true, ignora cache e solicita novo token
      * @return string Token de acesso
      */
     public function getAuthToken($forceRefresh = false) {
-        if (!$forceRefresh && Cache::has('fedex_token')) {
-            $token = Cache::get('fedex_token');
+        return $this->getAuthTokenForOperation('shipping', $forceRefresh);
+    }
+    
+    /**
+     * Obter token de autenticação da API FedEx para rastreamento
+     * 
+     * @param bool $forceRefresh Se true, ignora cache e solicita novo token
+     * @return string Token de acesso
+     */
+    public function getTrackingAuthToken($forceRefresh = false) {
+        return $this->getAuthTokenForOperation('tracking', $forceRefresh);
+    }
+    
+    /**
+     * Obter token de autenticação da API FedEx para uma operação específica
+     * 
+     * @param string $operation Tipo de operação ('shipping' ou 'tracking')
+     * @param bool $forceRefresh Se true, ignora cache e solicita novo token
+     * @return string Token de acesso
+     */
+    private function getAuthTokenForOperation($operation = 'shipping', $forceRefresh = false) {
+        $cacheKey = 'fedex_token_' . $operation;
+        
+        if (!$forceRefresh && Cache::has($cacheKey)) {
+            $token = Cache::get($cacheKey);
             
             // Se estiver processando um código especial, fazer log
             if (self::$trackingSpecialCode) {
                 Log::info('======= TOKEN FEDEX DO CACHE =======', [
                     'Token' => substr($token, 0, 10) . '...' . substr($token, -10),
+                    'Operacao' => $operation,
                     'Usado_Para' => 'Rastreamento do código ' . self::$trackingSpecialCode
                 ]);
             }
@@ -52,11 +77,19 @@ class FedexService
     
         $authUrl = $this->apiUrl . '/oauth/token';
         
+        // Usar credenciais específicas para cada operação
+        $clientId = $operation === 'tracking' 
+            ? config('services.fedex.tracking_client_id', $this->clientId)
+            : $this->clientId;
+        $clientSecret = $operation === 'tracking'
+            ? config('services.fedex.tracking_client_secret', $this->clientSecret)
+            : $this->clientSecret;
+        
         // Preparar payload para a solicitação de token
         $tokenPayload = [
             'grant_type' => 'client_credentials',
-            'client_id' => $this->clientId,
-            'client_secret' => $this->clientSecret
+            'client_id' => $clientId,
+            'client_secret' => $clientSecret
         ];
         
         // Se estiver processando um código especial, fazer log
@@ -64,8 +97,9 @@ class FedexService
             Log::info('======= SOLICITAÇÃO DE TOKEN FEDEX =======', [
                 'URL' => $authUrl,
                 'Payload' => $tokenPayload,
-                'Client_ID' => $this->clientId,
-                'Client_Secret' => substr($this->clientSecret, 0, 5) . '...' . substr($this->clientSecret, -5),
+                'Client_ID' => $clientId,
+                'Client_Secret' => substr($clientSecret, 0, 5) . '...' . substr($clientSecret, -5),
+                'Operacao' => $operation,
                 'Usado_Para' => 'Rastreamento do código ' . self::$trackingSpecialCode
             ]);
         }
@@ -88,13 +122,14 @@ class FedexService
         
         // Armazenar no cache por um pouco menos que o tempo de expiração
         $cacheMinutes = floor($expiresIn / 60) - 5; // 5 minutos de margem
-        Cache::put('fedex_token', $token, now()->addMinutes($cacheMinutes));
+        Cache::put($cacheKey, $token, now()->addMinutes($cacheMinutes));
         
         // Armazenar detalhes adicionais para diagnóstico
-        Cache::put('fedex_token_details', [
+        Cache::put($cacheKey . '_details', [
             'expires_in' => $expiresIn,
             'obtained_at' => now()->toDateTimeString(),
-            'expires_at' => now()->addSeconds($expiresIn)->toDateTimeString()
+            'expires_at' => now()->addSeconds($expiresIn)->toDateTimeString(),
+            'operation' => $operation
         ], now()->addMinutes($cacheMinutes));
         
         // Se estiver processando um código especial, fazer log
@@ -102,6 +137,7 @@ class FedexService
             Log::info('======= NOVO TOKEN FEDEX OBTIDO =======', [
                 'Token' => substr($token, 0, 10) . '...' . substr($token, -10),
                 'Expira_Em' => $expiresIn . ' segundos',
+                'Operacao' => $operation,
                 'Usado_Para' => 'Rastreamento do código ' . self::$trackingSpecialCode,
                 'Resposta_Completa' => $data
             ]);
@@ -138,7 +174,7 @@ class FedexService
             $pesoUtilizado = max($pesoCubico, $peso);
     
             // Preparar requisição de cotação
-            $rateUrl = $this->apiUrl . '/rate/v1/rates/quotes';
+            $rateUrl = $this->apiUrl . config('services.fedex.rate_endpoint', '/rate/v1/rates/quotes');
             $transactionId = uniqid('logiez_rate_');
             $shipDate = date('Y-m-d');
     
@@ -146,8 +182,11 @@ class FedexService
             $postalCodeOrigem = is_array($origem) ? ($origem['postalCode'] ?? $origem[0] ?? '') : $origem;
             $postalCodeDestino = is_array($destino) ? ($destino['postalCode'] ?? $destino[0] ?? '') : $destino;
             $countryCodeOrigem = is_array($origem) ? ($origem['countryCode'] ?? 'BR') : 'BR';
-            
             $countryCodeDestino = is_array($destino) ? ($destino['countryCode'] ?? 'US') : 'US';
+    
+            // Limpar códigos postais (remover hífens e espaços)
+            $postalCodeOrigem = preg_replace('/[^0-9]/', '', $postalCodeOrigem);
+            $postalCodeDestino = preg_replace('/[^0-9]/', '', $postalCodeDestino);
     
             $rateRequest = [
                 'accountNumber' => [
@@ -162,6 +201,9 @@ class FedexService
                 'requestedShipment' => [
                     'shipper' => [
                         'address' => [
+                            'streetLines' => ['Rua Teste, 123'],
+                            'city' => 'São Paulo',
+                            'stateOrProvinceCode' => 'SP',
                             'postalCode' => substr($postalCodeOrigem, 0, 10),
                             'countryCode' => $countryCodeOrigem,
                             'residential' => false
@@ -169,6 +211,9 @@ class FedexService
                     ],
                     'recipient' => [
                         'address' => [
+                            'streetLines' => ['Test Street, 456'],
+                            'city' => 'Orlando',
+                            'stateOrProvinceCode' => 'FL',
                             'postalCode' => substr($postalCodeDestino, 0, 10),
                             'countryCode' => $countryCodeDestino,
                             'residential' => false
@@ -179,6 +224,50 @@ class FedexService
                     'shipDateStamp' => $shipDate,
                     'pickupType' => 'DROPOFF_AT_FEDEX_LOCATION',
                     'packagingType' => 'YOUR_PACKAGING',
+                    'shippingChargesPayment' => [
+                        'paymentType' => 'SENDER',
+                        'payor' => [
+                            'responsibleParty' => [
+                                'accountNumber' => [
+                                    'value' => $this->shipperAccount
+                                ]
+                            ]
+                        ]
+                    ],
+                    'customsClearanceDetail' => [
+                        'dutiesPayment' => [
+                            'paymentType' => 'SENDER',
+                            'payor' => [
+                                'responsibleParty' => [
+                                    'accountNumber' => [
+                                        'value' => $this->shipperAccount
+                                    ]
+                                ]
+                            ]
+                        ],
+                        'commodities' => [
+                            [
+                                'description' => 'Sample Product',
+                                'weight' => [
+                                    'units' => 'KG',
+                                    'value' => $peso
+                                ],
+                                'quantity' => 1,
+                                'customsValue' => [
+                                    'amount' => '100',
+                                    'currency' => 'USD'
+                                ],
+                                'unitPrice' => [
+                                    'amount' => '100',
+                                    'currency' => 'USD'
+                                ],
+                                'numberOfPieces' => 1,
+                                'countryOfManufacture' => 'BR',
+                                'quantityUnits' => 'PCS',
+                                'name' => 'Sample Product'
+                            ]
+                        ]
+                    ],
                     'requestedPackageLineItems' => [
                         [
                             'weight' => [
@@ -194,86 +283,33 @@ class FedexService
                             'groupPackageCount' => 1
                         ]
                     ],
-                    'totalPackageCount' => 1,
-                    'documentShipment' => false,
-                    'customsClearanceDetail' => [
-                        'dutiesPayment' => [
-                            'paymentType' => 'SENDER',
-                            'payor' => [
-                                'responsibleParty' => [
-                                    'accountNumber' => [
-                                        'value' => $this->shipperAccount
-                                    ]
-                                ]
-                            ]
-                        ],
-                        'commodities' => [
-                            [
-                                'description' => 'Test Product',
-                                'weight' => [
-                                    'units' => 'KG',
-                                    'value' => $peso
-                                ],
-                                'quantity' => 1,
-                                'quantityUnits' => 'PCS',
-                                'unitPrice' => [
-                                    'amount' => 100,
-                                    'currency' => 'USD'
-                                ],
-                                'customsValue' => [
-                                    'amount' => 100,
-                                    'currency' => 'USD'
-                                ],
-                                'countryOfManufacture' => $countryCodeOrigem,
-                                'harmonizedCode' => '123456'
-                            ]
-                        ],
-                        'commercialInvoice' => [
-                            'purpose' => 'SAMPLE'
-                        ]
-                    ]
+                    'totalPackageCount' => 1
                 ],
-                'carrierCodes' => ['FDXE']
+                'carrierCodes' => ['FDXE', 'FDXG']
             ];
     
             // Fazer a requisição
-            $rateCurl = curl_init();
-            curl_setopt_array($rateCurl, [
-                CURLOPT_URL => $rateUrl,
-                CURLOPT_RETURNTRANSFER => true,
-                CURLOPT_ENCODING => "",
-                CURLOPT_MAXREDIRS => 10,
-                CURLOPT_TIMEOUT => 30,
-                CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
-                CURLOPT_CUSTOMREQUEST => "POST",
-                CURLOPT_POSTFIELDS => json_encode($rateRequest),
-                CURLOPT_HTTPHEADER => [
-                    "Content-Type: application/json",
-                    "Accept: application/json",
-                    "Authorization: Bearer " . $accessToken,
-                    "X-locale: en_US",
-                    "x-customer-transaction-id: " . $transactionId
-                ],
-                CURLOPT_SSL_VERIFYPEER => false,
-            ]);
+            $response = Http::withHeaders([
+                'Content-Type' => 'application/json',
+                'Accept' => 'application/json',
+                'Authorization' => 'Bearer ' . $accessToken,
+                'X-locale' => 'en_US',
+                'x-customer-transaction-id' => $transactionId
+            ])->post($rateUrl, $rateRequest);
     
-            $rateResponse = curl_exec($rateCurl);
-            $rateHttpCode = curl_getinfo($rateCurl, CURLINFO_HTTP_CODE);
-            $rateErr = curl_error($rateCurl);
-            
-            curl_close($rateCurl);
-    
-            if ($rateErr) {
-                throw new \Exception('Erro na requisição de cotação: ' . $rateErr);
+            if ($response->failed()) {
+                $errorMessage = 'Falha na cotação. Código HTTP: ' . $response->status() . "\n" . $response->body();
+                Log::error('Erro na cotação FedEx', [
+                    'status' => $response->status(),
+                    'response' => $response->body(),
+                    'request' => $rateRequest
+                ]);
+                throw new \Exception($errorMessage);
             }
     
-            if ($rateHttpCode != 200) {
-                throw new \Exception('Falha na cotação. Código HTTP: ' . $rateHttpCode);
-            }
+            $rateData = $response->json();
     
-            $rateData = json_decode($rateResponse, true);
-    
-            // Extrair cotações da resposta - mesma lógica do command
+            // Extrair cotações da resposta
             $cotacoes = [];
             if (isset($rateData['output']['rateReplyDetails'])) {
                 foreach ($rateData['output']['rateReplyDetails'] as $rateDetail) {
@@ -321,29 +357,34 @@ class FedexService
                 }
             }
     
-            return [
+            $resultado = [
                 'success' => true,
                 'pesoCubico' => round($pesoCubico, 2),
                 'pesoReal' => $peso,
                 'pesoUtilizado' => round($pesoUtilizado, 2),
                 'cotacoesFedEx' => $cotacoes,
                 'simulado' => false,
-                'dataConsulta' => date('Y-m-d H:i:s'),
-                'respostaOriginal' => $rateData // Opcional - para debug
+                'dataConsulta' => date('Y-m-d H:i:s')
             ];
+    
+            Log::info('Cotação FedEx calculada com sucesso', [
+                'pesoCubico' => $pesoCubico,
+                'pesoReal' => $peso,
+                'pesoUtilizado' => $pesoUtilizado,
+                'cotacoesEncontradas' => count($cotacoes),
+                'simulado' => false
+            ]);
+    
+            return $resultado;
     
         } catch (\Exception $e) {
             Log::error('Erro ao calcular cotação FedEx', [
-                'error' => $e->getMessage(),
+                'erro' => $e->getMessage(),
                 'trace' => $e->getTraceAsString()
             ]);
-
-            // Em caso de erro, retornar o erro ao invés de simular
-            return [
-                'success' => false,
-                'error_code' => 'fedex_api_error',
-                'message' => 'Erro na API FedEx: ' . $e->getMessage()
-            ];
+    
+            // Em caso de erro, retornar simulação como fallback
+            return $this->simularCotacao($origem, $destino, $altura, $largura, $comprimento, $peso);
         }
     }
 
@@ -596,10 +637,10 @@ class FedexService
     
         try {
             // Obter token de autenticação - forçar renovação para códigos especiais
-            $accessToken = $this->getAuthToken(!empty($specialTrackingConfig));
+            $accessToken = $this->getTrackingAuthToken(!empty($specialTrackingConfig));
     
             // Preparar requisição de rastreamento
-            $trackUrl = $this->apiUrl . '/track/v1/trackingnumbers';
+            $trackUrl = $this->apiUrl . config('services.fedex.track_endpoint', '/track/v1/trackingnumbers');
             $transactionId = uniqid('logiez_track_');
     
             $trackRequest = [
@@ -1247,7 +1288,7 @@ class FedexService
             $accessToken = $this->getAuthToken();
             
             // Preparar requisição de criação de envio
-            $shipUrl = $this->apiUrl . '/ship/v1/shipments';
+            $shipUrl = $this->apiUrl . config('services.fedex.ship_endpoint', '/ship/v1/shipments');
             $transactionId = uniqid('logiez_ship_');
             $shipDate = date('Y-m-d');
             

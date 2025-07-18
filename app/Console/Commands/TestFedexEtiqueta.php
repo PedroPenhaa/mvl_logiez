@@ -13,10 +13,10 @@ class TestFedexEtiqueta extends Command
     public function handle()
     {
         // 1. Autenticação na FedEx
-        $auth = Http::asForm()->post('https://apis-sandbox.fedex.com/oauth/token', [
+        $auth = Http::asForm()->post(config('services.fedex.api_url') . '/oauth/token', [
             'grant_type' => 'client_credentials',
-            'client_id' => 'l7517499d73dc1470c8f56fe055c45113c',
-            'client_secret' => '41d8172c88c345cca8f47695bc97a5cd',
+            'client_id' => config('services.fedex.client_id'),
+            'client_secret' => config('services.fedex.client_secret'),
         ]);
         
         $accessToken = $auth->json()['access_token'] ?? null;
@@ -139,7 +139,7 @@ class TestFedexEtiqueta extends Command
 
         // 3. Fazer a requisição para a API da FedEx
         $response = Http::withToken($accessToken)
-            ->post('https://apis-sandbox.fedex.com/ship/v1/shipments', $body);
+            ->post(config('services.fedex.api_url') . config('services.fedex.ship_endpoint', '/ship/v1/shipments'), $body);
 
             dd($response);
 
