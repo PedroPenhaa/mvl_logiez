@@ -21,7 +21,7 @@
             </div>
         </div>
         
-        <div class="d-flex justify-content-center mt-4" id="rastreamento-loader" style="display: none !important;">
+        <div class="d-flex justify-content-center mt-4" id="rastreamento-loader" style="display: none;">
             <div class="spinner-border text-primary" role="status">
                 <span class="visually-hidden">Carregando...</span>
             </div>
@@ -504,6 +504,13 @@
         border-radius: 8px;
         background-color: rgba(255, 255, 255, 0.8);
         box-shadow: 0 3px 10px rgba(0, 0, 0, 0.08);
+        transition: opacity 0.3s ease, visibility 0.3s ease;
+    }
+    
+    #rastreamento-loader.hidden {
+        display: none !important;
+        visibility: hidden !important;
+        opacity: 0 !important;
     }
     
     /* Botão de solicitar comprovante */
@@ -740,6 +747,14 @@ function initializeRastreamentoScript() {
     $(document).ready(function() {
         console.log('Document ready, inicializando funcionalidades de rastreamento...');
         
+        // GARANTIR QUE O LOADER ESTÁ OCULTO DESDE O INÍCIO
+        ocultarLoader();
+        
+        // Timeout adicional para garantir que o loader esteja oculto
+        setTimeout(function() {
+            ocultarLoader();
+        }, 100);
+        
         // Variáveis globais para armazenar o código de rastreamento
         let codigoRastreamento = '';
         
@@ -849,6 +864,32 @@ function initializeRastreamentoScript() {
             }
         }
         
+        // Função para ocultar o loader de forma robusta
+        function ocultarLoader() {
+            console.log('Ocultando loader de forma robusta');
+            const loader = document.getElementById('rastreamento-loader');
+            if (loader) {
+                loader.style.display = 'none';
+                loader.style.visibility = 'hidden';
+                loader.style.opacity = '0';
+                loader.classList.add('hidden');
+                $(loader).hide();
+            }
+        }
+        
+        // Função para mostrar o loader
+        function mostrarLoader() {
+            console.log('Mostrando loader');
+            const loader = document.getElementById('rastreamento-loader');
+            if (loader) {
+                loader.style.display = 'flex';
+                loader.style.visibility = 'visible';
+                loader.style.opacity = '1';
+                loader.classList.remove('hidden');
+                $(loader).show();
+            }
+        }
+        
         // Função para formatar data (YYYY-MM-DD para DD/MM/YYYY)
         function formatarData(dataString) {
             if (!dataString) return '';
@@ -890,9 +931,6 @@ function initializeRastreamentoScript() {
         // Função para mostrar os resultados do rastreamento
         function mostrarResultadoRastreamento(response) {
             console.log('Mostrando resultado do rastreamento:', response);
-            
-            // Garantir que o loader esteja oculto
-            $('#rastreamento-loader').hide().css('display', 'none !important');
             
             // Preencher dados do resultado
             $('#rastreamento-codigo').text(response.codigo);
@@ -1095,6 +1133,12 @@ function initializeRastreamentoScript() {
         function enviarSolicitacaoRastreamento(forcarSimulacao) {
             console.log('Enviando solicitação de rastreamento:', { codigoRastreamento, forcarSimulacao });
             
+            // Timeout de segurança para ocultar loader após 30 segundos
+            setTimeout(function() {
+                console.log('Timeout de segurança - ocultando loader');
+                ocultarLoader();
+            }, 30000);
+            
             $.ajax({
                 url: '{{ route("api.rastreamento.buscar") }}',
                 method: 'POST',
@@ -1106,19 +1150,19 @@ function initializeRastreamentoScript() {
                 dataType: 'json',
                 success: function(response) {
                     console.log('Resposta da API:', response);
+                    console.log('OCULTANDO LOADER AGORA!');
+                    
+                    // OCULTAR LOADER IMEDIATAMENTE
+                    ocultarLoader();
+                    console.log('Loader ocultado com sucesso');
                     
                     if (response.success) {
-                        // Esconder loader e mostrar mensagem de sucesso
-                        $('#rastreamento-loader').hide().css('display', 'none !important');
+                        // Mostrar mensagem de sucesso
                         $('#rastreamento-success').show();
                         
                         // Preencher dados do resultado
                         mostrarResultadoRastreamento(response);
                     } else {
-                        // Esconder loader e mensagem de sucesso
-                        $('#rastreamento-loader').hide();
-                        $('#rastreamento-success').hide();
-                        
                         // Verificar se é o código especial
                         if (codigoRastreamento === '794616896420') {
                             console.log('Código de rastreamento especial detectado: ' + codigoRastreamento);
@@ -1142,10 +1186,11 @@ function initializeRastreamentoScript() {
                 },
                 error: function(xhr) {
                     console.error('Erro na requisição AJAX:', xhr);
+                    console.log('OCULTANDO LOADER POR ERRO!');
                     
-                    // Esconder loader e mensagem de sucesso
-                    $('#rastreamento-loader').hide();
-                    $('#rastreamento-success').hide();
+                    // OCULTAR LOADER IMEDIATAMENTE
+                    ocultarLoader();
+                    console.log('Loader ocultado por erro com sucesso');
                     
                     let errorMsg = 'Erro ao processar a solicitação.';
                     if (xhr.responseJSON && xhr.responseJSON.message) {
@@ -1156,8 +1201,9 @@ function initializeRastreamentoScript() {
                     $('#rastreamento-error-message').text(errorMsg);
                 },
                 complete: function() {
-                    // Esconder o loader como garantia adicional
-                    $('#rastreamento-loader').hide().css('display', 'none !important');
+                    console.log('Função complete executada - ocultando loader como garantia');
+                    // Garantia adicional - ocultar loader novamente
+                    ocultarLoader();
                 }
             });
         }
@@ -1176,20 +1222,10 @@ function initializeRastreamentoScript() {
         const hashParam = getParameterByName('hash');
         if (hashParam) {
             console.log('Hash de rastreamento detectado na URL:', hashParam);
-            // Preencher o campo com o hash e disparar a busca automaticamente
+            // Preencher o campo com o hash apenas
             $('#codigo_rastreamento').val(hashParam);
             codigoRastreamento = hashParam;
-            
-            // Mostrar loader e esconder resultados anteriores
-            $('#rastreamento-error').hide();
-            $('#rastreamento-success').hide();
-            $('#rastreamento-loader').show();
-            $('#rastreamento-resultado').hide();
-            
-            // Enviar solicitação AJAX para a API
-            setTimeout(() => {
-                enviarSolicitacaoRastreamento(false);
-            }, 500); // Pequeno delay para garantir que os elementos estejam prontos
+            // NÃO MOSTRAR LOADER AUTOMATICAMENTE
         }
         
         // Processar formulário de rastreamento via AJAX
@@ -1200,13 +1236,12 @@ function initializeRastreamentoScript() {
             // Armazenar o código de rastreamento
             codigoRastreamento = $('#codigo_rastreamento').val().trim();
             
-            // Esconder mensagens de erro e sucesso anteriores
+            // LIMPAR TUDO E MOSTRAR LOADER
+            $('#rastreamento-resultado').hide();
             $('#rastreamento-error').hide();
             $('#rastreamento-success').hide();
-            
-            // Mostrar loader e esconder resultados anteriores
-            $('#rastreamento-loader').show();
-            $('#rastreamento-resultado').hide();
+            $('#rastreamento-simulado-alert').hide();
+            mostrarLoader();
             
             // Enviar solicitação AJAX para a API
             enviarSolicitacaoRastreamento(false);
@@ -1219,11 +1254,10 @@ function initializeRastreamentoScript() {
             simulacaoModal.hide();
             
             // Esconder mensagens de erro e sucesso
-            $('#rastreamento-error').hide();
-            $('#rastreamento-success').hide();
+            // limparResultadosAnteriores(); // REMOVIDO
             
             // Mostrar loader novamente
-            $('#rastreamento-loader').show();
+            mostrarLoader();
             
             // Enviar solicitação com flag para forçar simulação
             enviarSolicitacaoRastreamento(true);
