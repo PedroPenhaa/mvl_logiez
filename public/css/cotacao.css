@@ -281,4 +281,59 @@
     .cotacao-container {
         padding: 0;
     }
+    .tempo-entrega-info {
+        min-width: auto;
+    }
+} 
+
+/* Estilos para formatação do tempo de entrega */
+.tempo-entrega-info {
+    min-width: 150px;
+    padding: 0.5rem 0;
+}
+
+.data-chegada {
+    font-size: 0.85rem;
+    color: #6c757d;
+    border-bottom: 1px solid #e9ecef;
+    padding-bottom: 2px;
+    margin-bottom: 0.25rem;
+}
+
+.horario-entrega {
+    color: #198754;
+    font-size: 0.9rem;
+    font-weight: 600;
+}
+
+.prazo-entrega {
+    color: #0d6efd;
+    font-size: 0.9rem;
+    font-weight: 500;
+}
+
+.tempo-padrao {
+    font-size: 0.9rem;
+    color: #495057;
+}
+
+.table td {
+    vertical-align: middle;
+}
+
+/* Responsividade para tempo de entrega */
+@media (max-width: 768px) {
+    .tempo-entrega-info {
+        min-width: 120px;
+    }
+    
+    .data-chegada {
+        font-size: 0.8rem;
+    }
+    
+    .horario-entrega,
+    .prazo-entrega,
+    .tempo-padrao {
+        font-size: 0.85rem;
+    }
 } 
