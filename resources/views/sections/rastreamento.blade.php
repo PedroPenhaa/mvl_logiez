@@ -719,9 +719,135 @@
 </style>
 
 <script>
+// Verificar se jQuery está disponível
+if (typeof jQuery === 'undefined') {
+    console.error('jQuery não está disponível. Aguardando carregamento...');
+    // Aguardar o carregamento do jQuery
+    window.addEventListener('load', function() {
+        if (typeof jQuery !== 'undefined') {
+            console.log('jQuery carregado, inicializando script...');
+            initializeRastreamentoScript();
+        } else {
+            console.error('jQuery ainda não está disponível após carregamento da página');
+        }
+    });
+} else {
+    console.log('jQuery já está disponível, inicializando script...');
+    initializeRastreamentoScript();
+}
+
+function initializeRastreamentoScript() {
     $(document).ready(function() {
+        console.log('Document ready, inicializando funcionalidades de rastreamento...');
+        
         // Variáveis globais para armazenar o código de rastreamento
         let codigoRastreamento = '';
+        
+        // Variáveis para armazenar logs
+        var trackingLogs = [];
+
+        // Função para adicionar log ao array e ao console
+        function addLog(type, message, data) {
+            const logEntry = {
+                type: type,
+                message: message,
+                data: data,
+                timestamp: new Date().toISOString()
+            };
+            
+            trackingLogs.push(logEntry);
+            
+            // Log no console do navegador
+            if (type === 'error') {
+                console.error(message, data);
+            } else if (type === 'warn') {
+                console.warn(message, data);
+            } else {
+                console.log(message, data);
+            }
+            
+            // Atualizar a exibição de logs
+            updateLogsDisplay();
+        }
+
+        // Função para atualizar a exibição de logs
+        function updateLogsDisplay() {
+            const logsContainer = document.getElementById('logs-content');
+            if (!logsContainer) return;
+            
+            // Limpar o conteúdo anterior
+            logsContainer.innerHTML = '';
+            
+            // Adicionar cada log ao container
+            trackingLogs.forEach(log => {
+                const logElement = document.createElement('div');
+                logElement.className = 'mb-2 pb-2 border-b border-gray-700';
+                
+                const header = document.createElement('div');
+                header.className = `flex items-center ${log.type === 'error' ? 'text-red-500' : (log.type === 'warn' ? 'text-yellow-500' : 'text-green-400')}`;
+                
+                const timestamp = document.createElement('span');
+                timestamp.className = 'text-xs text-gray-500 mr-2';
+                timestamp.textContent = new Date(log.timestamp).toLocaleTimeString();
+                
+                const typeLabel = document.createElement('span');
+                typeLabel.className = 'text-xs font-bold mr-2';
+                typeLabel.textContent = log.type.toUpperCase();
+                
+                const message = document.createElement('span');
+                message.textContent = log.message;
+                
+                header.appendChild(timestamp);
+                header.appendChild(typeLabel);
+                header.appendChild(message);
+                logElement.appendChild(header);
+                
+                if (log.data) {
+                    const dataContainer = document.createElement('pre');
+                    dataContainer.className = 'mt-1 text-xs text-white bg-gray-800 p-2 rounded overflow-auto';
+                    dataContainer.style.maxHeight = '100px';
+                    dataContainer.textContent = typeof log.data === 'object' ? JSON.stringify(log.data, null, 2) : log.data;
+                    logElement.appendChild(dataContainer);
+                }
+                
+                logsContainer.appendChild(logElement);
+            });
+        }
+
+        // Função para mostrar/ocultar a seção de logs - apenas se o elemento existir
+        const toggleLogsElement = document.getElementById('toggle-logs');
+        if (toggleLogsElement) {
+            toggleLogsElement.addEventListener('click', function() {
+                const logsContainer = document.getElementById('logs-container');
+                if (logsContainer) {
+                    const isHidden = logsContainer.classList.contains('hidden');
+                    
+                    if (isHidden) {
+                        logsContainer.classList.remove('hidden');
+                        this.textContent = 'Ocultar';
+                    } else {
+                        logsContainer.classList.add('hidden');
+                        this.textContent = 'Mostrar';
+                    }
+                }
+            });
+        }
+
+        // Script para verificar ambiente e perfil do usuário
+        var appEnvironment = "{{ app()->environment() }}";
+        var isUserAdmin = "{{ auth()->check() && auth()->user()->is_admin ? 'true' : 'false' }}";
+
+        // Verificar se estamos em ambiente de desenvolvimento ou se o usuário é admin
+        if (appEnvironment === "local" || isUserAdmin === "true") {
+            const debugSection = document.getElementById('debug-logs-section');
+            if (debugSection) {
+                debugSection.classList.remove('hidden');
+                addLog('info', 'Modo de depuração ativado', { 
+                    ambiente: appEnvironment, 
+                    admin: isUserAdmin 
+                });
+            }
+        }
         
         // Função para formatar data (YYYY-MM-DD para DD/MM/YYYY)
         function formatarData(dataString) {
@@ -763,6 +889,8 @@
         
         // Função para mostrar os resultados do rastreamento
         function mostrarResultadoRastreamento(response) {
+            console.log('Mostrando resultado do rastreamento:', response);
+            
             // Garantir que o loader esteja oculto
             $('#rastreamento-loader').hide().css('display', 'none !important');
             
@@ -830,6 +958,8 @@
         
         // Função para preencher a timeline
         function preencherTimeline(eventos) {
+            console.log('Preenchendo timeline com eventos:', eventos);
+            
             const timeline = $('#rastreamento-timeline');
             timeline.empty();
             
@@ -963,6 +1093,8 @@
         
         // Função para enviar a solicitação AJAX de rastreamento
         function enviarSolicitacaoRastreamento(forcarSimulacao) {
+            console.log('Enviando solicitação de rastreamento:', { codigoRastreamento, forcarSimulacao });
+            
             $.ajax({
                 url: '{{ route("api.rastreamento.buscar") }}',
                 method: 'POST',
@@ -973,6 +1105,8 @@
                 },
                 dataType: 'json',
                 success: function(response) {
+                    console.log('Resposta da API:', response);
+                    
                     if (response.success) {
                         // Esconder loader e mostrar mensagem de sucesso
                         $('#rastreamento-loader').hide().css('display', 'none !important');
@@ -1007,6 +1141,8 @@
                     }
                 },
                 error: function(xhr) {
+                    console.error('Erro na requisição AJAX:', xhr);
+                    
                     // Esconder loader e mensagem de sucesso
                     $('#rastreamento-loader').hide();
                     $('#rastreamento-success').hide();
@@ -1059,6 +1195,7 @@
         // Processar formulário de rastreamento via AJAX
         $('#rastreamento-form').on('submit', function(e) {
             e.preventDefault();
+            console.log('Formulário de rastreamento submetido');
             
             // Armazenar o código de rastreamento
             codigoRastreamento = $('#codigo_rastreamento').val().trim();
@@ -1158,166 +1295,14 @@
                 }
             });
         });
-    });
-</script>
-
-<!-- Script para mostrar a seção de logs e renderizar os logs JavaScript -->
-<script>
-// Variáveis para armazenar logs
-var trackingLogs = [];
-
-// Função para adicionar log ao array e ao console
-function addLog(type, message, data) {
-    const logEntry = {
-        type: type,
-        message: message,
-        data: data,
-        timestamp: new Date().toISOString()
-    };
-    
-    trackingLogs.push(logEntry);
-    
-    // Log no console do navegador
-    if (type === 'error') {
-        console.error(message, data);
-    } else if (type === 'warn') {
-        console.warn(message, data);
-    } else {
-        console.log(message, data);
-    }
-    
-    // Atualizar a exibição de logs
-    updateLogsDisplay();
-}
-
-// Função para atualizar a exibição de logs
-function updateLogsDisplay() {
-    const logsContainer = document.getElementById('logs-content');
-    if (!logsContainer) return;
-    
-    // Limpar o conteúdo anterior
-    logsContainer.innerHTML = '';
-    
-    // Adicionar cada log ao container
-    trackingLogs.forEach(log => {
-        const logElement = document.createElement('div');
-        logElement.className = 'mb-2 pb-2 border-b border-gray-700';
         
-        const header = document.createElement('div');
-        header.className = `flex items-center ${log.type === 'error' ? 'text-red-500' : (log.type === 'warn' ? 'text-yellow-500' : 'text-green-400')}`;
-        
-        const timestamp = document.createElement('span');
-        timestamp.className = 'text-xs text-gray-500 mr-2';
-        timestamp.textContent = new Date(log.timestamp).toLocaleTimeString();
-        
-        const typeLabel = document.createElement('span');
-        typeLabel.className = 'text-xs font-bold mr-2';
-        typeLabel.textContent = log.type.toUpperCase();
-        
-        const message = document.createElement('span');
-        message.textContent = log.message;
-        
-        header.appendChild(timestamp);
-        header.appendChild(typeLabel);
-        header.appendChild(message);
-        logElement.appendChild(header);
-        
-        if (log.data) {
-            const dataContainer = document.createElement('pre');
-            dataContainer.className = 'mt-1 text-xs text-white bg-gray-800 p-2 rounded overflow-auto';
-            dataContainer.style.maxHeight = '100px';
-            dataContainer.textContent = typeof log.data === 'object' ? JSON.stringify(log.data, null, 2) : log.data;
-            logElement.appendChild(dataContainer);
-        }
-        
-        logsContainer.appendChild(logElement);
-    });
-}
-
-// Função para mostrar/ocultar a seção de logs
-document.getElementById('toggle-logs').addEventListener('click', function() {
-    const logsContainer = document.getElementById('logs-container');
-    const isHidden = logsContainer.classList.contains('hidden');
-    
-    if (isHidden) {
-        logsContainer.classList.remove('hidden');
-        this.textContent = 'Ocultar';
-    } else {
-        logsContainer.classList.add('hidden');
-        this.textContent = 'Mostrar';
-    }
-});
-
-// Sobrescrever a função original de enviar solicitação AJAX para adicionar logs
-const originalEnviarSolicitacao = enviarSolicitacaoRastreamento;
-enviarSolicitacaoRastreamento = function(forcarSimulacao) {
-    addLog('info', 'Iniciando solicitação de rastreamento', { 
-        codigo: codigoRastreamento,
-        forcarSimulacao: forcarSimulacao 
-    });
-    
-    // Sobrescrever método Ajax para logar
-    const originalAjax = $.ajax;
-    $.ajax = function(settings) {
-        addLog('info', 'Enviando requisição AJAX', {
-            url: settings.url,
-            method: settings.type,
-            data: settings.data
-        });
-        
-        // Armazenar os callbacks originais
-        const originalSuccess = settings.success;
-        const originalError = settings.error;
-        
-        // Sobrescrever callbacks
-        settings.success = function(response) {
-            addLog('info', 'Resposta AJAX recebida com sucesso', response);
-            if (originalSuccess) originalSuccess(response);
-        };
-        
-        settings.error = function(xhr, status, error) {
-            addLog('error', 'Erro na requisição AJAX', {
-                status: status,
-                error: error,
-                responseText: xhr.responseText
-            });
-            if (originalError) originalError(xhr, status, error);
-        };
-        
-        return originalAjax.apply($, arguments);
-    };
-    
-    // Chamar função original
-    const result = originalEnviarSolicitacao(forcarSimulacao);
-    
-    // Restaurar método Ajax original
-    $.ajax = originalAjax;
-    
-    return result;
-};
-
-// Script para verificar ambiente e perfil do usuário
-var appEnvironment = "{{ app()->environment() }}";
-var isUserAdmin = {{ auth()->check() && auth()->user()->is_admin ? 'true' : 'false' }};
-
-// Verificar se estamos em ambiente de desenvolvimento ou se o usuário é admin
-if (appEnvironment === "local" || isUserAdmin) {
-    document.getElementById('debug-logs-section').classList.remove('hidden');
-    addLog('info', 'Modo de depuração ativado', { 
-        ambiente: appEnvironment, 
-        admin: isUserAdmin 
-    });
-}
-</script> 
-
-@section('scripts')
-<script>
-    $(document).ready(function() {
+        // Configurar menu ativo
         $('.menu-item').removeClass('active');
         $('.menu-item[data-section="rastreamento"]').addClass('active');
         $('#content-container').show();
+        
+        console.log('Script de rastreamento inicializado com sucesso');
     });
+}
 </script>
-@endsection
-
 @endsection 

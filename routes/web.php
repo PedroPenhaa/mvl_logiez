@@ -1047,5 +1047,4 @@ Route::get('/cpf-test/{cpf?}', function ($cpf = null) {
 Route::get('/envio', [App\Http\Controllers\SectionController::class, 'envio'])->name('envio');
 Route::get('/pagamento', [App\Http\Controllers\SectionController::class, 'pagamento'])->name('pagamento');
 Route::get('/etiqueta', [App\Http\Controllers\SectionController::class, 'etiqueta'])->name('etiqueta');
-Route::get('/rastreamento', [App\Http\Controllers\SectionController::class, 'rastreamento'])->name('rastreamento');
 Route::get('/perfil', [App\Http\Controllers\SectionController::class, 'perfil'])->name('perfil');
