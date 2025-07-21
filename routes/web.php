@@ -84,6 +84,20 @@ Route::prefix('api')->name('api.')->group(function () {
         ->name('consulta.gemini')
         ->withoutMiddleware(['web']);
     
+    // Consulta de CEP/Endereço via Gemini (sem CSRF)
+    Route::post('/consulta-gemini-cep', [App\Http\Controllers\GeminiCEPController::class, 'consultar'])
+        ->name('consulta.gemini-cep')
+        ->withoutMiddleware(['web']);
+    
+    // Rota de teste simples
+    Route::get('/teste-rotas', function() {
+        return response()->json([
+            'success' => true,
+            'message' => 'Rotas funcionando!',
+            'timestamp' => now()
+        ]);
+    });
+    
     // Consulta de unidade tributária por NCM
     Route::get('/unidade-tributaria', [ProdutosController::class, 'consultarUnidadeTributaria'])->name('unidade-tributaria');
     

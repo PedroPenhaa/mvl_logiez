@@ -763,9 +763,7 @@
                                     </div>
                                     <div class="mb-3" id="origem_cidade_container">
                                         <label for="origem_cidade" class="form-label">Cidade</label>
-                                        <select class="form-select cidade-select" id="origem_cidade" name="origem_cidade" required>
-                                            <option value="">Selecione o estado primeiro</option>
-                                        </select>
+                                        <input type="text" class="form-control" id="origem_cidade" name="origem_cidade" required>
                                     </div>
                                     <div class="row g-2 mb-3">
                                         <div class="col-md-6">
@@ -819,9 +817,7 @@
                                     </div>
                                     <div class="mb-3" id="destino_cidade_container">
                                         <label for="destino_cidade" class="form-label">Cidade</label>
-                                        <select class="form-select cidade-select" id="destino_cidade" name="destino_cidade" required>
-                                            <option value="">Selecione o estado primeiro</option>
-                                        </select>
+                                        <input type="text" class="form-control" id="destino_cidade" name="destino_cidade" required>
                                     </div>
                                     <div class="row g-2 mb-3">
                                         <div class="col-md-6">
@@ -2887,208 +2883,25 @@
             });
         }
 
-        // Função para preencher o select de cidades com base no estado selecionado
-        function carregarCidades(estadoId, cidadeSelect) {
-            // Mostrar indicador de carregamento
-            cidadeSelect.prop('disabled', true);
-            cidadeSelect.find('option:not(:first)').remove();
-            cidadeSelect.find('option:first').text('Carregando cidades...');
-
-            // Obter informações de contexto
-            const formGroup = cidadeSelect.closest('.card-body');
-            const paisSelect = formGroup.find('.pais-select');
-            const paisId = paisSelect.val();
-            const prefixo = paisSelect.attr('id').split('_')[0]; // 'origem' ou 'destino'
-
-            // Nome do container que irá conter o select ou input
-            const cidadeContainerId = `#${prefixo}_cidade_container`;
-
-            // Verificar se já existe o container, caso contrário, criar
-            if ($(cidadeContainerId).length === 0) {
-                cidadeSelect.wrap(`<div id="${prefixo}_cidade_container"></div>`);
-            }
-
-            // Primeiro verificar se temos cidades cadastradas para este estado
-            const estadoCidades = cidades[estadoId] || [];
-
-            // Variável para controlar se devemos usar o IBGE
-            const isBrasil = paisId === 'BR';
-            const usarAPIIBGE = isBrasil && estadoId.length === 2; // Estados brasileiros têm UF com 2 caracteres
-
-            // Se tem cidades no array estático ou vamos usar a API do IBGE, tentamos o select
-            if (estadoCidades.length > 0 || usarAPIIBGE) {
-                // Se temos cidades cadastradas para este estado, usar o select
-                if (estadoCidades.length > 0) {
-                    // Exibir o select para estados com cidades cadastradas
-                    exibirSelectCidade(prefixo);
-
-                    cidadeSelect.find('option:not(:first)').remove();
-                    cidadeSelect.find('option:first').text('Selecione uma cidade');
-
-                    estadoCidades.forEach(function(cidade) {
-                        cidadeSelect.append($('<option>', {
-                            value: cidade.id,
-                            text: cidade.nome
-                        }));
-                    });
-
-                    cidadeSelect.prop('disabled', false);
-                    //console.log(`Carregadas ${estadoCidades.length} cidades para o estado ${estadoId} do array estático`);
-                }
-                // Se não temos cidades cadastradas, mas é um estado brasileiro, usar a API do IBGE
-                else if (usarAPIIBGE) {
-                    $.ajax({
-                        url: `https://servicodados.ibge.gov.br/api/v1/localidades/estados/${estadoId}/municipios`,
-                        method: 'GET',
-                        dataType: 'json',
-                        success: function(data) {
-                            // Certificar-se de exibir o select para estados brasileiros
-                            exibirSelectCidade(prefixo);
-
-                            cidadeSelect.find('option:not(:first)').remove();
-                            cidadeSelect.find('option:first').text('Selecione uma cidade');
-
-                            // Ordenar cidades por nome
-                            data.sort((a, b) => a.nome.localeCompare(b.nome));
-
-                            // Popular o select com todas as cidades retornadas
-                            data.forEach(function(cidade) {
-                                cidadeSelect.append($('<option>', {
-                                    value: cidade.id,
-                                    text: cidade.nome
-                                }));
-                            });
-
-                            cidadeSelect.prop('disabled', false);
-
-                            //console.log(`Carregadas ${data.length} cidades para o estado ${estadoId} via API IBGE`);
-                        },
-                        error: function(error) {
-                            //console.error('Erro ao carregar cidades do IBGE:', error);
-                            // Exibir campo de entrada de texto se a API falhar
-                            exibirInputCidade(prefixo, `Erro ao carregar cidades. Digite o nome da cidade manualmente.`);
-                        }
-                    });
-                }
-            } else {
-                // Se não temos cidades cadastradas e não é um estado brasileiro, exibir campo de entrada de texto
-                exibirInputCidade(prefixo, `Não há lista de cidades disponível para ${obterNomeEstado(estadoId, paisId)}. Digite o nome da cidade manualmente.`);
-            }
-
-            // Função para obter o nome do estado (para mensagem informativa)
-            function obterNomeEstado(estadoId, paisId) {
-                const paisEstados = estados[paisId] || [];
-                const estado = paisEstados.find(e => e.id === estadoId);
-                return estado ? estado.nome : 'este estado';
-            }
-
-            // Função para exibir o select de cidades
-            function exibirSelectCidade(prefixo) {
-                const container = $(`#${prefixo}_cidade_container`);
-
-                // Se já tem o select, não faz nada
-                if (container.find(`select#${prefixo}_cidade`).length > 0) {
-                    return;
-                }
-
-                // Remover mensagem informativa existente
-                container.next('.text-muted').remove();
-
-                // Remover o input se existir
-                container.find(`input#${prefixo}_cidade_texto`).remove();
-
-                // Recriar o select
-                container.empty();
-                container.append(`
-                    <select class="form-select cidade-select" id="${prefixo}_cidade" name="${prefixo}_cidade" required>
-                        <option value="" selected disabled>Selecione uma cidade</option>
-                    </select>
-                `);
-
-                // Atualizar a referência
-                cidadeSelect = $(`#${prefixo}_cidade`);
-            }
-
-            // Função para exibir o input de cidades
-            function exibirInputCidade(prefixo, mensagem) {
-                const container = $(`#${prefixo}_cidade_container`);
-
-                // Se já tem o input, não faz nada
-                if (container.find(`input#${prefixo}_cidade_texto`).length > 0) {
-                    return;
-                }
-
-                // Remover mensagem informativa existente
-                container.next('.text-muted').remove();
-
-                // Remover o select
-                container.empty();
-
-                // Criar o input
-                container.append(`
-                    <input type="text" class="form-control" id="${prefixo}_cidade_texto" 
-                           name="${prefixo}_cidade" placeholder="Digite o nome da cidade" required>
-                `);
-
-                // Exibir uma mensagem informativa
-                if (mensagem) {
-                    container.after(`<small class="text-muted">${mensagem}</small>`);
-                }
-            }
-        }
-
-        // Eventos para os selects de país, estado e cidade
+        // Eventos para os selects de país e estado
         $('.pais-select').on('change', function() {
             const paisId = $(this).val();
             const formGroup = $(this).closest('.card-body');
             const estadoSelect = formGroup.find('.estado-select');
-            const cidadeSelect = formGroup.find('.cidade-select');
             const prefixo = $(this).attr('id').split('_')[0]; // Obter prefixo (origem ou destino)
 
-            // Limpar campo de texto da cidade, se existir
-            const cidadeContainer = $(`#${prefixo}_cidade_container`);
-            if (cidadeContainer.length) {
-                cidadeContainer.find('.text-muted').remove();
-                cidadeContainer.next('.text-muted').remove();
-            }
+            // Limpar campo de cidade
+            $(`#${prefixo}_cidade`).val('');
 
             carregarEstados(paisId, estadoSelect);
-
-            // Limpar e desabilitar o campo de cidade, seja select ou input
-            if ($(`#${prefixo}_cidade`).length) {
-                $(`#${prefixo}_cidade`).prop('disabled', true);
-                $(`#${prefixo}_cidade`).val('');
-            }
-
-            if ($(`#${prefixo}_cidade_texto`).length) {
-                $(`#${prefixo}_cidade_texto`).val('');
-
-                // Se voltou para o Brasil, remover o input e voltar para select
-                if (paisId === 'BR') {
-                    // A função carregarCidades vai cuidar de criar o select
-                    const cidadeContainer = $(`#${prefixo}_cidade_container`);
-                    cidadeContainer.empty();
-                    cidadeContainer.append(`
-                        <select class="form-select cidade-select" id="${prefixo}_cidade" name="${prefixo}_cidade" required disabled>
-                            <option value="" selected disabled>Selecione um estado primeiro</option>
-                        </select>
-                    `);
-                }
-            }
         });
 
         $('.estado-select').on('change', function() {
             const estadoId = $(this).val();
-            const formGroup = $(this).closest('.card-body');
-            const cidadeSelect = formGroup.find('.cidade-select');
+            const prefixo = $(this).attr('id').split('_')[0]; // Obter prefixo (origem ou destino)
 
-            // Limpar mensagens informativas anteriores
-            const cidadeContainer = $(`#${prefixo}_cidade_container`);
-            if (cidadeContainer.length) {
-                cidadeContainer.next('.text-muted').remove();
-            }
-
-            carregarCidades(estadoId, cidadeSelect);
+            // Limpar campo de cidade quando estado mudar
+            $(`#${prefixo}_cidade`).val('');
         });
 
         // Função para buscar CEP via API ViaCEP (Brasil)
@@ -3128,7 +2941,7 @@
 
                                 // Aguardar o carregamento das cidades
                                 setTimeout(function() {
-                                    preencherCidade(prefixo, data.localidade);
+                                    $(`#${prefixo}_cidade`).val(data.localidade);
                                 }, 800);
                             }
                         }, 300);
@@ -3200,7 +3013,7 @@
                                 }
                             } else {
                                 // Tentamos novamente com o select agora preenchido
-                                preencherCidade(prefixo, nomeCidade);
+                                $(`#${prefixo}_cidade`).val(nomeCidade);
                             }
                         }, 500);
                     }
@@ -3769,20 +3582,66 @@
         });
 
         $('#btn-step-3-next').on('click', function() {
-            // Validar campos de origem e destino
-            if (!$('#origem_nome').val() || !$('#origem_endereco').val() || !$('#origem_cidade').val() ||
-                !$('#origem_estado').val() || !$('#origem_cep').val() || !$('#origem_pais').val() ||
-                !$('#origem_telefone').val() || !$('#origem_email').val()) {
-                showAlert('Por favor, preencha todos os campos de origem.', 'warning');
-                return;
+            // Função auxiliar para validar campo
+            function validarCampo(campoId, nomeCampo) {
+                const campo = $(campoId);
+                const valor = campo.val() ? campo.val().trim() : '';
+                if (!valor) {
+                    console.log(`❌ Campo ${nomeCampo} está vazio:`, campoId, 'Valor:', campo.val());
+                    return false;
+                }
+                console.log(`✅ Campo ${nomeCampo} está preenchido:`, campoId, 'Valor:', valor);
+                return true;
             }
-
-            if (!$('#destino_nome').val() || !$('#destino_endereco').val() || !$('#destino_cidade').val() ||
-                !$('#destino_estado').val() || !$('#destino_cep').val() || !$('#destino_pais').val() ||
-                !$('#destino_telefone').val() || !$('#destino_email').val()) {
-                showAlert('Por favor, preencha todos os campos de destino.', 'warning');
-                return;
+            
+            console.log('=== INICIANDO VALIDAÇÃO DOS CAMPOS ===');
+            
+            // Validar campos de origem
+            const camposOrigem = [
+                { id: '#origem_nome', nome: 'Nome de Origem' },
+                { id: '#origem_endereco', nome: 'Endereço de Origem' },
+                { id: '#origem_cidade', nome: 'Cidade de Origem' },
+                { id: '#origem_estado', nome: 'Estado de Origem' },
+                { id: '#origem_cep', nome: 'CEP de Origem' },
+                { id: '#origem_pais', nome: 'País de Origem' },
+                { id: '#origem_telefone', nome: 'Telefone de Origem' },
+                { id: '#origem_email', nome: 'Email de Origem' }
+            ];
+            
+            // Validar campos de destino
+            const camposDestino = [
+                { id: '#destino_nome', nome: 'Nome de Destino' },
+                { id: '#destino_endereco', nome: 'Endereço de Destino' },
+                { id: '#destino_cidade', nome: 'Cidade de Destino' },
+                { id: '#destino_estado', nome: 'Estado de Destino' },
+                { id: '#destino_cep', nome: 'CEP de Destino' },
+                { id: '#destino_pais', nome: 'País de Destino' },
+                { id: '#destino_telefone', nome: 'Telefone de Destino' },
+                { id: '#destino_email', nome: 'Email de Destino' }
+            ];
+            
+            console.log('=== VALIDANDO CAMPOS DE ORIGEM ===');
+            // Verificar campos de origem
+            for (let campo of camposOrigem) {
+                if (!validarCampo(campo.id, campo.nome)) {
+                    showAlert(`Por favor, preencha o campo: ${campo.nome}`, 'warning');
+                    $(campo.id).focus();
+                    return;
+                }
             }
+            
+            console.log('=== VALIDANDO CAMPOS DE DESTINO ===');
+            // Verificar campos de destino
+            for (let campo of camposDestino) {
+                if (!validarCampo(campo.id, campo.nome)) {
+                    showAlert(`Por favor, preencha o campo: ${campo.nome}`, 'warning');
+                    $(campo.id).focus();
+                    return;
+                }
+            }
+            
+            // Se chegou até aqui, todos os campos estão preenchidos
+            console.log('🎉 Todos os campos estão preenchidos corretamente!');
             
             // Abrir modal de revisão
             const modal = new bootstrap.Modal(document.getElementById('modal-revisao-final'));
@@ -3991,7 +3850,7 @@
                     //console.log(`Dados do CEP (${tipo}):`, data);
 
                     // Preenche os campos com os dados retornados
-                    $(campoEndereco).val(data.logradouro || '');
+                    $(campoEndereco).val(data.logradouro || data.rua || '');
                     $(campoCidade).val(data.localidade || data.cidade || '');
                     $(campoEstado).val(data.uf || data.estado || '');
 
@@ -4027,7 +3886,7 @@
                             if (data && data.cep) {
                                 preencherCampos(data);
                             } else {
-                                informarErro('CEP não encontrado');
+                                tentarGemini();
                             }
                         },
                         error: function(jqXHR, textStatus, errorThrown) {
@@ -4042,14 +3901,65 @@
                                     if (data && data.status === 200) {
                                         preencherCampos(data);
                                     } else {
-                                        informarErro('CEP não encontrado');
+                                        tentarGemini();
                                     }
                                 },
                                 error: function(jqXHR, textStatus, errorThrown) {
                                     //console.log('Erro na terceira tentativa:', textStatus, errorThrown);
-                                    informarErro('Não foi possível consultar o CEP');
+                                    tentarGemini();
                                 }
                             });
+                        }
+                    });
+                }
+
+                // Função para tentar consulta via Gemini
+                function tentarGemini() {
+                    //console.log('Tentando consulta via Gemini para o CEP:', cep);
+                    
+                    // Mostrar indicador de IA
+                    $(campoEndereco).attr('placeholder', 'Consultando IA...');
+                    
+                    $.ajax({
+                        url: '/gemini-cep-api.php',
+                        method: 'POST',
+                        data: JSON.stringify({
+                            cep: cep
+                        }),
+                        contentType: 'application/json',
+                        timeout: 10000, // 10 segundos de timeout para IA
+                        success: function(response) {
+                            if (response.success && response.tipo === 'cep') {
+                                const data = response.data;
+                                
+                                // Preencher campos com dados do Gemini
+                                $(campoEndereco).val(data.rua || '');
+                                $(campoCidade).val(data.cidade || '');
+                                $(campoEstado).val(data.estado || '');
+                                
+                                // Se tiver país, selecionar
+                                if (data.pais) {
+                                    const paisSelect = $(campoPais);
+                                    const paisOption = paisSelect.find(`option:contains("${data.pais}")`);
+                                    if (paisOption.length > 0) {
+                                        paisSelect.val(paisOption.val());
+                                    }
+                                }
+                                
+                                // Limpar placeholder
+                                $(campoEndereco).attr('placeholder', '');
+                                
+                                // Mostrar mensagem de sucesso da IA
+                                showAlert(`<strong>Sucesso!</strong> Endereço encontrado via IA para o CEP ${cep}.`, 'success');
+                                
+                                //console.log(`CEP (${tipo}) encontrado via Gemini e preenchido com sucesso`);
+                            } else {
+                                informarErro('CEP não encontrado nas APIs tradicionais nem via IA');
+                            }
+                        },
+                        error: function(jqXHR, textStatus, errorThrown) {
+                            //console.log('Erro na consulta Gemini:', textStatus, errorThrown);
+                            informarErro('CEP não encontrado');
                         }
                     });
                 }
@@ -4071,6 +3981,83 @@
                     showAlert(`<strong>Atenção:</strong> ${mensagem}. Por favor, preencha os dados manualmente.`, 'warning');
                 }
             }
+
+            // Função para consultar CEP via Gemini quando endereço, país, estado e cidade são preenchidos
+            function consultarCEPviaEndereco(tipo) {
+                const endereco = $(`#${tipo}_endereco`).val();
+                const pais = $(`#${tipo}_pais option:selected`).text();
+                const estado = $(`#${tipo}_estado option:selected`).text();
+                const cidade = $(`#${tipo}_cidade`).val();
+                
+                // Verificar se todos os campos necessários estão preenchidos
+                if (!endereco || !pais || !estado || !cidade) {
+                    return;
+                }
+                
+                // Verificar se o CEP já está preenchido
+                const cepAtual = $(`#${tipo}_cep`).val();
+                if (cepAtual && cepAtual.replace(/\D/g, '').length === 8) {
+                    return; // CEP já está preenchido
+                }
+                
+                // Mostrar indicador de IA no campo CEP
+                $(`#${tipo}_cep`).attr('placeholder', 'Consultando IA...');
+                
+                $.ajax({
+                    url: '/gemini-cep-api.php',
+                    method: 'POST',
+                    data: JSON.stringify({
+                        endereco: endereco,
+                        pais: pais,
+                        estado: estado,
+                        cidade: cidade
+                    }),
+                    contentType: 'application/json',
+                    timeout: 10000, // 10 segundos de timeout para IA
+                    success: function(response) {
+                        if (response.success && response.tipo === 'endereco') {
+                            const cep = response.data.cep;
+                            
+                            // Preencher o campo CEP
+                            $(`#${tipo}_cep`).val(cep);
+                            
+                            // Limpar placeholder
+                            $(`#${tipo}_cep`).attr('placeholder', '');
+                            
+                            // Mostrar mensagem de sucesso da IA
+                            showAlert(`<strong>Sucesso!</strong> CEP ${cep} encontrado via IA para o endereço informado.`, 'success');
+                            
+                            //console.log(`CEP (${tipo}) encontrado via Gemini: ${cep}`);
+                        } else {
+                            // Limpar placeholder
+                            $(`#${tipo}_cep`).attr('placeholder', '');
+                            
+                            // Mostrar mensagem informativa
+                            showAlert(`<strong>Informação:</strong> Não foi possível encontrar o CEP via IA. Preencha manualmente se necessário.`, 'info');
+                        }
+                    },
+                    error: function(jqXHR, textStatus, errorThrown) {
+                        //console.log('Erro na consulta Gemini para CEP:', textStatus, errorThrown);
+                        
+                        // Limpar placeholder
+                        $(`#${tipo}_cep`).attr('placeholder', '');
+                        
+                        // Mostrar mensagem informativa
+                        showAlert(`<strong>Informação:</strong> Não foi possível consultar o CEP via IA. Preencha manualmente se necessário.`, 'info');
+                    }
+                });
+            }
+
+            // Adicionar eventos para consultar CEP quando endereço, país, estado e cidade são preenchidos
+            // Para origem
+            $('#origem_endereco, #origem_pais, #origem_estado, #origem_cidade').on('change blur', function() {
+                setTimeout(() => consultarCEPviaEndereco('origem'), 500);
+            });
+            
+            // Para destino
+            $('#destino_endereco, #destino_pais, #destino_estado, #destino_cidade').on('change blur', function() {
+                setTimeout(() => consultarCEPviaEndereco('destino'), 500);
+            });
         });
     } // <- Fechamento da função inicializarApp
 

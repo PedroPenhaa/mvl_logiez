@@ -5,6 +5,7 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\ProdutosController;
 use App\Http\Controllers\EnvioController;
 use App\Http\Controllers\EtiquetaController;
+use App\Http\Controllers\GeminiCEPController;
 
 // Rota de teste simples
 Route::get('/teste', function() {
@@ -17,6 +18,9 @@ Route::get('/teste', function() {
 
 // Rota para consultar NCM via Gemini
 Route::post('consulta/gemini', [ProdutosController::class, 'consultarGemini'])->name('api.consulta.gemini');
+
+// Rota para consultar CEP/Endereço via Gemini
+Route::post('consulta/gemini-cep', [GeminiCEPController::class, 'consultar'])->name('api.consulta.gemini-cep');
 
 // Rota para consultar unidade tributária pelo NCM
 Route::get('/unidade-tributaria', [ProdutosController::class, 'consultarUnidadeTributaria'])->name('api.unidade-tributaria');
