@@ -511,12 +511,12 @@
                                             <input type="text" class="form-control text-center" id="busca-codigo" 
                                                    placeholder="NCM" maxlength="10">
                                         </div>
-                                        <div class="col-lg-3 col-md-3">
+                                       <!--  <div class="col-lg-3 col-md-3">
                                             <label for="produto-select" class="form-label fw-semibold">
                                                 <i class="fas fa-list me-1 text-primary"></i>Selecionar Produto
                                             </label>
                                             <select class="form-select" id="produto-select" style="width: 100%"></select>
-                                        </div>
+                                        </div> -->
                                         <div class="col-lg-2 col-md-12 d-flex align-items-end">
                                             <button type="button" class="btn btn-outline-secondary w-100" id="limpar-busca">
                                                 <i class="fas fa-eraser me-1"></i> Limpar
@@ -529,6 +529,19 @@
                                         <div class="alert alert-info border-0 bg-light">
                                             <i class="fas fa-info-circle me-2 text-primary"></i>
                                             Digite o nome de um produto para buscar
+                                        </div>
+                                    </div>
+
+                                    <!-- Descrição do Produto (Gemini) -->
+                                    <div class="mb-3 d-none" id="descricao-gemini-container">
+                                        <div class="alert alert-success border-0 bg-light">
+                                            <div class="d-flex align-items-start">
+                                                <i class="fas fa-robot me-2 text-success mt-1"></i>
+                                                <div class="flex-grow-1">
+                                                    <strong>Descrição do Produto (IA):</strong>
+                                                    <div id="descricao-gemini-text" class="mt-1 text-dark"></div>
+                                                </div>
+                                            </div>
                                         </div>
                                     </div>
 
@@ -977,6 +990,9 @@
 
         // Array para armazenar as caixas adicionadas
         let caixas = [];
+
+        // Variável para armazenar produto em confirmação
+        let produtoEmConfirmacao = null;
 
         // Variáveis para controle de paginação e busca
         let currentPage = 1;
@@ -1777,6 +1793,9 @@
 
             // Limpar a descrição anterior do Gemini
             ultimaDescricaoGemini = '';
+            
+            // Ocultar descrição do Gemini
+            $('#descricao-gemini-container').addClass('d-none');
 
             // Destruir a instância do Select2 para garantir que seja completamente reinicializado
             if ($('#produto-select').hasClass('select2-hidden-accessible')) {
@@ -1824,6 +1843,12 @@
                             // Definir a variável global com a resposta do Gemini
                             ultimaDescricaoGemini = response.raw_response || response.descricao;
                             
+                            // Mostrar a descrição do Gemini
+                            if (ultimaDescricaoGemini) {
+                                $('#descricao-gemini-text').html(ultimaDescricaoGemini.replace(/\n/g, '<br>'));
+                                $('#descricao-gemini-container').removeClass('d-none');
+                            }
+                            
                             $('#select-status').html(`
                                 <div class="alert alert-success border-0 bg-light">
                                     <i class="fas fa-check-circle me-2 text-success"></i>
@@ -1837,6 +1862,9 @@
                                 descricao: response.descricao
                             });
                         } else {
+                            // Ocultar descrição do Gemini em caso de erro
+                            $('#descricao-gemini-container').addClass('d-none');
+                            
                             $('#select-status').html(`
                                 <div class="alert alert-warning border-0 bg-light">
                                     <i class="fas fa-exclamation-triangle me-2 text-warning"></i>
@@ -2547,14 +2575,42 @@
 
         // Evento de adicionar produto
         $('#adicionar-produto').on('click', function() {
-            const produtoSelecionado = $('#produto-select').select2('data')[0];
+            // Verificar se o Select2 está inicializado e se há dados
+            let produtoSelecionado = null;
+            
+            try {
+                // Verificar se o elemento existe e se o Select2 está inicializado
+                if ($('#produto-select').length && $('#produto-select').hasClass('select2-hidden-accessible')) {
+                    const select2Data = $('#produto-select').select2('data');
+                    if (select2Data && select2Data.length > 0) {
+                        produtoSelecionado = select2Data[0];
+                    }
+                }
+            } catch (error) {
+                console.error('Erro ao acessar dados do Select2:', error);
+            }
+
+            // Se não conseguiu pegar do Select2, tentar pegar dos campos de busca
+            if (!produtoSelecionado) {
+                const descricao = $('#busca-descricao').val();
+                const codigo = $('#busca-codigo').val();
+                
+                if (descricao && codigo) {
+                    produtoSelecionado = {
+                        id: codigo,
+                        codigo: codigo,
+                        text: descricao,
+                        nome: descricao
+                    };
+                }
+            }
 
             if (produtoSelecionado && produtoSelecionado.id) {
                 //console.log("Produto selecionado:", produtoSelecionado);
 
                 const id = produtoSelecionado.id;
                 const codigo = produtoSelecionado.codigo || id;
-                const nome = produtoSelecionado.text;
+                const nome = produtoSelecionado.text || produtoSelecionado.nome;
                 const peso = produtoSelecionado.peso || 0.5;
                 const valorInformado = parseFloat($('#produto-valor').val()) || 0;
                 const unidade = $('#produto-unidade').val();
@@ -2657,6 +2713,10 @@
             $('#produto-quantidade').val(1);
             $('#produto-valor').val(0.00);
             $('#produto-unidade').val('');
+
+            // Limpar descrição do Gemini
+            ultimaDescricaoGemini = '';
+            $('#descricao-gemini-container').addClass('d-none');
 
             // Limpar mensagem de status
             $('#select-status').text('Digite um produto para buscar');
