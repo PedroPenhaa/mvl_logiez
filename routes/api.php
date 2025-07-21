@@ -6,21 +6,16 @@ use App\Http\Controllers\ProdutosController;
 use App\Http\Controllers\EnvioController;
 use App\Http\Controllers\EtiquetaController;
 
-/*
-|--------------------------------------------------------------------------
-| API Routes
-|--------------------------------------------------------------------------
-|
-| Here is where you can register API routes for your application. These
-| routes are loaded by the RouteServiceProvider and all of them will
-| be assigned to the "api" middleware group. Make something great!
-|
-*/
-
-Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
-    return $request->user();
+// Rota de teste simples
+Route::get('/teste', function() {
+    return response()->json([
+        'success' => true,
+        'message' => 'API funcionando!',
+        'timestamp' => now()
+    ]);
 });
 
+// Rota para consultar NCM via Gemini
 Route::post('consulta/gemini', [ProdutosController::class, 'consultarGemini'])->name('api.consulta.gemini');
 
 // Rota para consultar unidade tributária pelo NCM

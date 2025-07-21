@@ -1801,11 +1801,12 @@
 
                 // Chama o endpoint para consultar o Gemini
                 $.ajax({
-                    url: '{{ route("api.consulta.gemini") }}',
+                    url: 'http://localhost:8080/gemini-consulta.php',
                     method: 'POST',
-                    data: {
+                    data: JSON.stringify({
                         produto: buscaDescricao
-                    },
+                    }),
+                    contentType: 'application/json',
                     dataType: 'json',
                     beforeSend: function() {
                         //console.log("Enviando consulta para o Gemini para o produto:", buscaDescricao);
@@ -1814,57 +1815,34 @@
                         // Ocultar indicador de carregamento
                         $('#busca-descricao').removeClass('loading');
 
-                        //console.log("Resposta completa da API:", response);
-
                         if (response.success) {
-                            //console.log("Consulta bem-sucedida. Resposta do Gemini:", response.resultado);
+                            // Preencher os campos diretamente com o que veio do backend
+                            $('#busca-codigo').val(response.ncm);
+                            $('#produto-unidade').val(response.unidade);
+                            $('#busca-descricao').val(response.descricao);
+                            
+                            // Definir a variável global com a resposta do Gemini
+                            ultimaDescricaoGemini = response.raw_response || response.descricao;
+                            
+                            $('#select-status').html(`
+                                <div class="alert alert-success border-0 bg-light">
+                                    <i class="fas fa-check-circle me-2 text-success"></i>
+                                    NCM identificado: <strong>${response.ncm}</strong>. Unidade: <strong>${response.unidade}</strong>. Buscando produtos...
+                                </div>
+                            `);
 
-                            // Extrair o NCM e a unidade da resposta
-                            const ncmExtraido = extrairNCM(response.resultado);
-                            const unidadeExtraida = extrairUnidade(response.resultado);
-
-                            // Armazenar a descrição completa do Gemini
-                            ultimaDescricaoGemini = response.resultado;
-
-                            if (ncmExtraido) {
-                                //console.log("NCM extraído:", ncmExtraido);
-                                //console.log("Unidade extraída:", unidadeExtraida);
-                                $('#select-status').html(`
-                                    <div class="alert alert-success border-0 bg-light">
-                                        <i class="fas fa-check-circle me-2 text-success"></i>
-                                        NCM identificado: <strong>${ncmExtraido}</strong>. Unidade: <strong>${unidadeExtraida}</strong>. Buscando produtos...
-                                    </div>
-                                `);
-
-                                // Atualizar o campo NCM e unidade
-                                $('#busca-codigo').val(ncmExtraido);
-                                $('#produto-unidade').val(unidadeExtraida);
-
-                                // Buscar produtos pelo NCM extraído
-                                buscarProdutos({
-                                    codigo: ncmExtraido,
-                                    descricao: buscaDescricao
-                                });
-                            } else {
-                                $('#select-status').html(`
-                                    <div class="alert alert-warning border-0 bg-light">
-                                        <i class="fas fa-exclamation-triangle me-2 text-warning"></i>
-                                        Não foi possível identificar o NCM. Tentando busca direta...
-                                    </div>
-                                `);
-                                // Continuar com a busca normal
-                                buscarProdutos({
-                                    descricao: buscaDescricao
-                                });
-                            }
+                            // Buscar produtos pelo NCM retornado
+                            buscarProdutos({
+                                codigo: response.ncm,
+                                descricao: response.descricao
+                            });
                         } else {
                             $('#select-status').html(`
                                 <div class="alert alert-warning border-0 bg-light">
                                     <i class="fas fa-exclamation-triangle me-2 text-warning"></i>
-                                    Erro na consulta da IA. Tentando busca direta...
+                                    Erro na consulta da IA: ${response.error}. Tentando busca direta...
                                 </div>
                             `);
-                            //console.error("Erro na consulta Gemini:", response.error);
                             // Continuar com a busca normal
                             buscarProdutos({
                                 descricao: buscaDescricao

@@ -16,6 +16,7 @@ use App\Http\Controllers\WebhookController;
 use Illuminate\Support\Facades\Log;
 use App\Http\Controllers\PaymentController;
 use App\Http\Controllers\EtiquetaController;
+use Illuminate\Support\Facades\Artisan;
 
 /*
 |--------------------------------------------------------------------------
@@ -78,8 +79,10 @@ Route::prefix('api')->name('api.')->group(function () {
     // Produtos da Receita
     Route::get('/produtos', [ProdutosController::class, 'getProdutos'])->name('produtos.get');
     
-    // Consulta de NCM via Gemini
-    Route::post('/consulta-gemini', [ProdutosController::class, 'consultarGemini'])->name('consulta.gemini');
+    // Consulta de NCM via Gemini (sem CSRF)
+    Route::post('/consulta-gemini', [ProdutosController::class, 'consultarGemini'])
+        ->name('consulta.gemini')
+        ->withoutMiddleware(['web']);
     
     // Consulta de unidade tributária por NCM
     Route::get('/unidade-tributaria', [ProdutosController::class, 'consultarUnidadeTributaria'])->name('unidade-tributaria');
@@ -1043,8 +1046,58 @@ Route::get('/cpf-test/{cpf?}', function ($cpf = null) {
     }
 });
 
+// Rota de teste simples
+Route::get('/teste-rota', function() {
+    return response()->json([
+        'success' => true,
+        'message' => 'Rota web funcionando!',
+        'timestamp' => now()
+    ]);
+})->name('teste.rota');
+
+// Rota de teste para verificar se a API está funcionando
+Route::post('/teste-api', function() {
+    return response()->json([
+        'success' => true,
+        'message' => 'API funcionando corretamente',
+        'timestamp' => now()
+    ]);
+})->name('teste.api')->withoutMiddleware(['web']);
+
 // Rotas tradicionais para navegação do menu lateral
 Route::get('/envio', [App\Http\Controllers\SectionController::class, 'envio'])->name('envio');
 Route::get('/pagamento', [App\Http\Controllers\SectionController::class, 'pagamento'])->name('pagamento');
 Route::get('/etiqueta', [App\Http\Controllers\SectionController::class, 'etiqueta'])->name('etiqueta');
 Route::get('/perfil', [App\Http\Controllers\SectionController::class, 'perfil'])->name('perfil');
+
+// Rota para consultar Gemini via comando Artisan
+Route::post('/gemini-consulta', function(Request $request) {
+    $produto = $request->input('produto');
+    
+    if (!$produto) {
+        return response()->json([
+            'success' => false,
+            'error' => 'Produto não informado'
+        ]);
+    }
+    
+    // Executar o comando Artisan
+    $result = Artisan::call('consulta:gemini', [
+        'produto' => $produto
+    ]);
+    
+    $output = Artisan::output();
+    
+    // Decodificar a resposta JSON
+    $data = json_decode($output, true);
+    
+    if (!$data || !isset($data['success'])) {
+        return response()->json([
+            'success' => false,
+            'error' => 'Erro na execução do comando',
+            'output' => $output
+        ]);
+    }
+    
+    return response()->json($data);
+})->name('gemini.consulta');

@@ -3,9 +3,12 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\File;
-use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Artisan;
+use Illuminate\Support\Facades\File;
+use App\Models\Produto;
+use App\Models\UnidadeTributaria;
 
 class ProdutosController extends Controller
 {
@@ -209,7 +212,6 @@ class ProdutosController extends Controller
      */
     public function consultarGemini(Request $request)
     {
-        // Validar o request
         $request->validate([
             'produto' => 'required|string|min:2|max:255'
         ]);
@@ -217,125 +219,46 @@ class ProdutosController extends Controller
         $produto = $request->input('produto');
         
         try {
-            // Primeiro método: Usar o Kernel do Artisan diretamente (mais confiável)
-            try {
-                Log::info('Usando o Kernel para executar o comando ConsultaGemini', [
-                    'produto' => $produto
-                ]);
-                
-                $output = new \Symfony\Component\Console\Output\BufferedOutput;
-                $exitCode = \Illuminate\Support\Facades\Artisan::call('consulta:gemini', [
-                    '--produto' => $produto
-                ], $output);
-                
-                $resultado = $output->fetch();
-                
-                if ($exitCode === 0) {
-                    Log::info('Comando ConsultaGemini executado com sucesso via Kernel', [
-                        'resultado' => $resultado
-                    ]);
-                    
-                    return response()->json([
-                        'success' => true,
-                        'resultado' => $resultado,
-                        'metodo' => 'kernel'
-                    ]);
-                }
-                
-                // Se não funcionou, registre o erro e tente o método alternativo
-                Log::warning('Falha ao executar comando via Kernel, tentando método alternativo', [
-                    'exit_code' => $exitCode,
-                    'output' => $resultado
-                ]);
-                
-            } catch (\Exception $e) {
-                Log::warning('Exceção no método Kernel', [
-                    'mensagem' => $e->getMessage()
-                ]);
-                // Continuar com o método alternativo
-            }
-            
-            // Método alternativo: Execução via shell
-            $saida = [];
-            $returnCode = 0;
-            
-            // Usar o caminho absoluto para o arquivo artisan
-            $artisanPath = base_path('artisan');
-            $command = "php {$artisanPath} consulta:gemini --produto=" . escapeshellarg($produto);
-            
-            // Loggar o comando para diagnóstico
-            Log::info('Executando comando:', [
-                'comando' => $command,
-                'artisan_path_exists' => file_exists($artisanPath)
+            // Usar o comando Artisan que já funciona
+            $result = Artisan::call('consulta:gemini', [
+                'produto' => $produto
             ]);
             
-            // Executar o comando
-            exec($command, $saida, $returnCode);
+            $output = Artisan::output();
             
-            // Verificar se o comando foi bem-sucedido
-            if ($returnCode !== 0) {
-                Log::error('Erro ao executar o comando ConsultaGemini', [
-                    'produto' => $produto,
-                    'saida' => $saida,
-                    'codigo_retorno' => $returnCode,
-                    'comando' => $command,
-                    'diretorio_atual' => getcwd()
-                ]);
-                
+            // Decodificar a resposta JSON do comando
+            $data = json_decode($output, true);
+            
+            if (!$data || !isset($data['success'])) {
+                throw new \Exception('Resposta inválida do comando Gemini');
+            }
+            
+            if (!$data['success']) {
                 return response()->json([
                     'success' => false,
-                    'error' => 'Erro ao consultar NCM via Gemini',
-                    'saida' => $saida,
-                    'codigo' => $returnCode,
-                    'debug_info' => [
-                        'artisan_path' => $artisanPath,
-                        'artisan_exists' => file_exists($artisanPath),
-                        'current_dir' => getcwd()
-                    ]
-                ], 500);
+                    'error' => $data['error'] ?? 'Erro na consulta'
+                ], 400);
             }
             
-            // Juntar a saída em uma string
-            $resultado = implode("\n", $saida);
-            
-            // Verificar se o resultado contém informações úteis
-            $resultadoUtil = false;
-            foreach ($saida as $linha) {
-                if (strpos($linha, 'NCM') !== false || preg_match('/\d{4}\.\d{2}/', $linha)) {
-                    $resultadoUtil = true;
-                    break;
-                }
-            }
-            
-            if (!$resultadoUtil) {
-                Log::warning('Resultado do Gemini não parece conter um NCM', [
-                    'produto' => $produto,
-                    'resultado' => $resultado
-                ]);
-            }
-            
-            // Log da resposta para debug
-            Log::info('Resposta do comando ConsultaGemini', [
-                'produto' => $produto,
-                'resultado' => $resultado
-            ]);
+            // Extrair NCM, descrição e unidade da resposta
+            $ncm = $data['ncm'] ?? '';
+            $descricao = $data['descricao'] ?? $produto;
+            $unidade = $data['unidade'] ?? 'UN';
             
             return response()->json([
                 'success' => true,
-                'resultado' => $resultado,
-                'metodo' => 'exec'
+                'ncm' => $ncm,
+                'descricao' => $descricao,
+                'unidade' => $unidade,
+                'produto_original' => $produto
             ]);
+            
         } catch (\Exception $e) {
-            Log::error('Exceção ao consultar NCM via Gemini', [
-                'produto' => $produto,
-                'mensagem' => $e->getMessage(),
-                'arquivo' => $e->getFile(),
-                'linha' => $e->getLine()
-            ]);
+            Log::error('Erro na consulta Gemini: ' . $e->getMessage());
             
             return response()->json([
                 'success' => false,
-                'error' => 'Erro ao consultar NCM: ' . $e->getMessage()
+                'error' => 'Erro interno: ' . $e->getMessage()
             ], 500);
         }
     }
