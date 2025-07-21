@@ -712,7 +712,7 @@
                 <div id="step-3" data-step="3" class="d-none">
                     <div class="row mb-4">
                         <div class="col-md-6 mb-4">
-                            <!-- Bloco de origem (copiado do original) -->
+                            <!-- Bloco de origem -->
                             <div class="card border-light shadow-sm">
                                 <div class="card-header bg-light" style="background: linear-gradient(90deg, #6f42c1 0%, #a084e8 100%) !important; color: #fff;">
                                     <i class="fas fa-map-marker-alt me-2"></i>
@@ -766,7 +766,9 @@
                                     </div>
                                 </div>
                             </div>
-                            <!-- Bloco de destino (copiado do original) -->
+                        </div>
+                        <div class="col-md-6 mb-4">
+                            <!-- Bloco de destino -->
                             <div class="card border-light shadow-sm">
                                 <div class="card-header bg-light" style="background: linear-gradient(90deg, #6f42c1 0%, #a084e8 100%) !important; color: #fff;">
                                     <i class="fas fa-map-marker me-2"></i>
@@ -820,9 +822,6 @@
                                     </div>
                                 </div>
                             </div>
-                        </div>
-                        <div class="col-md-6 mb-4">
-                            <!-- ... cole aqui o HTML do bloco de destino ... -->
                         </div>
                     </div>
                     <div class="text-end">
