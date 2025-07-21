@@ -251,14 +251,14 @@ class SectionController extends Controller
                 'peso' => 'required|numeric|min:0',
             ]);
 
-            // Calcular peso cúbico (cm³ / 6000)
-            $pesoCubico = ($request->altura * $request->largura * $request->comprimento) / 6000;
+            // Calcular peso cúbico (cm³ / 5000) - usando o mesmo divisor do comando que funciona
+            $pesoCubico = ($request->altura * $request->largura * $request->comprimento) / 5000;
             $peso = $request->peso;
             $pesoUtilizado = max($pesoCubico, $peso);
 
             // Obter cotação do dólar atual
             $cotacaoDolar = $this->obterCotacaoDolar();
-            $valorDolar = $cotacaoDolar['cotacao'] ?? 5.00; // Valor padrão caso a API falhe
+            $valorDolar = $cotacaoDolar['cotacao'] ?? 5.71; // Valor padrão caso a API falhe
 
             // Tentar obter cotação real da FedEx
             try {
@@ -297,9 +297,11 @@ class SectionController extends Controller
                         $resultado['cotacoesFedEx'] = $cotacoesProcessadas;
                         $resultado['cotacaoDolar'] = $valorDolar;
                         
-                        // Salvar cotação no cache e obter hash
-                        $hash = $this->saveCotacaoToCache($request, $resultado);
-                        return response()->json(array_merge($resultado, ['hash' => $hash]));
+                        // Retornar resposta no formato correto
+                        return response()->json([
+                            'status' => 'success',
+                            'data' => $resultado
+                        ]);
                     }
                 }
             } catch (\Exception $e) {
@@ -310,27 +312,27 @@ class SectionController extends Controller
             $cotacoes = [
                 [
                     'servico' => 'FedEx International Priority',
-                    'servicoTipo' => 'PRIORITY',
-                    'valorTotal' => number_format($pesoUtilizado * 35, 2, '.', ''),
-                    'moeda' => 'USD',
-                    'tempoEntrega' => '2-3 dias úteis',
-                    'valorTotalBRL' => number_format($pesoUtilizado * 35 * $valorDolar, 2, ',', '.')
+                    'servicoTipo' => 'INTERNATIONAL_PRIORITY',
+                    'valorTotal' => $pesoUtilizado * 35 * $valorDolar,
+                    'moeda' => 'BRL',
+                    'tempoEntrega' => '3-5 dias úteis',
+                    'dataEntrega' => date('Y-m-d', strtotime('+4 days'))
                 ],
                 [
                     'servico' => 'FedEx International Economy',
-                    'servicoTipo' => 'ECONOMY',
-                    'valorTotal' => number_format($pesoUtilizado * 25, 2, '.', ''),
-                    'moeda' => 'USD',
+                    'servicoTipo' => 'INTERNATIONAL_ECONOMY',
+                    'valorTotal' => $pesoUtilizado * 25 * $valorDolar,
+                    'moeda' => 'BRL',
                     'tempoEntrega' => '5-7 dias úteis',
-                    'valorTotalBRL' => number_format($pesoUtilizado * 25 * $valorDolar, 2, ',', '.')
+                    'dataEntrega' => date('Y-m-d', strtotime('+6 days'))
                 ],
                 [
                     'servico' => 'FedEx International First',
-                    'servicoTipo' => 'FIRST',
-                    'valorTotal' => number_format($pesoUtilizado * 45, 2, '.', ''),
-                    'moeda' => 'USD',
-                    'tempoEntrega' => '1-2 dias úteis',
-                    'valorTotalBRL' => number_format($pesoUtilizado * 45 * $valorDolar, 2, ',', '.')
+                    'servicoTipo' => 'INTERNATIONAL_FIRST',
+                    'valorTotal' => $pesoUtilizado * 45 * $valorDolar,
+                    'moeda' => 'BRL',
+                    'tempoEntrega' => '1-3 dias úteis',
+                    'dataEntrega' => date('Y-m-d', strtotime('+2 days'))
                 ]
             ];
 
@@ -346,17 +348,18 @@ class SectionController extends Controller
                 'cotacaoDolar' => $valorDolar
             ];
 
-            // Salvar cotação simulada no cache
-            $hash = $this->saveCotacaoToCache($request, $resultado);
-            
-            return response()->json(array_merge($resultado, ['hash' => $hash]));
+            // Retornar resposta no formato correto
+            return response()->json([
+                'status' => 'success',
+                'data' => $resultado
+            ]);
 
         } catch (\Exception $e) {
             \Log::error('Erro ao calcular cotação: ' . $e->getMessage());
+            
             return response()->json([
-                'success' => false,
-                'message' => 'Erro ao processar sua cotação. Por favor, tente novamente.',
-                'error_details' => $e->getMessage()
+                'status' => 'error',
+                'message' => 'Erro ao calcular cotação: ' . $e->getMessage()
             ], 500);
         }
     }

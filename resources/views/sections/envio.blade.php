@@ -358,6 +358,40 @@
         min-width: 50px;
         max-width: 60px;
     }
+    
+    /* Estilos para cards de serviço de entrega */
+    .servico-option {
+        cursor: pointer;
+        transition: all 0.3s ease;
+        border: 2px solid #e9ecef;
+    }
+    
+    .servico-option:hover {
+        border-color: var(--roxo-principal);
+        box-shadow: 0 4px 12px rgba(111, 66, 193, 0.15);
+        transform: translateY(-2px);
+    }
+    
+    .servico-option.selected {
+        border-color: var(--roxo-principal);
+        background-color: rgba(111, 66, 193, 0.05);
+        box-shadow: 0 4px 12px rgba(111, 66, 193, 0.2);
+    }
+    
+    .servico-option .price-main {
+        font-size: 1.4rem;
+        color: var(--roxo-principal);
+        font-weight: 600;
+    }
+    
+    .servico-option .card-title {
+        color: var(--roxo-principal);
+        font-weight: 600;
+    }
+    
+    .servico-option .text-muted {
+        font-size: 0.875rem;
+    }
 </style>
 @endsection
 
@@ -709,6 +743,7 @@
                     <input type="hidden" id="largura-hidden" name="largura">
                     <input type="hidden" id="comprimento-hidden" name="comprimento">
                     <input type="hidden" id="peso-caixa-hidden" name="peso_caixa">
+                    <input type="hidden" id="servico_entrega" name="servico_entrega">
 
                     <!-- Botão de Continuar -->
                     <div class="row">
@@ -848,10 +883,11 @@
                                     <h5 class="mb-0" style="color: white;">Serviço de Entrega FedEx</h5>
                                 </div>
                                 <div class="card-body">
-                                    <!-- Bloco de serviços (copiado do original) -->
-                                    <!-- ... cole aqui o HTML do bloco de serviços ... -->
-                                    <div class="text-end mt-3">
-                                        <button type="button" class="btn btn-primary" id="btn-step-5-next">Continuar</button>
+                                    <div class="text-center py-5">
+                                        <div class="spinner-border text-primary" role="status">
+                                            <span class="visually-hidden">Carregando...</span>
+                                        </div>
+                                        <p class="mt-3 text-muted">Carregando opções de serviço...</p>
                                     </div>
                                 </div>
                             </div>
@@ -3488,28 +3524,21 @@
         let etapaAtual = 1;
         const totalEtapas = 6;
 
+        // Função para mostrar uma etapa específica
         function mostrarEtapa(etapa) {
             // Esconder todas as etapas
-            for (let i = 1; i <= totalEtapas; i++) {
-                $('#step-' + i).addClass('d-none');
-            }
+            $('[id^="step-"]').addClass('d-none');
             
             // Mostrar a etapa atual
             $('#step-' + etapa).removeClass('d-none');
             
-            // Atualizar progress bar
-            const percent = (etapa / totalEtapas) * 100;
-            $('#wizard-progress-bar').css('width', percent + '%');
-            $('#wizard-progress-bar').attr('aria-valuenow', etapa);
-            $('#wizard-progress-label').text('Etapa ' + etapa + ' de ' + totalEtapas);
+            // Atualizar progresso do wizard
+            atualizarProgressoWizard(etapa);
             
-            // Gerenciar o card informativo
-            gerenciarCardInformativo(etapa);
-            
-            // Rolar para o topo da página
+            // Scroll suave para o topo
             $('html, body').animate({
                 scrollTop: 0
-            }, 300);
+            }, 500);
         }
 
         // Função para gerenciar o card informativo
@@ -3652,17 +3681,75 @@
         });
 
         $('#btn-confirmar-revisao').on('click', function() {
-            const modal = bootstrap.Modal.getInstance(document.getElementById('modal-revisao-final'));
-            modal.hide();
-            etapaAtual = 5;
-            mostrarEtapa(etapaAtual);
+            // Mostrar loader
+            showAlert('<i class="fas fa-spinner fa-spin me-2"></i>Calculando cotações de envio...', 'info');
+            
+            // Coletar dados para cotação
+            const dadosCotacao = {
+                origem: $('#origem_cep').val(),
+                destino: $('#destino_cep').val(),
+                altura: parseFloat($('#altura').val()),
+                largura: parseFloat($('#largura').val()),
+                comprimento: parseFloat($('#comprimento').val()),
+                peso: parseFloat($('#peso_caixa').val()),
+                _token: $('meta[name="csrf-token"]').attr('content')
+            };
+            
+            // Fazer requisição de cotação
+            $.ajax({
+                url: '/calcular-cotacao',
+                method: 'POST',
+                data: dadosCotacao,
+                success: function(response) {
+                    // Esconder alerta de loading
+                    $('#alert-container').empty();
+                    
+                    if (response.status === 'success' && response.data.success) {
+                        // Armazenar cotações na sessão ou variável global
+                        window.cotacoesFedEx = response.data.cotacoesFedEx;
+                        window.dadosCotacao = response.data;
+                        
+                        // Fechar modal de revisão
+                        const modal = bootstrap.Modal.getInstance(document.getElementById('modal-revisao-final'));
+                        modal.hide();
+                        
+                        // Ir para etapa 5 (seleção de serviço)
+                        etapaAtual = 5;
+                        mostrarEtapa(etapaAtual);
+                        
+                        // Preencher as opções de serviço
+                        preencherOpcoesServico(response.data.cotacoesFedEx);
+                    } else {
+                        showAlert('Erro ao calcular cotação: ' + (response.message || 'Serviço indisponível'), 'danger');
+                    }
+                },
+                error: function(xhr) {
+                    // Esconder alerta de loading
+                    $('#alert-container').empty();
+                    
+                    let errorMessage = 'Erro ao calcular cotação';
+                    if (xhr.responseJSON && xhr.responseJSON.message) {
+                        errorMessage = xhr.responseJSON.message;
+                    }
+                    showAlert(errorMessage, 'danger');
+                }
+            });
         });
 
         $('#btn-step-5-next').on('click', function() {
             // Validar se um serviço foi selecionado
-            if (!$('#servico_entrega').val()) {
+            if (!window.servicoSelecionado) {
                 showAlert('Por favor, selecione um serviço de entrega.', 'warning');
                 return;
+            }
+            
+            // Armazenar o serviço selecionado no formulário
+            $('#servico_entrega').val(window.servicoSelecionado.tipo);
+            
+            // Adicionar informações do serviço selecionado ao resumo
+            const servicoInfo = window.cotacoesFedEx.find(c => c.servicoTipo === window.servicoSelecionado.tipo);
+            if (servicoInfo) {
+                window.servicoInfo = servicoInfo;
             }
             
             etapaAtual = 6;
@@ -4107,6 +4194,81 @@
         }
         // ... resto do código ...
     });
+
+    // Função para preencher as opções de serviço com as cotações
+    function preencherOpcoesServico(cotacoes) {
+        const container = $('#step-5 .card-body');
+        
+        // Limpar conteúdo anterior
+        container.empty();
+        
+        // Adicionar cabeçalho
+        container.append(`
+            <div class="alert alert-info mb-4">
+                <i class="fas fa-info-circle me-2"></i>
+                <strong>Selecione o serviço de entrega FedEx</strong><br>
+                Abaixo estão as opções disponíveis para seu envio. Clique em uma opção para selecioná-la.
+            </div>
+        `);
+        
+        // Criar cards para cada cotação
+        cotacoes.forEach(function(cotacao, index) {
+            const cardHtml = `
+                <div class="servico-option card mb-3" data-servico="${cotacao.servicoTipo}" data-index="${index}">
+                    <div class="card-body d-flex justify-content-between align-items-center">
+                        <div class="servico-info">
+                            <h6 class="card-title mb-1">${cotacao.servico}</h6>
+                            <p class="text-muted mb-0">
+                                <i class="fas fa-clock me-1"></i>${cotacao.tempoEntrega}
+                            </p>
+                        </div>
+                        <div class="price-info">
+                            <div class="price-main">R$ ${cotacao.valorTotal}</div>
+                        </div>
+                    </div>
+                </div>
+            `;
+            container.append(cardHtml);
+        });
+        
+        // Adicionar evento de clique nos cards
+        $('.servico-option').on('click', function() {
+            $('.servico-option').removeClass('selected');
+            $(this).addClass('selected');
+            
+            const servicoTipo = $(this).data('servico');
+            const index = $(this).data('index');
+            window.servicoSelecionado = {
+                tipo: servicoTipo,
+                index: index
+            };
+        });
+        
+        // Adicionar botão de continuar
+        container.append(`
+            <div class="text-end mt-4">
+                <button type="button" class="btn btn-primary btn-lg" id="btn-step-5-next" disabled>
+                    <i class="fas fa-arrow-right me-2"></i>Continuar
+                </button>
+            </div>
+        `);
+        
+        // Habilitar botão quando um serviço for selecionado
+        $('.servico-option').on('click', function() {
+            $('#btn-step-5-next').prop('disabled', false);
+        });
+    }
+
+    // Função para atualizar o progresso do wizard
+    function atualizarProgressoWizard(etapa) {
+        const totalEtapas = 6; // Agora são 6 etapas
+        const progresso = (etapa / totalEtapas) * 100;
+        
+        $('#wizard-progress-bar').css('width', progresso + '%');
+        $('#wizard-progress-bar').attr('aria-valuenow', etapa);
+        $('#wizard-progress-label').text('Etapa ' + etapa + ' de ' + totalEtapas);
+        $('#info-card-badge').text('Etapa ' + etapa + ' de ' + totalEtapas);
+    }
 </script>
 
 <!-- Seção para exibir logs de depuração -->

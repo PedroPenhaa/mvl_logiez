@@ -11,6 +11,8 @@ class TestFedexCotacao extends Command
     /**
      * The name and signature of the console command.
      *
+     * 
+     * 
      * @var string
      */
     protected $signature = 'fedex:test-cotacao';
@@ -38,6 +40,7 @@ class TestFedexCotacao extends Command
         $comprimento = 20;       // 20 cm
         $peso = 5;               // 5 kg
 
+    
         $this->info("📦 Dados do pacote:");
         $this->info("Origem: $origem");
         $this->info("Destino: $destino");
