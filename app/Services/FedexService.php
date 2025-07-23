@@ -17,14 +17,14 @@ class FedexService
     
     public function __construct()
     {
-        $this->apiUrl = config('services.fedex.api_url', "https://apis-sandbox.fedex.com");
-        $this->clientId = config('services.fedex.client_id', "l7517499d73dc1470c8f56fe055c45113c");
-        $this->clientSecret = config('services.fedex.client_secret', "41d8172c88c345cca8f47695bc97a5cd");
-        $this->shipperAccount = config('services.fedex.shipper_account', "740561073");
+        $this->apiUrl = config('services.fedex.api_url', "https://apis.fedex.com");
+        $this->clientId = config('services.fedex.client_id');
+        $this->clientSecret = config('services.fedex.client_secret');
+        $this->shipperAccount = config('services.fedex.shipper_account');
 
         // Registrar ambiente em uso para diagnóstico
         Log::info('FedexService inicializado', [
-            'ambiente' => config('services.fedex.use_production', false) ? 'Produção' : 'Homologação',
+            'ambiente' => 'Produção',
             'apiUrl' => $this->apiUrl,
             'client_id' => substr($this->clientId, 0, 5) . '...' . substr($this->clientId, -5)
         ]);

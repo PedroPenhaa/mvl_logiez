@@ -94,11 +94,11 @@ class TestFedexEnvio extends Command
         $this->info('⏳ Enviando requisição para criar envio...');
         
         try {
-            // Usar as credenciais que funcionaram na cotação
-            $apiUrl = "https://apis-sandbox.fedex.com";
-            $clientId = "l774cb4034be8346eb9e3a476a633764e3";
-            $clientSecret = "1e939e0d9e8747eb92319e28970b5bc0";
-            $shipperAccount = "740561073";
+            // Usar as credenciais de produção configuradas no sistema
+            $apiUrl = config('services.fedex.api_url');
+            $clientId = config('services.fedex.client_id');
+            $clientSecret = config('services.fedex.client_secret');
+            $shipperAccount = config('services.fedex.shipper_account');
             
             // Obter token de autenticação
             $authUrl = $apiUrl . '/oauth/token';

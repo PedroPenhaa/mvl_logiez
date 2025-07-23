@@ -50,12 +50,6 @@
 
 ### 🎯 Recomendações
 
-#### Para Desenvolvimento/Testes
-```bash
-# Usar ambiente de homologação
-FEDEX_USE_PRODUCTION=false
-```
-
 #### Para Produção
 1. **Confirmar com a FedEx:**
    - IP do servidor liberado
@@ -101,7 +95,7 @@ php artisan fedex:test-etiqueta {codigo}
 
 ### 🎉 Conclusão
 
-A API da FedEx está **configurada corretamente** com:
+A API da FedEx está **configurada corretamente** para funcionar exclusivamente em produção com:
 - ✅ Credenciais de produção implementadas
 - ✅ Separação de credenciais por operação
 - ✅ Endpoints corretos configurados
@@ -119,4 +113,4 @@ Em caso de problemas:
 1. Execute `php artisan fedex:diagnostic` para diagnóstico
 2. Verifique os logs em `storage/logs/laravel.log`
 3. Confirme as permissões com a FedEx
-4. Use ambiente de homologação para testes (`FEDEX_USE_PRODUCTION=false`) 
+4. O sistema está configurado exclusivamente para produção 

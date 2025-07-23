@@ -18,7 +18,7 @@ class TestFedexDiagnostic extends Command
         
         // Verificar configurações
         $this->info("\n📋 Configurações atuais:");
-        $this->line('   Ambiente: ' . (config('services.fedex.use_production') ? 'Produção' : 'Homologação'));
+        $this->line('   Ambiente: Produção');
         $this->line('   API URL: ' . config('services.fedex.api_url'));
         $this->line('   Client ID (Cotação/Envio): ' . config('services.fedex.client_id'));
         $this->line('   Client Secret (Cotação/Envio): ' . substr(config('services.fedex.client_secret'), 0, 5) . '...' . substr(config('services.fedex.client_secret'), -5));
@@ -94,20 +94,18 @@ class TestFedexDiagnostic extends Command
         $this->line('   Track Endpoint: ' . config('services.fedex.track_endpoint'));
         
         // Teste 5: Verificar se estamos em produção
-        if (config('services.fedex.use_production')) {
-            $this->info("\n⚠️ AVISO: Ambiente de produção detectado");
-            $this->line('   As credenciais de produção podem ter restrições de IP ou ambiente.');
-            $this->line('   Verifique se:');
-            $this->line('   1. O IP do servidor está liberado na FedEx');
-            $this->line('   2. As credenciais estão ativas');
-            $this->line('   3. O ambiente tem permissão para usar credenciais de produção');
-        }
+        $this->info("\n✅ Ambiente de produção configurado");
+        $this->line('   As credenciais de produção estão ativas.');
+        $this->line('   Verifique se:');
+        $this->line('   1. O IP do servidor está liberado na FedEx');
+        $this->line('   2. As credenciais estão ativas');
+        $this->line('   3. O ambiente tem permissão para usar credenciais de produção');
         
         $this->info("\n🎯 Recomendações:");
         $this->line('   1. Se as autenticações falharem, verifique as credenciais');
         $this->line('   2. Se receber erro FORBIDDEN, pode ser restrição de IP');
-        $this->line('   3. Para testes, use o ambiente de homologação (FEDEX_USE_PRODUCTION=false)');
-        $this->line('   4. Para produção, confirme com a FedEx as permissões');
+        $this->line('   3. Para produção, confirme com a FedEx as permissões');
+        $this->line('   4. Monitore os logs para identificar possíveis problemas');
         
         return 0;
     }

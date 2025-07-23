@@ -36,23 +36,23 @@ return [
     ],
 
     'fedex' => [
-        'use_production' => env('FEDEX_USE_PRODUCTION', false),
-        'client_id' => env('FEDEX_USE_PRODUCTION', false) ? env('FEDEX_PROD_CLIENT_ID') : env('FEDEX_HOM_CLIENT_ID'),
-        'client_secret' => env('FEDEX_USE_PRODUCTION', false) ? env('FEDEX_PROD_CLIENT_SECRET') : env('FEDEX_HOM_CLIENT_SECRET'),
-        'api_url' => env('FEDEX_USE_PRODUCTION', false) ? env('FEDEX_PROD_API_URL', 'https://apis.fedex.com') : env('FEDEX_HOM_API_URL', 'https://apis-sandbox.fedex.com'),
-        'shipper_account' => env('FEDEX_USE_PRODUCTION', false) ? env('FEDEX_PROD_SHIPPER_ACCOUNT') : env('FEDEX_HOM_SHIPPER_ACCOUNT'),
+        'use_production' => true, // Sempre usar produção
+        'client_id' => env('FEDEX_PROD_CLIENT_ID'),
+        'client_secret' => env('FEDEX_PROD_CLIENT_SECRET'),
+        'api_url' => env('FEDEX_PROD_API_URL', 'https://apis.fedex.com'),
+        'shipper_account' => env('FEDEX_PROD_SHIPPER_ACCOUNT'),
         'auth_endpoint' => '/oauth/token',
         'rate_endpoint' => '/rate/v1/rates/quotes',
         'ship_endpoint' => '/ship/v1/shipments',
         'track_endpoint' => '/track/v1/trackingnumbers',
         // Credenciais específicas para rastreamento
-        'tracking_client_id' => env('FEDEX_USE_PRODUCTION', false) ? env('FEDEX_PROD_TRACKING_CLIENT_ID') : env('FEDEX_HOM_CLIENT_ID'),
-        'tracking_client_secret' => env('FEDEX_USE_PRODUCTION', false) ? env('FEDEX_PROD_TRACKING_CLIENT_SECRET') : env('FEDEX_HOM_CLIENT_SECRET'),
+        'tracking_client_id' => env('FEDEX_PROD_TRACKING_CLIENT_ID'),
+        'tracking_client_secret' => env('FEDEX_PROD_TRACKING_CLIENT_SECRET'),
         'special_tracking' => [
             '794616896420' => [
                 'client_id' => 'l76ba883d77f744aecb0a0d2d944f64e83',
                 'client_secret' => '9715b01ba6004c74bf2774af3e51c336',
-                'api_url' => 'https://apis-sandbox.fedex.com'
+                'api_url' => 'https://apis.fedex.com'
             ]
         ],
     ],

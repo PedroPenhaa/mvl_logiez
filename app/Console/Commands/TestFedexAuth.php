@@ -30,7 +30,7 @@ class TestFedexAuth extends Command
         $this->info('Iniciando teste de autenticação FedEx...');
         
         // Obter as configurações atuais
-        $this->info('Ambiente: ' . (config('services.fedex.use_production') ? 'Produção' : 'Homologação'));
+        $this->info('Ambiente: Produção');
         $this->info('API URL: ' . config('services.fedex.api_url'));
         $this->info('Client ID: ' . substr(config('services.fedex.client_id'), 0, 5) . '...' . substr(config('services.fedex.client_id'), -5));
         

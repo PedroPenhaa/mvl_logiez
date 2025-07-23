@@ -27,17 +27,17 @@ class TestFedexQuoteRequest extends Command
      */
     public function handle()
     {
-        // Usar as credenciais de teste fornecidas pelo usuário
-        $apiUrl = "https://apis-sandbox.fedex.com";
-        $clientId = "l7517499d73dc1470c8f56fe055c45113c";
-        $clientSecret = "41d8172c88c345cca8f47695bc97a5cd";
-        $shipperAccount = "740561073";
+        // Usar as credenciais de produção configuradas no sistema
+        $apiUrl = config('services.fedex.api_url');
+        $clientId = config('services.fedex.client_id');
+        $clientSecret = config('services.fedex.client_secret');
+        $shipperAccount = config('services.fedex.shipper_account');
 
         $this->info("\n📌 AMBIENTE DE EXECUÇÃO");
-        $this->line("• Ambiente: <fg=yellow>Teste (Sandbox)</>");
-        $this->line("• API URL: <fg=yellow>$apiUrl</>");
-        $this->line("• Client ID: <fg=yellow>$clientId</>");
-        $this->line("• Shipper Account: <fg=yellow>$shipperAccount</>");
+        $this->line("• Ambiente: <fg=green>Produção</>");
+        $this->line("• API URL: <fg=green>$apiUrl</>");
+        $this->line("• Client ID: <fg=green>$clientId</>");
+        $this->line("• Shipper Account: <fg=green>$shipperAccount</>");
 
         // Obter parâmetros da linha de comando
         $origem = '01222001'; // Alterado para string para evitar problemas com zeros à esquerda
