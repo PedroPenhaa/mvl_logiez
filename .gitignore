@@ -1,0 +1,35 @@
+# Arquivos de configuração do servidor web
+public/.htaccess
+
+# Arquivos de ambiente
+.env
+.env.local
+.env.production
+
+# Dependências
+/node_modules
+/vendor
+
+# Arquivos de cache
+/bootstrap/cache/
+/storage/framework/cache/
+/storage/framework/sessions/
+/storage/framework/views/
+
+# Logs
+/storage/logs/
+*.log
+
+# Arquivos temporários
+*.tmp
+*.temp
+
+# IDEs
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Sistema operacional
+.DS_Store
+Thumbs.db 
