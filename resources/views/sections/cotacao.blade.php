@@ -206,6 +206,18 @@ $(document).ready(function() {
     
     // Função para processar a resposta
     function processarResposta(response) {
+        // Debug: verificar a estrutura da resposta
+        console.log('Resposta completa:', response);
+        
+        // Verificar se a resposta está dentro de um objeto 'data'
+        if (response.data && response.data.success !== undefined) {
+            response = response.data;
+        }
+        
+        console.log('response.success:', response.success);
+        console.log('response.cotacoesFedEx:', response.cotacoesFedEx);
+        console.log('response.cotacoesFedEx.length:', response.cotacoesFedEx ? response.cotacoesFedEx.length : 'undefined');
+        
         if (response.success === false) {
             // Mostrar mensagem de erro
             var html = '<div class="card shadow">';
@@ -256,160 +268,165 @@ $(document).ready(function() {
         
         // Função para formatar o tempo de entrega conforme padrão FedEx
         function formatarTempoEntrega(tempoEntrega, dataChegada) {
-            if (!tempoEntrega) return 'Consultar';
-            
-            // Debug para verificar os dados recebidos
-            console.log('Tempo de entrega recebido:', tempoEntrega);
-            console.log('Data de chegada recebida:', dataChegada);
-            console.log('Tipo da data de chegada:', typeof dataChegada);
-            
-            var html = '<div class="tempo-entrega-info">';
-            
-            // Sempre mostrar uma data - se não vier da API, calcular baseado no serviço
-            var dataFormatada = '';
-            
-            if (dataChegada && dataChegada !== null && dataChegada !== '') {
-                // Se a data vier como timestamp ou formato ISO
-                if (dataChegada.includes('-') || dataChegada.includes('/')) {
-                    var data = new Date(dataChegada);
-                    if (!isNaN(data.getTime())) {
-                        var dia = data.getDate().toString().padStart(2, '0');
-                        var mes = (data.getMonth() + 1).toString().padStart(2, '0');
-                        var ano = data.getFullYear();
-                        dataFormatada = dia + '/' + mes + '/' + ano;
+            try {
+                if (!tempoEntrega) return 'Consultar';
+                
+                // Debug para verificar os dados recebidos
+                console.log('Tempo de entrega recebido:', tempoEntrega);
+                console.log('Data de chegada recebida:', dataChegada);
+                console.log('Tipo da data de chegada:', typeof dataChegada);
+                
+                var html = '<div class="tempo-entrega-info">';
+                
+                // Sempre mostrar uma data - se não vier da API, calcular baseado no serviço
+                var dataFormatada = '';
+                
+                if (dataChegada && dataChegada !== null && dataChegada !== '') {
+                    // Se a data vier como timestamp ou formato ISO
+                    if (dataChegada.includes('-') || dataChegada.includes('/')) {
+                        var data = new Date(dataChegada);
+                        if (!isNaN(data.getTime())) {
+                            var dia = data.getDate().toString().padStart(2, '0');
+                            var mes = (data.getMonth() + 1).toString().padStart(2, '0');
+                            var ano = data.getFullYear();
+                            dataFormatada = dia + '/' + mes + '/' + ano;
+                        }
+                    } else {
+                        // Se vier em outro formato, usar como está
+                        dataFormatada = dataChegada;
                     }
                 } else {
-                    // Se vier em outro formato, usar como está
-                    dataFormatada = dataChegada;
-                }
-            } else {
-                // Se não vier data da API, calcular baseado no serviço
-                var hoje = new Date();
-                var diasAdicionais = 0;
-                
-                // Determinar dias baseado no serviço
-                if (tempoEntrega.includes('First') || tempoEntrega.includes('8:30')) {
-                    diasAdicionais = 2; // Mais rápido
-                } else if (tempoEntrega.includes('Priority Express') || tempoEntrega.includes('10:30')) {
-                    diasAdicionais = 3;
-                } else if (tempoEntrega.includes('Priority') || tempoEntrega.includes('5:00 PM')) {
-                    diasAdicionais = 4;
-                } else if (tempoEntrega.includes('Economy') || tempoEntrega.includes('Connect Plus') || tempoEntrega.includes('10:00 PM')) {
-                    diasAdicionais = 5;
-                } else {
-                    diasAdicionais = 4; // Padrão
-                }
-                
-                // Adicionar dias úteis (pular finais de semana)
-                var dataEntrega = new Date(hoje);
-                var diasAdicionados = 0;
-                while (diasAdicionados < diasAdicionais) {
-                    dataEntrega.setDate(dataEntrega.getDate() + 1);
-                    // Se não for fim de semana (0 = domingo, 6 = sábado)
-                    if (dataEntrega.getDay() !== 0 && dataEntrega.getDay() !== 6) {
-                        diasAdicionados++;
+                    // Se não vier data da API, calcular baseado no serviço
+                    var hoje = new Date();
+                    var diasAdicionais = 0;
+                    
+                    // Determinar dias baseado no serviço
+                    if (tempoEntrega.includes('First') || tempoEntrega.includes('8:30')) {
+                        diasAdicionais = 2; // Mais rápido
+                    } else if (tempoEntrega.includes('Priority Express') || tempoEntrega.includes('10:30')) {
+                        diasAdicionais = 3;
+                    } else if (tempoEntrega.includes('Priority') || tempoEntrega.includes('5:00 PM')) {
+                        diasAdicionais = 4;
+                    } else if (tempoEntrega.includes('Economy') || tempoEntrega.includes('Connect Plus') || tempoEntrega.includes('10:00 PM')) {
+                        diasAdicionais = 5;
+                    } else {
+                        diasAdicionais = 4; // Padrão
                     }
+                    
+                    // Adicionar dias úteis (pular finais de semana)
+                    var dataEntrega = new Date(hoje);
+                    var diasAdicionados = 0;
+                    while (diasAdicionados < diasAdicionais) {
+                        dataEntrega.setDate(dataEntrega.getDate() + 1);
+                        // Se não for fim de semana (0 = domingo, 6 = sábado)
+                        if (dataEntrega.getDay() !== 0 && dataEntrega.getDay() !== 6) {
+                            diasAdicionados++;
+                        }
+                    }
+                    
+                    var dia = dataEntrega.getDate().toString().padStart(2, '0');
+                    var mes = (dataEntrega.getMonth() + 1).toString().padStart(2, '0');
+                    var ano = dataEntrega.getFullYear();
+                    dataFormatada = dia + '/' + mes + '/' + ano;
                 }
                 
-                var dia = dataEntrega.getDate().toString().padStart(2, '0');
-                var mes = (dataEntrega.getMonth() + 1).toString().padStart(2, '0');
-                var ano = dataEntrega.getFullYear();
-                dataFormatada = dia + '/' + mes + '/' + ano;
+                // Sempre mostrar a data
+                html += '<div class="data-chegada text-muted small mb-1">';
+                html += '<i class="fas fa-calendar-alt me-1"></i><strong>Chega dia ' + dataFormatada + '</strong>';
+                html += '</div>';
+                
+                // Formatar o tempo de entrega traduzindo para português
+                if (tempoEntrega.includes('ENTREGUE ATÉ') || tempoEntrega.includes('DELIVERED BY')) {
+                    var horarioTraduzido = tempoEntrega
+                        .replace('ENTREGUE ATÉ', 'Entregue até')
+                        .replace('DELIVERED BY', 'Entregue até');
+                    
+                    html += '<div class="horario-entrega fw-bold">';
+                    html += '<i class="fas fa-clock me-1"></i>' + horarioTraduzido;
+                    html += '</div>';
+                } else if (tempoEntrega.includes('A.M.') || tempoEntrega.includes('P.M.')) {
+                    // Tratar formato específico da imagem: "8:30 A.M. IF NO CUSTOMS DELAY"
+                    var tempoFormatado = tempoEntrega
+                        .replace('A.M.', 'AM')
+                        .replace('P.M.', 'PM')
+                        .replace('IF NO CUSTOMS DELAY', 'SE NÃO HOUVER ATRASO NA ALFÂNDEGA');
+                    
+                    html += '<div class="horario-entrega fw-bold">';
+                    html += '<i class="fas fa-clock me-1"></i>às ' + tempoFormatado;
+                    html += '</div>';
+                } else if (tempoEntrega.includes('dias') || tempoEntrega.includes('days')) {
+                    var prazoTraduzido = tempoEntrega
+                        .replace('days', 'dias')
+                        .replace('day', 'dia');
+                    
+                    html += '<div class="prazo-entrega">';
+                    html += '<i class="fas fa-shipping-fast me-1"></i>' + prazoTraduzido;
+                    html += '</div>';
+                } else if (tempoEntrega.includes('business days') || tempoEntrega.includes('dias úteis')) {
+                    var prazoTraduzido = tempoEntrega
+                        .replace('business days', 'dias úteis')
+                        .replace('business day', 'dia útil');
+                    
+                    html += '<div class="prazo-entrega">';
+                    html += '<i class="fas fa-shipping-fast me-1"></i>' + prazoTraduzido;
+                    html += '</div>';
+                } else if (tempoEntrega.includes('hours') || tempoEntrega.includes('horas')) {
+                    var prazoTraduzido = tempoEntrega
+                        .replace('hours', 'horas')
+                        .replace('hour', 'hora');
+                    
+                    html += '<div class="prazo-entrega">';
+                    html += '<i class="fas fa-shipping-fast me-1"></i>' + prazoTraduzido;
+                    html += '</div>';
+                } else {
+                    // Traduções mais abrangentes para outros termos
+                    var tempoTraduzido = tempoEntrega
+                        // Serviços FedEx
+                        .replace(/FedEx\s+International\s+First®/gi, 'FedEx International First®')
+                        .replace(/FedEx\s+International\s+Priority®\s+Express/gi, 'FedEx International Priority® Express')
+                        .replace(/FedEx\s+International\s+Priority®/gi, 'FedEx International Priority®')
+                        .replace(/FedEx\s+International\s+Economy®/gi, 'FedEx International Economy®')
+                        .replace(/FedEx\s+International\s+Connect\s+Plus/gi, 'FedEx International Connect Plus')
+                        
+                        // Termos de tempo
+                        .replace(/Express/gi, 'Expresso')
+                        .replace(/Priority/gi, 'Prioritário')
+                        .replace(/Economy/gi, 'Econômico')
+                        .replace(/Standard/gi, 'Padrão')
+                        .replace(/Next\s+Day/gi, 'Próximo Dia')
+                        .replace(/Same\s+Day/gi, 'Mesmo Dia')
+                        .replace(/2\s+Day/gi, '2 Dias')
+                        .replace(/3\s+Day/gi, '3 Dias')
+                        .replace(/Ground/gi, 'Terrestre')
+                        .replace(/Air/gi, 'Aéreo')
+                        .replace(/International/gi, 'Internacional')
+                        .replace(/Domestic/gi, 'Nacional')
+                        .replace(/First/gi, 'Primeiro')
+                        .replace(/Connect/gi, 'Conect')
+                        .replace(/Plus/gi, 'Plus')
+                        
+                        // Horários específicos
+                        .replace(/08:30/gi, '08:30')
+                        .replace(/10:30/gi, '10:30')
+                        .replace(/17:00/gi, '17:00')
+                        .replace(/22:00/gi, '22:00')
+                        
+                        // Outros termos
+                        .replace(/Delivery/gi, 'Entrega')
+                        .replace(/Service/gi, 'Serviço')
+                        .replace(/Shipping/gi, 'Envio')
+                        .replace(/Freight/gi, 'Frete')
+                        .replace(/Cargo/gi, 'Carga');
+                    
+                    html += '<div class="tempo-padrao">' + tempoTraduzido + '</div>';
+                }
+                
+                html += '</div>';
+                return html;
+            } catch (error) {
+                console.error('Erro na função formatarTempoEntrega:', error);
+                return tempoEntrega || 'Consultar';
             }
-            
-            // Sempre mostrar a data
-            html += '<div class="data-chegada text-muted small mb-1">';
-            html += '<i class="fas fa-calendar-alt me-1"></i><strong>Chega dia ' + dataFormatada + '</strong>';
-            html += '</div>';
-            
-            // Formatar o tempo de entrega traduzindo para português
-            if (tempoEntrega.includes('ENTREGUE ATÉ') || tempoEntrega.includes('DELIVERED BY')) {
-                var horarioTraduzido = tempoEntrega
-                    .replace('ENTREGUE ATÉ', 'Entregue até')
-                    .replace('DELIVERED BY', 'Entregue até');
-                
-                html += '<div class="horario-entrega fw-bold">';
-                html += '<i class="fas fa-clock me-1"></i>' + horarioTraduzido;
-                html += '</div>';
-            } else if (tempoEntrega.includes('A.M.') || tempoEntrega.includes('P.M.')) {
-                // Tratar formato específico da imagem: "8:30 A.M. IF NO CUSTOMS DELAY"
-                var tempoFormatado = tempoEntrega
-                    .replace('A.M.', 'AM')
-                    .replace('P.M.', 'PM')
-                    .replace('IF NO CUSTOMS DELAY', 'SE NÃO HOUVER ATRASO NA ALFÂNDEGA');
-                
-                html += '<div class="horario-entrega fw-bold">';
-                html += '<i class="fas fa-clock me-1"></i>às ' + tempoFormatado;
-                html += '</div>';
-            } else if (tempoEntrega.includes('dias') || tempoEntrega.includes('days')) {
-                var prazoTraduzido = tempoEntrega
-                    .replace('days', 'dias')
-                    .replace('day', 'dia');
-                
-                html += '<div class="prazo-entrega">';
-                html += '<i class="fas fa-shipping-fast me-1"></i>' + prazoTraduzido;
-                html += '</div>';
-            } else if (tempoEntrega.includes('business days') || tempoEntrega.includes('dias úteis')) {
-                var prazoTraduzido = tempoEntrega
-                    .replace('business days', 'dias úteis')
-                    .replace('business day', 'dia útil');
-                
-                html += '<div class="prazo-entrega">';
-                html += '<i class="fas fa-shipping-fast me-1"></i>' + prazoTraduzido;
-                html += '</div>';
-            } else if (tempoEntrega.includes('hours') || tempoEntrega.includes('horas')) {
-                var prazoTraduzido = tempoEntrega
-                    .replace('hours', 'horas')
-                    .replace('hour', 'hora');
-                
-                html += '<div class="prazo-entrega">';
-                html += '<i class="fas fa-shipping-fast me-1"></i>' + prazoTraduzido;
-                html += '</div>';
-            } else {
-                // Traduções mais abrangentes para outros termos
-                var tempoTraduzido = tempoEntrega
-                    // Serviços FedEx
-                    .replace(/FedEx\s+International\s+First®/gi, 'FedEx International First®')
-                    .replace(/FedEx\s+International\s+Priority®\s+Express/gi, 'FedEx International Priority® Express')
-                    .replace(/FedEx\s+International\s+Priority®/gi, 'FedEx International Priority®')
-                    .replace(/FedEx\s+International\s+Economy®/gi, 'FedEx International Economy®')
-                    .replace(/FedEx\s+International\s+Connect\s+Plus/gi, 'FedEx International Connect Plus')
-                    
-                    // Termos de tempo
-                    .replace(/Express/gi, 'Expresso')
-                    .replace(/Priority/gi, 'Prioritário')
-                    .replace(/Economy/gi, 'Econômico')
-                    .replace(/Standard/gi, 'Padrão')
-                    .replace(/Next\s+Day/gi, 'Próximo Dia')
-                    .replace(/Same\s+Day/gi, 'Mesmo Dia')
-                    .replace(/2\s+Day/gi, '2 Dias')
-                    .replace(/3\s+Day/gi, '3 Dias')
-                    .replace(/Ground/gi, 'Terrestre')
-                    .replace(/Air/gi, 'Aéreo')
-                    .replace(/International/gi, 'Internacional')
-                    .replace(/Domestic/gi, 'Nacional')
-                    .replace(/First/gi, 'Primeiro')
-                    .replace(/Connect/gi, 'Conect')
-                    .replace(/Plus/gi, 'Plus')
-                    
-                    // Horários específicos
-                    .replace(/08:30/gi, '08:30')
-                    .replace(/10:30/gi, '10:30')
-                    .replace(/17:00/gi, '17:00')
-                    .replace(/22:00/gi, '22:00')
-                    
-                    // Outros termos
-                    .replace(/Delivery/gi, 'Entrega')
-                    .replace(/Service/gi, 'Serviço')
-                    .replace(/Shipping/gi, 'Envio')
-                    .replace(/Freight/gi, 'Frete')
-                    .replace(/Cargo/gi, 'Carga');
-                
-                html += '<div class="tempo-padrao">' + tempoTraduzido + '</div>';
-            }
-            
-            html += '</div>';
-            return html;
         }
         
         if (response.success) {
@@ -455,10 +472,20 @@ $(document).ready(function() {
                 html += '</tr></thead><tbody>';
                 
                 response.cotacoesFedEx.forEach(function(cotacao) {
+                    console.log('Processando cotação:', cotacao);
+                    console.log('servico:', cotacao.servico);
+                    console.log('tempoEntrega:', cotacao.tempoEntrega);
+                    console.log('dataEntrega:', cotacao.dataEntrega);
+                    
                     html += '<tr>';
                     html += '<td>' + cotacao.servico + '</td>';
                     html += '<td>';
-                    html += formatarTempoEntrega(cotacao.tempoEntrega, cotacao.dataChegada);
+                    try {
+                        html += formatarTempoEntrega(cotacao.tempoEntrega, cotacao.dataEntrega);
+                    } catch (error) {
+                        console.error('Erro ao formatar tempo de entrega:', error);
+                        html += cotacao.tempoEntrega || 'Consultar';
+                    }
                     html += '</td>';
                     html += '<td>' + cotacao.valorTotal + ' ' + cotacao.moeda + '</td>';
                     html += '<td class="fw-bold text-success">R$ ' + (cotacao.valorTotalBRL || '-') + '</td>';
@@ -498,6 +525,9 @@ $(document).ready(function() {
             
             // Exibir resultados
             $('#cotacao-resultado').html(html).fadeIn();
+            
+            // Debug: verificar se o HTML foi gerado
+            console.log('HTML gerado:', html);
             
             // Scroll suave até os resultados
             $('html, body').animate({
