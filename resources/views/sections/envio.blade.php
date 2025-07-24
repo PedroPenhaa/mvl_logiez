@@ -3699,6 +3699,8 @@
                 url: '/calcular-cotacao',
                 method: 'POST',
                 data: dadosCotacao,
+
+
                 success: function(response) {
                     // Esconder alerta de loading
                     $('#alert-container').empty();
@@ -4222,7 +4224,7 @@
                             </p>
                         </div>
                         <div class="price-info">
-                            <div class="price-main">R$ ${cotacao.valorTotal}</div>
+                            <div class="price-main">R$ ${cotacao.valorTotalBRL}</div>
                         </div>
                     </div>
                 </div>

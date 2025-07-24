@@ -282,18 +282,25 @@ class SectionController extends Controller
                 $cotacaoProcessada = $cotacao;
                 
                 // Se a moeda for BRL, converter para USD e adicionar valor em BRL
-                if ($cotacao['moeda'] === 'BRL') {
+                if ($cotacao['moeda'] === 'BRL' || $cotacao['moeda'] === 'USD') {
                     $valorUSD = $cotacao['valorTotal'] / $valorDolar;
                     $cotacaoProcessada['valorTotal'] = number_format($valorUSD, 2, '.', '');
                     $cotacaoProcessada['moeda'] = 'USD';
                     $cotacaoProcessada['valorTotalBRL'] = number_format($cotacao['valorTotal'], 2, ',', '.');
                 } 
                 // Se a moeda for USD, adicionar valor em BRL
-                else if ($cotacao['moeda'] === 'USD') {
+               /* else if ($cotacao['moeda'] === 'USD') {
                     $valorBRL = $cotacao['valorTotal'] * $valorDolar;
                     $cotacaoProcessada['valorTotalBRL'] = number_format($valorBRL, 2, ',', '.');
                 }
-                
+                // Se a moeda for EUR, converter para USD e adicionar valor em BRL
+                else if ($cotacao['moeda'] === 'EUR') {
+                    $valorUSD = $cotacao['valorTotal'] / 0.85; // Supondo taxa de conversão de 0.85
+                    $cotacaoProcessada['valorTotal'] = number_format($valorUSD, 2, '.', '');
+                    $cotacaoProcessada['moeda'] = 'USD';
+                    $valorBRL = $valorUSD * $valorDolar;
+                    $cotacaoProcessada['valorTotalBRL'] = number_format($valorBRL, 2, ',', '.');
+                }*/
                 $cotacoesProcessadas[] = $cotacaoProcessada;
             }
             
