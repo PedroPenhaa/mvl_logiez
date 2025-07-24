@@ -160,11 +160,6 @@ class FedexService
      */
     public function calcularCotacao($origem, $destino, $altura, $largura, $comprimento, $peso, $forcarSimulacao = false)
     {
-        // Se forçar simulação, usa o método de simulação
-        if ($forcarSimulacao) {
-            return $this->simularCotacao($origem, $destino, $altura, $largura, $comprimento, $peso);
-        }
-    
         try {
             // Obter token de autenticação
             $accessToken = $this->getAuthToken(true); // Forçar novo token
@@ -296,14 +291,9 @@ class FedexService
                 'X-locale' => 'en_US',
                 'x-customer-transaction-id' => $transactionId
             ])->post($rateUrl, $rateRequest);
-    
+
             if ($response->failed()) {
                 $errorMessage = 'Falha na cotação. Código HTTP: ' . $response->status() . "\n" . $response->body();
-                Log::error('Erro na cotação FedEx', [
-                    'status' => $response->status(),
-                    'response' => $response->body(),
-                    'request' => $rateRequest
-                ]);
                 throw new \Exception($errorMessage);
             }
     
@@ -363,17 +353,8 @@ class FedexService
                 'pesoReal' => $peso,
                 'pesoUtilizado' => round($pesoUtilizado, 2),
                 'cotacoesFedEx' => $cotacoes,
-                'simulado' => false,
                 'dataConsulta' => date('Y-m-d H:i:s')
             ];
-    
-            Log::info('Cotação FedEx calculada com sucesso', [
-                'pesoCubico' => $pesoCubico,
-                'pesoReal' => $peso,
-                'pesoUtilizado' => $pesoUtilizado,
-                'cotacoesEncontradas' => count($cotacoes),
-                'simulado' => false
-            ]);
     
             return $resultado;
     

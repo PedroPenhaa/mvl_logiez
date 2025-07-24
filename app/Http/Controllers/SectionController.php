@@ -251,104 +251,51 @@ class SectionController extends Controller
                 'peso' => 'required|numeric|min:0',
             ]);
 
-            // Calcular peso cúbico (cm³ / 5000) - usando o mesmo divisor do comando que funciona
-            $pesoCubico = ($request->altura * $request->largura * $request->comprimento) / 5000;
-            $peso = $request->peso;
-            $pesoUtilizado = max($pesoCubico, $peso);
-
             // Obter cotação do dólar atual
             $cotacaoDolar = $this->obterCotacaoDolar();
             $valorDolar = $cotacaoDolar['cotacao'] ?? 5.71; // Valor padrão caso a API falhe
 
-            // Tentar obter cotação real da FedEx
-            try {
-                if (!$request->forcarSimulacao) {
-                    $resultado = $this->fedexService->calcularCotacao(
-                        $request->origem,
-                        $request->destino,
-                        $request->altura,
-                        $request->largura,
-                        $request->comprimento,
-                        $request->peso
-                    );
-                    
-                    if ($resultado['success']) {
-                        // Processar cotações para adicionar conversão de moeda se necessário
-                        $cotacoesProcessadas = [];
-                        foreach ($resultado['cotacoesFedEx'] as $cotacao) {
-                            $cotacaoProcessada = $cotacao;
-                            
-                            // Se a moeda for BRL, converter para USD e adicionar valor em BRL
-                            if ($cotacao['moeda'] === 'BRL') {
-                                $valorUSD = $cotacao['valorTotal'] / $valorDolar;
-                                $cotacaoProcessada['valorTotal'] = number_format($valorUSD, 2, '.', '');
-                                $cotacaoProcessada['moeda'] = 'USD';
-                                $cotacaoProcessada['valorTotalBRL'] = number_format($cotacao['valorTotal'], 2, ',', '.');
-                            } 
-                            // Se a moeda for USD, adicionar valor em BRL
-                            else if ($cotacao['moeda'] === 'USD') {
-                                $valorBRL = $cotacao['valorTotal'] * $valorDolar;
-                                $cotacaoProcessada['valorTotalBRL'] = number_format($valorBRL, 2, ',', '.');
-                            }
-                            
-                            $cotacoesProcessadas[] = $cotacaoProcessada;
-                        }
-                        
-                        $resultado['cotacoesFedEx'] = $cotacoesProcessadas;
-                        $resultado['cotacaoDolar'] = $valorDolar;
-                        
-                        // Retornar resposta no formato correto
-                        return response()->json([
-                            'status' => 'success',
-                            'data' => $resultado
-                        ]);
-                    }
-                }
-            } catch (\Exception $e) {
-                \Log::error('Erro ao obter cotação FedEx: ' . $e->getMessage());
+            // Obter cotação real da FedEx
+            $resultado = $this->fedexService->calcularCotacao(
+                $request->origem,
+                $request->destino,
+                $request->altura,
+                $request->largura,
+                $request->comprimento,
+                $request->peso
+            );
+            
+            if (!$resultado['success']) {
+                return response()->json([
+                    'status' => 'error',
+                    'message' => $resultado['mensagem'] ?? 'Não foi possível obter a cotação.'
+                ], 400);
             }
 
-            // Se chegou aqui, usar simulação
-            $cotacoes = [
-                [
-                    'servico' => 'FedEx International Priority',
-                    'servicoTipo' => 'INTERNATIONAL_PRIORITY',
-                    'valorTotal' => $pesoUtilizado * 35 * $valorDolar,
-                    'moeda' => 'BRL',
-                    'tempoEntrega' => '3-5 dias úteis',
-                    'dataEntrega' => date('Y-m-d', strtotime('+4 days'))
-                ],
-                [
-                    'servico' => 'FedEx International Economy',
-                    'servicoTipo' => 'INTERNATIONAL_ECONOMY',
-                    'valorTotal' => $pesoUtilizado * 25 * $valorDolar,
-                    'moeda' => 'BRL',
-                    'tempoEntrega' => '5-7 dias úteis',
-                    'dataEntrega' => date('Y-m-d', strtotime('+6 days'))
-                ],
-                [
-                    'servico' => 'FedEx International First',
-                    'servicoTipo' => 'INTERNATIONAL_FIRST',
-                    'valorTotal' => $pesoUtilizado * 45 * $valorDolar,
-                    'moeda' => 'BRL',
-                    'tempoEntrega' => '1-3 dias úteis',
-                    'dataEntrega' => date('Y-m-d', strtotime('+2 days'))
-                ]
-            ];
-
-            $resultado = [
-                'success' => true,
-                'pesoCubico' => round($pesoCubico, 2),
-                'pesoReal' => $peso,
-                'pesoUtilizado' => round($pesoUtilizado, 2),
-                'cotacoesFedEx' => $cotacoes,
-                'dataConsulta' => date('Y-m-d H:i:s'),
-                'simulado' => true,
-                'mensagem' => 'Cotação simulada. Os valores são aproximados e podem variar.',
-                'cotacaoDolar' => $valorDolar
-            ];
-
-            // Retornar resposta no formato correto
+            // Processar cotações para adicionar conversão de moeda se necessário
+            $cotacoesProcessadas = [];
+            foreach ($resultado['cotacoesFedEx'] as $cotacao) {
+                $cotacaoProcessada = $cotacao;
+                
+                // Se a moeda for BRL, converter para USD e adicionar valor em BRL
+                if ($cotacao['moeda'] === 'BRL') {
+                    $valorUSD = $cotacao['valorTotal'] / $valorDolar;
+                    $cotacaoProcessada['valorTotal'] = number_format($valorUSD, 2, '.', '');
+                    $cotacaoProcessada['moeda'] = 'USD';
+                    $cotacaoProcessada['valorTotalBRL'] = number_format($cotacao['valorTotal'], 2, ',', '.');
+                } 
+                // Se a moeda for USD, adicionar valor em BRL
+                else if ($cotacao['moeda'] === 'USD') {
+                    $valorBRL = $cotacao['valorTotal'] * $valorDolar;
+                    $cotacaoProcessada['valorTotalBRL'] = number_format($valorBRL, 2, ',', '.');
+                }
+                
+                $cotacoesProcessadas[] = $cotacaoProcessada;
+            }
+            
+            $resultado['cotacoesFedEx'] = $cotacoesProcessadas;
+            $resultado['cotacaoDolar'] = $valorDolar;
+            
             return response()->json([
                 'status' => 'success',
                 'data' => $resultado
