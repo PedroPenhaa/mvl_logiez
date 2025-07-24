@@ -253,6 +253,10 @@ class SectionController extends Controller
 
             // Obter cotação do dólar atual
             $cotacaoDolar = $this->obterCotacaoDolar();
+
+
+
+
             $valorDolar = $cotacaoDolar['cotacao'] ?? 5.71; // Valor padrão caso a API falhe
 
             // Obter cotação real da FedEx
@@ -321,7 +325,7 @@ class SectionController extends Controller
         try {
             // URL da API AwesomeAPI para cotações
             $response = \Illuminate\Support\Facades\Http::get("https://economia.awesomeapi.com.br/json/daily/USD-BRL/1");
-            
+
             if ($response->successful()) {
                 $cotacao = $response->json();
                 
