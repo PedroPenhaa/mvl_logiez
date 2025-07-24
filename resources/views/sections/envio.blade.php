@@ -834,7 +834,6 @@
                                             <label for="destino_cep" class="form-label">CEP</label>
                                             <div class="input-group">
                                                 <input type="text" class="form-control" id="destino_cep" name="destino_cep" maxlength="9" required>
-                                                <button type="button" class="btn btn-outline-secondary" id="destino_buscar_cep">Buscar CEP</button>
                                             </div>
                                         </div>
                                         <div class="col-md-4">
@@ -4141,9 +4140,9 @@
                 setTimeout(() => consultarCEPviaEndereco('origem'), 500);
             });
             
-            // Para destino
+            // Para destino - desativado consulta via Gemini
             $('#destino_endereco, #destino_pais, #destino_estado, #destino_cidade').on('change blur', function() {
-                setTimeout(() => consultarCEPviaEndereco('destino'), 500);
+                // Não faz nada - consulta via Gemini desativada para destino
             });
         });
     } // <- Fechamento da função inicializarApp
