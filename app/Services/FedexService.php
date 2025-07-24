@@ -298,7 +298,7 @@ class FedexService
             }
     
             $rateData = $response->json();
-    
+
             // Extrair cotações da resposta
             $cotacoes = [];
             if (isset($rateData['output']['rateReplyDetails'])) {
@@ -346,7 +346,7 @@ class FedexService
                     }
                 }
             }
-    
+
             $resultado = [
                 'success' => true,
                 'pesoCubico' => round($pesoCubico, 2),

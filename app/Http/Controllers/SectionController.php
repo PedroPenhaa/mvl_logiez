@@ -233,6 +233,21 @@ class SectionController extends Controller
     }
 
     /**
+     * Formata o CEP mantendo apenas os 5 primeiros dígitos e completando com zeros
+     *
+     * @param string $cep
+     * @return string
+     */
+    private function formatarCep($cep) 
+    {
+        // Remove qualquer caractere não numérico
+        $cep = preg_replace('/[^0-9]/', '', $cep);
+        
+        // Pega os 5 primeiros dígitos e completa com zeros
+        return substr($cep, 0, 5);
+    }
+
+    /**
      * Processa o cálculo de cotação de envio.
      *
      * @param  \Illuminate\Http\Request  $request
@@ -251,11 +266,14 @@ class SectionController extends Controller
                 'peso' => 'required|numeric|min:0',
             ]);
 
+            // Formatar os CEPs de origem e destino
+            $request->merge([
+                'origem' => $this->formatarCep($request->origem),
+                'destino' => $this->formatarCep($request->destino)
+            ]);
+
             // Obter cotação do dólar atual
             $cotacaoDolar = $this->obterCotacaoDolar();
-
-
-
 
             $valorDolar = $cotacaoDolar['cotacao'] ?? 5.71; // Valor padrão caso a API falhe
 
@@ -268,7 +286,7 @@ class SectionController extends Controller
                 $request->comprimento,
                 $request->peso
             );
-            
+
             if (!$resultado['success']) {
                 return response()->json([
                     'status' => 'error',
@@ -278,7 +296,9 @@ class SectionController extends Controller
 
             // Processar cotações para adicionar conversão de moeda se necessário
             $cotacoesProcessadas = [];
+
             foreach ($resultado['cotacoesFedEx'] as $cotacao) {
+
                 $cotacaoProcessada = $cotacao;
                 
                 // Se a moeda for BRL, converter para USD e adicionar valor em BRL
