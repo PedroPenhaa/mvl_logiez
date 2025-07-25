@@ -1,35 +1,94 @@
 # Arquivos de configuração do servidor web
 public/.htaccess
+.htaccess
 
-# Arquivos de ambiente
+# Arquivos de ambiente e credenciais
 .env
-.env.local
+.env.*
+!.env.example
+.env.backup
 .env.production
+.env.local
+.env.development
+.env.testing
+*.pem
+*.key
+*.crt
+*.csr
+*.cer
+*.der
+*.p12
+*.pfx
+*.keystore
 
 # Dependências
 /node_modules
 /vendor
+yarn.lock
+package-lock.json
+composer.lock
 
-# Arquivos de cache
+# Arquivos de cache e compilados
 /bootstrap/cache/
 /storage/framework/cache/
 /storage/framework/sessions/
 /storage/framework/views/
+/storage/app/public/
+.phpunit.result.cache
+.php_cs.cache
+.php-cs-fixer.cache
 
-# Logs
+# Logs e debugging
 /storage/logs/
 *.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.phpunit.result.cache
 
 # Arquivos temporários
 *.tmp
 *.temp
-
-# IDEs
-.vscode/
-.idea/
 *.swp
 *.swo
+*~
+
+# IDEs e editores
+.vscode/
+.idea/
+*.sublime-project
+*.sublime-workspace
+*.komodoproject
+.komodotools/
+.eclipse/
+nbproject/
+.settings/
+.project
+.buildpath
 
 # Sistema operacional
 .DS_Store
-Thumbs.db 
+Thumbs.db
+*.pid
+*.seed
+*.pid.lock
+
+# Arquivos de build e distribuição
+/public/hot
+/public/storage
+/public/build
+/dist
+/build
+
+# Arquivos de teste e cobertura
+/coverage
+.phpunit.cache/
+.nyc_output
+/cypress/videos/
+/cypress/screenshots/
+
+# Outros
+docker-compose.override.yml
+*.bak
+*.orig
+.git-rewrite/ 
