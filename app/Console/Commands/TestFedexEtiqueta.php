@@ -21,6 +21,7 @@ class TestFedexEtiqueta extends Command
         
         $accessToken = $auth->json()['access_token'] ?? null;
         if (!$accessToken) {
+            dd('erro');
             $this->error('Erro ao autenticar na FedEx');
             return 1;
         }

@@ -29,9 +29,4 @@ Route::get('/unidade-tributaria', [ProdutosController::class, 'consultarUnidadeT
 Route::post('/envio/processar', [EnvioController::class, 'processar'])->name('api.envio.processar');
 Route::post('/envio/processar-confirmados', [EnvioController::class, 'processarConfirmados'])
     ->middleware('auth:api')
-    ->name('api.envio.processar-confirmados');
-
-// Rota para etiqueta FedEx
-Route::post('/fedex/etiqueta', [EtiquetaController::class, 'fedex'])
-    ->name('api.fedex.etiqueta')
-    ->middleware(['web', 'auth']); 
+    ->name('api.envio.processar-confirmados'); 

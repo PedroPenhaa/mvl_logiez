@@ -414,6 +414,16 @@
 <div class="card">
   
     <div class="card-body">
+        <!-- Add loading overlay div after the form opening tag -->
+        <div id="loading-overlay" class="position-fixed top-0 start-0 w-100 h-100 d-none" style="background: rgba(0,0,0,0.5); z-index: 9999;">
+            <div class="position-absolute top-50 start-50 translate-middle text-center text-white">
+                <div class="spinner-border mb-3" role="status">
+                    <span class="visually-hidden">Carregando...</span>
+                </div>
+                <h5 class="mb-0">Buscando as melhores opções de envio...</h5>
+            </div>
+        </div>
+
         <form id="envio-form" action="{{ route('api.envio.processar') }}" method="POST">
             @csrf
 
@@ -903,8 +913,86 @@
                                     <h5 class="mb-0">Método de Pagamento</h5>
                                 </div>
                                 <div class="card-body">
-                                    <!-- Bloco de pagamento (copiado do original) -->
-                                    <!-- ... cole aqui o HTML do bloco de pagamento ... -->
+                                    <!-- Resumo do Serviço -->
+                                    <div class="alert alert-info mb-4">
+                                        <h6 class="mb-2">Serviço Selecionado:</h6>
+                                        <p class="mb-1"><strong id="payment-service-name"></strong></p>
+                                        <p class="mb-0">Valor: <strong id="payment-service-value"></strong></p>
+                                    </div>
+
+                                    <!-- Métodos de Pagamento -->
+                                    <h6 class="mb-3">Selecione o Método de Pagamento:</h6>
+                                    <div class="row g-3">
+                                        <!-- Cartão de Crédito -->
+                                        <div class="col-md-6">
+                                            <div class="card h-100">
+                                                <div class="card-body">
+                                                    <div class="form-check">
+                                                        <input class="form-check-input" type="radio" name="payment_method" id="credit-card" value="credit_card">
+                                                        <label class="form-check-label" for="credit-card">
+                                                            <i class="fas fa-credit-card me-2"></i>Cartão de Crédito
+                                                        </label>
+                                                    </div>
+                                                    <div id="credit-card-form" class="mt-3" style="display: none;">
+                                                        <div class="mb-3">
+                                                            <label class="form-label">Número do Cartão</label>
+                                                            <input type="text" class="form-control" id="card_number" name="card_number" placeholder="0000 0000 0000 0000">
+                                                        </div>
+                                                        <div class="row">
+                                                            <div class="col-6">
+                                                                <div class="mb-3">
+                                                                    <label class="form-label">Validade</label>
+                                                                    <input type="text" class="form-control" id="card_expiry" name="card_expiry" placeholder="MM/AA">
+                                                                </div>
+                                                            </div>
+                                                            <div class="col-6">
+                                                                <div class="mb-3">
+                                                                    <label class="form-label">CVV</label>
+                                                                    <input type="text" class="form-control" id="card_cvv" name="card_cvv" placeholder="123">
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                        <div class="mb-3">
+                                                            <label class="form-label">Nome no Cartão</label>
+                                                            <input type="text" class="form-control" id="card_name" name="card_name" placeholder="Como está no cartão">
+                                                        </div>
+                                                        <div class="mb-3">
+                                                            <label class="form-label">Parcelas</label>
+                                                            <select class="form-select" id="installments" name="installments">
+                                                                <option value="1">1x sem juros</option>
+                                                                <option value="2">2x sem juros</option>
+                                                                <option value="3">3x sem juros</option>
+                                                            </select>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <!-- Pix -->
+                                        <div class="col-md-6">
+                                            <div class="card h-100">
+                                                <div class="card-body">
+                                                    <div class="form-check">
+                                                        <input class="form-check-input" type="radio" name="payment_method" id="pix" value="pix">
+                                                        <label class="form-check-label" for="pix">
+                                                            <i class="fas fa-qrcode me-2"></i>PIX
+                                                        </label>
+                                                    </div>
+                                                    <div id="pix-info" class="mt-3" style="display: none;">
+                                                        <p class="text-muted">Ao confirmar, você receberá um QR Code para pagamento via PIX.</p>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- Botão de Finalizar -->
+                                    <div class="mt-4">
+                                        <button type="submit" class="btn btn-success btn-lg w-100" id="finalizar-pagamento">
+                                            <i class="fas fa-check-circle me-2"></i>Finalizar Pagamento
+                                        </button>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -3244,11 +3332,19 @@
                 $('.selecionar-servico').removeClass('btn-success').addClass('btn-primary').text('Selecionar');
                 $(this).removeClass('btn-primary').addClass('btn-success').text('Selecionado');
 
+                // Armazenar o serviço selecionado
+                window.servicoSelecionado = {
+                    tipo: servicoTipo,
+                    nome: servicoNome,
+                    valorUSD: valorUSD,
+                    valorBRL: valorBRL,
+                    moeda: moeda
+                };
+
                 // Criar um campo oculto para armazenar o serviço selecionado
                 if ($('#servico_entrega').length) {
                     $('#servico_entrega').val(servicoTipo);
                 } else {
-                    // Se não existir, criar o campo
                     $('<input>').attr({
                         type: 'hidden',
                         id: 'servico_entrega',
@@ -3260,26 +3356,12 @@
                 // Mostrar mensagem de confirmação
                 $('#servicos-lista').append(
                     '<div class="alert alert-success mt-3">' +
-                    '<i class="fas fa-check-circle me-2"></i> Serviço <strong>' + servicoNome + '</strong> selecionado. Continue para selecionar o método de pagamento.' +
+                    '<i class="fas fa-check-circle me-2"></i> Serviço <strong>' + servicoNome + '</strong> selecionado. Clique em Continuar para prosseguir com o pagamento.' +
                     '</div>'
                 );
 
-                // Mostrar a seção de métodos de pagamento
-                $('#pagamento-section').show();
-
-                // Preencher os valores de pagamento
-                // Limpar o valor BRL, removendo "R$", espaços e convertendo vírgula para ponto
-                const valorNumerico = valorBRL.replace(/[^\d,]/g, '').replace(',', '.');
-                $('#payment_amount').val(valorNumerico);
-
-                // Atualizar o resumo do pagamento
-                $('#payment-service-name').text(servicoNome);
-                $('#payment-service-value').text('R$ ' + valorBRL);
-
-                // Rolar até a seção de pagamento
-                $('html, body').animate({
-                    scrollTop: $('#pagamento-section').offset().top - 100
-                }, 500);
+                // Habilitar o botão de continuar
+                $('#btn-step-2-next').prop('disabled', false);
             });
         }
 
@@ -3680,8 +3762,12 @@
         });
 
         $('#btn-confirmar-revisao').on('click', function() {
-            // Mostrar loader
-            showAlert('<i class="fas fa-spinner fa-spin me-2"></i>Calculando cotações de envio...', 'info');
+            // Show loading overlay
+            $('#loading-overlay').removeClass('d-none');
+            
+            // Close the modal
+            const modal = bootstrap.Modal.getInstance(document.getElementById('modal-revisao-final'));
+            modal.hide();
             
             // Coletar dados para cotação
             const dadosCotacao = {
@@ -3699,20 +3785,14 @@
                 url: '/calcular-cotacao',
                 method: 'POST',
                 data: dadosCotacao,
-
-
                 success: function(response) {
-                    // Esconder alerta de loading
-                    $('#alert-container').empty();
+                    // Hide loading overlay
+                    $('#loading-overlay').addClass('d-none');
                     
                     if (response.status === 'success' && response.data.success) {
                         // Armazenar cotações na sessão ou variável global
                         window.cotacoesFedEx = response.data.cotacoesFedEx;
                         window.dadosCotacao = response.data;
-                        
-                        // Fechar modal de revisão
-                        const modal = bootstrap.Modal.getInstance(document.getElementById('modal-revisao-final'));
-                        modal.hide();
                         
                         // Ir para etapa 5 (seleção de serviço)
                         etapaAtual = 5;
@@ -3725,8 +3805,8 @@
                     }
                 },
                 error: function(xhr) {
-                    // Esconder alerta de loading
-                    $('#alert-container').empty();
+                    // Hide loading overlay
+                    $('#loading-overlay').addClass('d-none');
                     
                     let errorMessage = 'Erro ao calcular cotação';
                     if (xhr.responseJSON && xhr.responseJSON.message) {
@@ -4270,6 +4350,120 @@
         $('#wizard-progress-label').text('Etapa ' + etapa + ' de ' + totalEtapas);
         $('#info-card-badge').text('Etapa ' + etapa + ' de ' + totalEtapas);
     }
+
+    // Adicionar os eventos de pagamento
+    $('input[name="payment_method"]').on('change', function() {
+        const method = $(this).val();
+        
+        // Esconder todos os formulários
+        $('#credit-card-form, #pix-info').hide();
+        
+        // Mostrar o formulário do método selecionado
+        if (method === 'credit_card') {
+            $('#credit-card-form').slideDown();
+        } else if (method === 'pix') {
+            $('#pix-info').slideDown();
+        }
+    });
+
+    // Máscara para campos do cartão
+    $('#card_number').on('input', function() {
+        let value = $(this).val().replace(/\D/g, '');
+        if (value.length > 16) value = value.slice(0, 16);
+        value = value.replace(/(\d{4})(?=\d)/g, '$1 ');
+        $(this).val(value);
+    });
+
+    $('#card_expiry').on('input', function() {
+        let value = $(this).val().replace(/\D/g, '');
+        if (value.length > 4) value = value.slice(0, 4);
+        if (value.length > 2) value = value.slice(0, 2) + '/' + value.slice(2);
+        $(this).val(value);
+    });
+
+    $('#card_cvv').on('input', function() {
+        let value = $(this).val().replace(/\D/g, '');
+        if (value.length > 4) value = value.slice(0, 4);
+        $(this).val(value);
+    });
+
+    // Evento de finalizar pagamento
+    $('#finalizar-pagamento').on('click', function(e) {
+        e.preventDefault();
+        
+        // Validar se um método foi selecionado
+        const paymentMethod = $('input[name="payment_method"]:checked').val();
+        if (!paymentMethod) {
+            showAlert('Por favor, selecione um método de pagamento.', 'warning');
+            return;
+        }
+        
+        // Validar campos do cartão se for cartão de crédito
+        if (paymentMethod === 'credit_card') {
+            if (!$('#card_number').val() || !$('#card_expiry').val() || !$('#card_cvv').val() || !$('#card_name').val()) {
+                showAlert('Por favor, preencha todos os campos do cartão de crédito.', 'warning');
+                return;
+            }
+        }
+        
+        // Mostrar loading
+        $(this).prop('disabled', true).html('<i class="fas fa-spinner fa-spin me-2"></i>Processando...');
+        
+        // Preparar dados para envio
+        const formData = new FormData($('#envio-form')[0]);
+        formData.append('payment_method', paymentMethod);
+        
+        // Adicionar dados do cartão se for cartão de crédito
+        if (paymentMethod === 'credit_card') {
+            formData.append('card_number', $('#card_number').val());
+            formData.append('card_expiry', $('#card_expiry').val());
+            formData.append('card_cvv', $('#card_cvv').val());
+            formData.append('card_name', $('#card_name').val());
+            formData.append('installments', $('#installments').val());
+        }
+        
+        // Enviar para processamento
+        $.ajax({
+            url: '/processar-pagamento',
+            type: 'POST',
+            data: formData,
+            processData: false,
+            contentType: false,
+            success: function(response) {
+                if (response.success) {
+                    // Redirecionar para página de sucesso ou mostrar QR Code do PIX
+                    if (paymentMethod === 'pix') {
+                        // Mostrar QR Code do PIX
+                        $('#pagamento-section').html(`
+                            <div class="card-body text-center">
+                                <h5 class="mb-4">Pagamento PIX Gerado</h5>
+                                <div class="qr-code-container mb-4">
+                                    <img src="${response.qr_code_url}" alt="QR Code PIX" class="img-fluid">
+                                </div>
+                                <p class="mb-2">Valor: <strong>R$ ${response.valor}</strong></p>
+                                <p class="text-muted mb-4">Escaneie o QR Code acima com seu aplicativo de pagamento PIX</p>
+                                <div class="d-grid gap-2">
+                                    <button class="btn btn-outline-primary" onclick="window.location.reload()">
+                                        <i class="fas fa-redo me-2"></i>Gerar Novo PIX
+                                    </button>
+                                </div>
+                            </div>
+                        `);
+                    } else {
+                        // Redirecionar para página de sucesso
+                        window.location.href = '/pagamento-sucesso?id=' + response.payment_id;
+                    }
+                } else {
+                    showAlert(response.message || 'Erro ao processar pagamento. Tente novamente.', 'danger');
+                    $('#finalizar-pagamento').prop('disabled', false).html('<i class="fas fa-check-circle me-2"></i>Finalizar Pagamento');
+                }
+            },
+            error: function(xhr) {
+                showAlert('Erro ao processar pagamento. Tente novamente.', 'danger');
+                $('#finalizar-pagamento').prop('disabled', false).html('<i class="fas fa-check-circle me-2"></i>Finalizar Pagamento');
+            }
+        });
+    });
 </script>
 
 <!-- Seção para exibir logs de depuração -->

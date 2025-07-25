@@ -216,6 +216,9 @@
 @endsection
 
 @section('content')
+<!-- Adicionar meta tag CSRF -->
+<meta name="csrf-token" content="{{ csrf_token() }}">
+
 <!-- Header Section -->
 <div class="page-header-wrapper">
     <div class="page-header-content">
@@ -448,51 +451,59 @@
     </div>
 </div>
 
+@endsection
+
+@section('scripts')
 <script>
-    // Loader simples
-    function showLoader() {
-        if ($('#loader-modal').length === 0) {
-            $('body').append('<div id="loader-modal" style="position:fixed;top:0;left:0;width:100vw;height:100vh;background:rgba(255,255,255,0.7);z-index:9999;display:flex;align-items:center;justify-content:center;"><div class="spinner-border text-primary" style="width:4rem;height:4rem;" role="status"></div></div>');
+    // Garantir que o código só execute após o jQuery estar carregado
+    $(function() {
+        console.log('Documento pronto - Iniciando script');
+
+        // ========== FUNÇÕES AUXILIARES ==========
+        // Loader
+        function showLoader() {
+            if ($('#loader-modal').length === 0) {
+                $('body').append('<div id="loader-modal" style="position:fixed;top:0;left:0;width:100vw;height:100vh;background:rgba(255,255,255,0.7);z-index:9999;display:flex;align-items:center;justify-content:center;"><div class="spinner-border text-primary" style="width:4rem;height:4rem;" role="status"></div></div>');
+            }
         }
-    }
-    function hideLoader() {
-        $('#loader-modal').remove();
-    }
 
-    // Alerta simples
-    function showAlert(type, message) {
-        let alertClass = 'alert-info';
-        if (type === 'success') alertClass = 'alert-success';
-        if (type === 'warning') alertClass = 'alert-warning';
-        if (type === 'danger') alertClass = 'alert-danger';
-        $('.alert').remove(); // Remove alertas antigos
-        $('.card-body').first().prepend('<div class="alert ' + alertClass + ' alert-dismissible fade show" role="alert">' + message + '<button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button></div>');
-    }
+        function hideLoader() {
+            $('#loader-modal').remove();
+        }
 
-    // Função para atualizar a tabela com os dados da etiqueta
-    function atualizarTabelaEtiqueta(dados) {
-        const tbody = $('table tbody');
-        tbody.empty();
+        // Alertas
+        function showAlert(type, message) {
+            let alertClass = 'alert-info';
+            if (type === 'success') alertClass = 'alert-success';
+            if (type === 'warning') alertClass = 'alert-warning';
+            if (type === 'danger') alertClass = 'alert-danger';
+            $('.alert').remove();
+            $('.card-body').first().prepend('<div class="alert ' + alertClass + ' alert-dismissible fade show" role="alert">' + message + '<button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button></div>');
+        }
 
-        const row = `
-            <tr>
-                <td>${dados.trackingNumber}</td>
-                <td>${new Date(dados.shipDate).toLocaleDateString('pt-BR')}</td>
-                <td>${dados.recipient.name}</td>
-                <td>${dados.recipient.city}, ${dados.recipient.country}</td>
-                <td><span class="badge bg-success">Ativo</span></td>
-                <td>
-                    <button class="btn btn-sm btn-primary visualizar-etiqueta" data-codigo="${dados.trackingNumber}">
-                        <i class="fas fa-eye me-1"></i> Visualizar
-                    </button>
-                </td>
-            </tr>
-        `;
-        tbody.append(row);
-    }
+        // Atualizar tabela
+        function atualizarTabelaEtiqueta(dados) {
+            const tbody = $('table tbody');
+            tbody.empty();
 
-    $(document).ready(function() {
-        // Buscar etiquetas do usuário logado ao carregar a página
+            const row = `
+                <tr>
+                    <td>${dados.trackingNumber}</td>
+                    <td>${new Date(dados.shipDate).toLocaleDateString('pt-BR')}</td>
+                    <td>${dados.recipient.name}</td>
+                    <td>${dados.recipient.city}, ${dados.recipient.country}</td>
+                    <td><span class="badge bg-success">Ativo</span></td>
+                    <td>
+                        <button class="btn btn-sm btn-primary visualizar-etiqueta" data-codigo="${dados.trackingNumber}">
+                            <i class="fas fa-eye me-1"></i> Visualizar
+                        </button>
+                    </td>
+                </tr>
+            `;
+            tbody.append(row);
+        }
+
+        // Carregar etiquetas
         function carregarEtiquetasUsuario() {
             showLoader();
             $.ajax({
@@ -538,53 +549,24 @@
             });
         }
 
-        // Chamar ao carregar a página
-        carregarEtiquetasUsuario();
-        
-        // Buscar etiqueta
-        $('#buscar-etiqueta-btn').on('click', function() {
-            const codigo = $('#codigo-envio').val().trim();
-            
-            if (!codigo) {
-                showAlert('warning', 'Por favor, digite um código de envio válido.');
-                return;
-            }
-            
-            showLoader();
-            
-            // Fazer requisição para buscar a etiqueta pelo código na FedEx
-            $.ajax({
-                url: '/api/fedex/etiqueta',
-                method: 'POST',
-                data: { codigo: codigo },
-                headers: {
-                    'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
-                },
-                success: function(response) {
-                    hideLoader();
-                    if (response.success) {
-                        showAlert('success', 'Etiqueta encontrada!');
-                        atualizarTabelaEtiqueta(response);
-                        $('#sem-etiquetas').hide();
-                        $('#etiquetas-disponiveis').show();
-                    } else {
-                        showAlert('warning', 'Etiqueta não encontrada: ' + (response.message || 'Verifique o código informado.'));
-                        $('#sem-etiquetas').show();
-                        $('#etiquetas-disponiveis').hide();
-                    }
-                },
-                error: function(xhr) {
-                    hideLoader();
-                    let errorMessage = 'Erro ao buscar a etiqueta.';
-                    if (xhr.responseJSON && xhr.responseJSON.message) {
-                        errorMessage += ' ' + xhr.responseJSON.message;
-                    }
-                    showAlert('danger', errorMessage);
-                }
-            });
-        });
-        
-        // Função para exibir os dados da etiqueta no modal
+        // ========== INICIALIZAÇÃO ==========
+        // Verificar se o botão existe
+        const buscarBtn = document.querySelector('#buscar-etiqueta-btn');
+        if (!buscarBtn) {
+            console.error('Botão de busca não encontrado na página!');
+            return;
+        }
+        console.log('Botão de busca encontrado:', buscarBtn);
+
+        // Verificar se o input existe
+        const codigoInput = document.querySelector('#codigo-envio');
+        if (!codigoInput) {
+            console.error('Input de código não encontrado na página!');
+            return;
+        }
+        console.log('Input de código encontrado:', codigoInput);
+
+        // Função para exibir etiqueta no modal
         function exibirEtiqueta(envio) {
             console.log("Exibindo etiqueta com dados:", envio);
             
@@ -680,19 +662,87 @@
             const etiquetaModal = new bootstrap.Modal(document.getElementById('etiqueta-modal'));
             etiquetaModal.show();
         }
+
+        // ========== HANDLERS DE EVENTOS ==========
+        // Handler do botão de busca
+        function handleBuscarClick(e) {
+            e.preventDefault();
+            console.log('Botão clicado - handleBuscarClick executado');
+            
+            const codigo = codigoInput.value.trim();
+            console.log('Código digitado:', codigo);
+            
+            if (!codigo) {
+                showAlert('warning', 'Por favor, digite um código de envio válido.');
+                return;
+            }
+            
+            // Verificar token CSRF
+            const token = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+            if (!token) {
+                console.error('Token CSRF não encontrado!');
+                showAlert('danger', 'Erro de segurança: Token CSRF não encontrado.');
+                return;
+            }
+            
+            console.log('Iniciando busca para o código:', codigo);
+            showLoader();
+            
+            // Fazer requisição para buscar a etiqueta pelo código na FedEx
+            fetch('/api/fedex/etiqueta', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': token
+                },
+                body: JSON.stringify({ codigo: codigo })
+            })
+            .then(response => response.json())
+            .then(data => {
+                console.log('Resposta recebida:', data);
+                hideLoader();
+                if (data.success) {
+                    showAlert('success', 'Etiqueta encontrada!');
+                    atualizarTabelaEtiqueta(data);
+                    $('#sem-etiquetas').hide();
+                    $('#etiquetas-disponiveis').show();
+                } else {
+                    showAlert('warning', 'Etiqueta não encontrada: ' + (data.message || 'Verifique o código informado.'));
+                    $('#sem-etiquetas').show();
+                    $('#etiquetas-disponiveis').hide();
+                }
+            })
+            .catch(error => {
+                console.error('Erro na requisição:', error);
+                hideLoader();
+                showAlert('danger', 'Erro ao buscar a etiqueta.');
+            });
+        }
+
+        // Adicionar eventos
+        buscarBtn.addEventListener('click', handleBuscarClick);
         
-        // Visualizar etiqueta da tabela
+        codigoInput.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                console.log('Tecla Enter pressionada');
+                e.preventDefault();
+                handleBuscarClick(e);
+            }
+        });
+
+        // Handler para visualizar etiqueta
         $(document).on('click', '.visualizar-etiqueta', function() {
             const codigo = $(this).data('codigo');
             showLoader();
 
+            // Fazer requisição direta para a etiqueta
             $.ajax({
                 url: '/api/fedex/etiqueta',
                 method: 'POST',
-                data: { codigo: codigo },
-                headers: {
-                    'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
-                },
+                contentType: 'application/json',
+                data: JSON.stringify({
+                    codigo: codigo
+                }),
                 success: function(response) {
                     hideLoader();
                     if (response.success && response.labelUrl) {
@@ -721,36 +771,13 @@
                             }
                         });
 
-                        // Preencher os dados no modal
-                        $('#etiqueta-codigo').text(response.trackingNumber);
-                        $('#etiqueta-servico').text(response.serviceName);
-                        $('#etiqueta-data').text(new Date(response.shipDate).toLocaleDateString('pt-BR'));
-                        $('#etiqueta-destinatario').text(response.recipient.name);
-                        $('#etiqueta-cidade-destinatario').text(response.recipient.city);
-                        $('#etiqueta-pais-destinatario').text(response.recipient.country);
-                        $('#etiqueta-tracking').text(response.trackingNumber);
-                        
-                        // Configurar o iframe para exibir o PDF da etiqueta
-                        $('#etiqueta-iframe-container').html(`
-                            <iframe src="${response.labelUrl}" 
-                                    style="width: 100%; height: 500px; border: none;"
-                                    title="Etiqueta FedEx">
-                            </iframe>
-                        `);
-                        
-                        // Configurar o botão de download
-                        $('#download-etiqueta-btn').attr('href', response.labelUrl);
-                        
-                        // Configurar o link de rastreamento
-                        $('#link-rastreamento').attr('href', `https://www.fedex.com/tracking?tracknumbers=${response.trackingNumber}`);
-                        
-                        // Mostrar o modal
-                        $('#etiqueta-modal').modal('show');
+                        exibirEtiqueta(response);
                     } else {
                         showAlert('warning', 'Etiqueta não encontrada ou erro na FedEx.');
                     }
                 },
                 error: function(xhr) {
+                    console.error('Erro na requisição de etiqueta:', xhr);
                     hideLoader();
                     let errorMessage = 'Erro ao buscar etiqueta FedEx.';
                     if (xhr.responseJSON && xhr.responseJSON.message) {
@@ -760,30 +787,8 @@
                 }
             });
         });
-        
-        // Imprimir etiqueta
-        $('#imprimir-modal-btn').on('click', function() {
-            const iframe = document.querySelector('#etiqueta-iframe-container iframe');
-            if (iframe) {
-                iframe.contentWindow.print();
-            }
-        });
-        
-        // Mostrar todas as etiquetas
-        $('#mostrar-todos-btn').on('click', function() {
-            $('#sem-etiquetas').hide();
-            $('#etiquetas-disponiveis').show();
-            $('#codigo-envio').val('');
-        });
-        
-        // Voltar para todas as etiquetas
-        $('#voltar-etiquetas-btn').on('click', function() {
-            $('#sem-etiquetas').hide();
-            $('#etiquetas-disponiveis').show();
-            $('#codigo-envio').val('');
-        });
 
-        // Evento para o botão Invoice
+        // Handler para o botão Invoice
         $(document).on('click', '.btn-invoice', function() {
             const shipmentId = $(this).data('id');
             showLoader();
@@ -806,6 +811,33 @@
                 }
             });
         });
+
+        // Handler para imprimir etiqueta
+        $('#imprimir-modal-btn').on('click', function() {
+            const iframe = document.querySelector('#etiqueta-iframe-container iframe');
+            if (iframe) {
+                iframe.contentWindow.print();
+            }
+        });
+
+        // Handler para mostrar todas as etiquetas
+        $('#mostrar-todos-btn').on('click', function() {
+            $('#sem-etiquetas').hide();
+            $('#etiquetas-disponiveis').show();
+            $('#codigo-envio').val('');
+            carregarEtiquetasUsuario();
+        });
+
+        // Handler para voltar para todas as etiquetas
+        $('#voltar-etiquetas-btn').on('click', function() {
+            $('#sem-etiquetas').hide();
+            $('#etiquetas-disponiveis').show();
+            $('#codigo-envio').val('');
+            carregarEtiquetasUsuario();
+        });
+
+        // Carregar dados iniciais
+        carregarEtiquetasUsuario();
     });
 
     function renderInvoiceModal(invoice) {
@@ -894,16 +926,5 @@
         // Atualiza o link do botão de download do PDF
         $('#download-invoice-pdf-btn').attr('href', `/api/sections/invoice/${invoice.invoice_number.replace('#','')}/pdf`);
     }
-</script> 
-
-@section('scripts')
-<script>
-    $(document).ready(function() {
-        $('.menu-item').removeClass('active');
-        $('.menu-item[data-section="etiqueta"]').addClass('active');
-        $('#content-container').show();
-    });
 </script>
-@endsection
-
 @endsection 

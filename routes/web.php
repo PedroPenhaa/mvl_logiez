@@ -1115,3 +1115,18 @@ Route::post('/gemini-consulta', function(Request $request) {
     
     return response()->json($data);
 })->name('gemini.consulta');
+
+// Rota para processar pagamento
+Route::post('/processar-pagamento', [App\Http\Controllers\PaymentController::class, 'processar'])->name('processar.pagamento');
+
+// Rota para página de sucesso do pagamento
+Route::get('/pagamento-sucesso', [App\Http\Controllers\PaymentController::class, 'sucesso'])->name('pagamento.sucesso');
+
+// Rota para verificar status do pagamento
+Route::get('/verificar-pagamento/{id}', [App\Http\Controllers\PaymentController::class, 'verificarStatus'])->name('verificar.pagamento');
+
+// Rotas da FedEx
+Route::group(['prefix' => 'api/fedex', 'middleware' => ['auth']], function () {
+    Route::post('/auth', [App\Http\Controllers\FedexController::class, 'auth'])->name('api.fedex.auth');
+    Route::post('/etiqueta', [App\Http\Controllers\FedexController::class, 'getEtiqueta'])->name('api.fedex.etiqueta');
+});
