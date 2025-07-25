@@ -4,6 +4,10 @@ namespace App\Console\Commands;
 
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Http;
+use App\Models\Shipment;
+use App\Models\SenderAddress;
+use App\Models\RecipientAddress;
+use App\Models\ShipmentItem;
 
 class TestFedexEtiqueta extends Command
 {
@@ -12,137 +16,224 @@ class TestFedexEtiqueta extends Command
 
     public function handle()
     {
+        $trackingNumber = $this->argument('codigo');
+        
+        // Buscar o envio pelo código
+        $shipment = Shipment::with(['senderAddress', 'recipientAddress', 'items'])
+            ->where('tracking_number', $trackingNumber)
+            ->first();
+
         // 1. Autenticação na FedEx
         $auth = Http::asForm()->post(config('services.fedex.api_url') . '/oauth/token', [
             'grant_type' => 'client_credentials',
             'client_id' => config('services.fedex.client_id'),
             'client_secret' => config('services.fedex.client_secret'),
         ]);
-        
+
         $accessToken = $auth->json()['access_token'] ?? null;
         if (!$accessToken) {
-            dd('erro');
             $this->error('Erro ao autenticar na FedEx');
             return 1;
         }
 
         // 2. Montar o corpo da requisição
-        $body = [
-            "labelResponseOptions" => "URL_ONLY",
-            "accountNumber" => ["value" => "740561073"],
-            "requestedShipment" => [
-                "shipDatestamp" => "2024-10-01",
-                "serviceType" => "INTERNATIONAL_PRIORITY",
-                "packagingType" => "YOUR_PACKAGING",
-                "pickupType" => "USE_SCHEDULED_PICKUP",
-                "blockInsightVisibility" => false,
-                "shipper" => [
-                    "tins" => [[
-                        "number" => "GB123456789",
-                        "tinType" => "BUSINESS_UNION",
-                        "usage" => "usage",
-                        "effectiveDate" => "2000-01-23T04:56:07.000+00:00",
-                        "expirationDate" => "2024-01-23T04:56:07.000+00:00"
+        if ($shipment) {
+            $this->info('Usando dados do banco de dados para o envio ' . $trackingNumber);
+            $body = [
+                "labelResponseOptions" => "URL_ONLY",
+                "accountNumber" => ["value" => config('services.fedex.account_number')],
+                "requestedShipment" => [
+                    "shipDatestamp" => $shipment->ship_date->format('Y-m-d'),
+                    "serviceType" => $shipment->service_code,
+                    "packagingType" => "YOUR_PACKAGING",
+                    "pickupType" => "USE_SCHEDULED_PICKUP",
+                    "blockInsightVisibility" => false,
+                    "shipper" => [
+                        "contact" => [
+                            "personName" => $shipment->senderAddress->name,
+                            "phoneNumber" => preg_replace('/\D/', '', $shipment->senderAddress->phone),
+                            "companyName" => "LS COMÉRCIO ATACADISTA E VAREJISTA LTDA"
+                        ],
+                        "address" => [
+                            "streetLines" => [
+                                $shipment->senderAddress->address,
+                                $shipment->senderAddress->address_complement
+                            ],
+                            "city" => $shipment->senderAddress->city,
+                            "stateOrProvinceCode" => $shipment->senderAddress->state,
+                            "postalCode" => $shipment->senderAddress->postal_code,
+                            "countryCode" => $shipment->senderAddress->country
+                        ]
+                    ],
+                    "recipients" => [[
+                        "contact" => [
+                            "personName" => $shipment->recipientAddress->name,
+                            "phoneNumber" => preg_replace('/\D/', '', $shipment->recipientAddress->phone),
+                            "companyName" => $shipment->recipientAddress->name
+                        ],
+                        "address" => [
+                            "streetLines" => [
+                                $shipment->recipientAddress->address,
+                                $shipment->recipientAddress->address_complement
+                            ],
+                            "city" => $shipment->recipientAddress->city,
+                            "stateOrProvinceCode" => $shipment->recipientAddress->state,
+                            "postalCode" => $shipment->recipientAddress->postal_code,
+                            "countryCode" => $shipment->recipientAddress->country,
+                            "residential" => $shipment->recipientAddress->is_residential
+                        ]
                     ]],
-                    "contact" => [
-                        "personName" => "SHIPPER NAME",
-                        "phoneNumber" => 1234567890,
-                        "companyName" => "Shipper Company Name"
+                    "shippingChargesPayment" => [
+                        "paymentType" => "SENDER"
                     ],
-                    "address" => [
-                        "streetLines" => [
-                            "SHIPPER STREET LINE 1",
-                            "SHIPPER STREET LINE 2",
-                            "SHIPPER STREET LINE 3"
-                        ],
-                        "city" => "MIAMI",
-                        "stateOrProvinceCode" => "FL",
-                        "postalCode" => "33126",
-                        "countryCode" => "US"
-                    ]
-                ],
-                "recipients" => [[
-                    "contact" => [
-                        "personName" => "RECIPIENT NAME",
-                        "phoneNumber" => 1234567890,
-                        "companyName" => "Recipient Company Name"
+                    "labelSpecification" => [
+                        "imageType" => "PDF",
+                        "labelStockType" => "STOCK_4X6"
                     ],
-                    "address" => [
-                        "streetLines" => [
-                            "RECIPIENT STREET LINE 1",
-                            "RECIPIENT STREET LINE 2",
-                            "RECIPIENT STREET LINE 3"
-                        ],
-                        "city" => "SAO PAULO",
-                        "stateOrProvinceCode" => "SP",
-                        "postalCode" => "01138000",
-                        "countryCode" => "BR",
-                        "residential" => true
-                    ]
-                ]],
-                "shippingChargesPayment" => [
-                    "paymentType" => "SENDER"
-                ],
-                "labelSpecification" => [
-                    "imageType" => "PDF",
-                    "labelStockType" => "STOCK_4X6"
-                ],
-                "customsClearanceDetail" => [
-                    "commercialInvoice" => [
-                        "originatorName" => "originator Name",
-                        "customerReferences" => [[
-                            "customerReferenceType" => "INVOICE_NUMBER",
-                            "value" => "3686"
-                        ]],
-                        "packingCosts" => ["amount" => 12.45, "currency" => "USD"],
-                        "handlingCosts" => ["amount" => 12.45, "currency" => "USD"],
-                        "freightCharge" => ["amount" => 12.45, "currency" => "USD"],
-                        "insuranceCharge" => ["amount" => 12.45, "currency" => "USD"],
-                        "declarationStatement" => "declarationStatement",
-                        "termsOfSale" => "FCA",
-                        "specialInstructions" => "specialInstructions",
-                        "shipmentPurpose" => "SOLD"
+                    "customsClearanceDetail" => [
+                        "dutiesPayment" => ["paymentType" => "RECIPIENT"],
+                        "isDocumentOnly" => false,
+                        "commodities" => $shipment->items->map(function($item) {
+                            return [
+                                "description" => $item->description,
+                                "countryOfManufacture" => $item->country_of_origin ?? "BR",
+                                "harmonizedCode" => $item->harmonized_code,
+                                "quantity" => $item->quantity,
+                                "quantityUnits" => "PCS",
+                                "unitPrice" => [
+                                    "amount" => $item->unit_price,
+                                    "currency" => $item->currency
+                                ],
+                                "customsValue" => [
+                                    "amount" => $item->total_price,
+                                    "currency" => $item->currency
+                                ],
+                                "weight" => [
+                                    "units" => "KG",
+                                    "value" => $item->weight
+                                ]
+                            ];
+                        })->toArray()
                     ],
-                    "dutiesPayment" => ["paymentType" => "RECIPIENT"],
-                    "isDocumentOnly" => false,
-                    "commodities" => [[
-                        "description" => "MUSICAL INSTRUMENTS",
-                        "countryOfManufacture" => "CN",
-                        "harmonizedCode" => "90189084",
-                        "quantity" => 1,
-                        "quantityUnits" => "PCS",
-                        "unitPrice" => ["amount" => 1000, "currency" => "USD"],
-                        "customsValue" => ["amount" => 1000, "currency" => "USD"],
-                        "weight" => ["units" => "KG", "value" => 0.01]
+                    "shippingDocumentSpecification" => [
+                        "shippingDocumentTypes" => ["COMMERCIAL_INVOICE"],
+                        "commercialInvoiceDetail" => [
+                            "documentFormat" => [
+                                "stockType" => "PAPER_LETTER",
+                                "docType" => "PDF"
+                            ]
+                        ]
+                    ],
+                    "requestedPackageLineItems" => [[
+                        "weight" => [
+                            "units" => "KG",
+                            "value" => $shipment->package_weight
+                        ]
                     ]]
-                ],
-                "shippingDocumentSpecification" => [
-                    "shippingDocumentTypes" => ["COMMERCIAL_INVOICE"],
-                    "commercialInvoiceDetail" => [
-                        "documentFormat" => [
-                            "stockType" => "PAPER_LETTER",
-                            "docType" => "PDF"
+                ]
+            ];
+        } else {
+            $this->info('Envio não encontrado no banco. Usando apenas o tracking number ' . $trackingNumber);
+            // Payload mínimo necessário quando não temos dados do banco
+            $body = [
+                "labelResponseOptions" => "URL_ONLY",
+                "accountNumber" => ["value" => config('services.fedex.account_number')],
+                "requestedShipment" => [
+                    "shipDatestamp" => now()->format('Y-m-d'),
+                    "serviceType" => "INTERNATIONAL_PRIORITY",
+                    "packagingType" => "YOUR_PACKAGING",
+                    "pickupType" => "USE_SCHEDULED_PICKUP",
+                    "blockInsightVisibility" => false,
+                    "shipper" => [
+                        "contact" => [
+                            "personName" => "LS COMÉRCIO",
+                            "phoneNumber" => "19981166445",
+                            "companyName" => "LS COMÉRCIO ATACADISTA E VAREJISTA LTDA"
                         ],
-                        "dispositions" => [["dispositionType" => "RETURNED"]]
-                    ]
-                ],
-                "edtRequestType" => "ALL",
-                "requestedPackageLineItems" => [[
-                    "customerReferences" => [[
-                        "customerReferenceType" => "CUSTOMER_REFERENCE",
-                        "value" => "Cust_Ref1"
+                        "address" => [
+                            "streetLines" => [
+                                "Rua 4, Pq Res. Dona Chiquinha"
+                            ],
+                            "city" => "Cosmópolis",
+                            "stateOrProvinceCode" => "SP",
+                            "postalCode" => "13150000",
+                            "countryCode" => "BR"
+                        ]
+                    ],
+                    "recipients" => [[
+                        "contact" => [
+                            "personName" => "RECIPIENT NAME",
+                            "phoneNumber" => "1234567890",
+                            "companyName" => "Recipient Company"
+                        ],
+                        "address" => [
+                            "streetLines" => [
+                                "123 Main St"
+                            ],
+                            "city" => "Miami",
+                            "stateOrProvinceCode" => "FL",
+                            "postalCode" => "33126",
+                            "countryCode" => "US",
+                            "residential" => true
+                        ]
                     ]],
-                    "weight" => ["units" => "KG", "value" => 0.01]
-                ]],
-                "rateRequestType" => ["LIST", "PREFERRED"]
-            ]
-        ];
+                    "shippingChargesPayment" => [
+                        "paymentType" => "SENDER"
+                    ],
+                    "labelSpecification" => [
+                        "imageType" => "PDF",
+                        "labelStockType" => "STOCK_4X6"
+                    ],
+                    "customsClearanceDetail" => [
+                        "dutiesPayment" => ["paymentType" => "RECIPIENT"],
+                        "isDocumentOnly" => false,
+                        "commodities" => [[
+                            "description" => "Sample Product",
+                            "countryOfManufacture" => "BR",
+                            "harmonizedCode" => "000000",
+                            "quantity" => 1,
+                            "quantityUnits" => "PCS",
+                            "unitPrice" => [
+                                "amount" => 100,
+                                "currency" => "USD"
+                            ],
+                            "customsValue" => [
+                                "amount" => 100,
+                                "currency" => "USD"
+                            ],
+                            "weight" => [
+                                "units" => "KG",
+                                "value" => 1
+                            ]
+                        ]]
+                    ],
+                    "requestedPackageLineItems" => [[
+                        "weight" => [
+                            "units" => "KG",
+                            "value" => 1
+                        ]
+                    ]]
+                ]
+            ];
+        }
+
+        // Validar tamanho mínimo das cidades
+        $shipperCity = $body['requestedShipment']['shipper']['address']['city'];
+        $recipientCity = $body['requestedShipment']['recipients'][0]['address']['city'];
+
+        if (strlen($shipperCity) < 3) {
+            $this->error('A cidade do remetente deve ter pelo menos 3 caracteres.');
+            return 1;
+        }
+
+        if (strlen($recipientCity) < 3) {
+            $this->error('A cidade do destinatário deve ter pelo menos 3 caracteres.');
+            return 1;
+        }
 
         // 3. Fazer a requisição para a API da FedEx
         $response = Http::withToken($accessToken)
             ->post(config('services.fedex.api_url') . config('services.fedex.ship_endpoint', '/ship/v1/shipments'), $body);
-
-            dd($response);
 
         $this->info('Status: ' . $response->status());
         $this->line('Resposta:');
