@@ -1119,6 +1119,9 @@ Route::post('/gemini-consulta', function(Request $request) {
 // Rota para processar pagamento
 Route::post('/processar-pagamento', [App\Http\Controllers\PaymentController::class, 'processar'])->name('processar.pagamento');
 
+// Rota para armazenar serviço na sessão
+Route::post('/armazenar-servico-sessao', [App\Http\Controllers\PaymentController::class, 'armazenarServicoSessao'])->name('armazenar.servico.sessao');
+
 // Rota para página de sucesso do pagamento
 Route::get('/pagamento-sucesso', [App\Http\Controllers\PaymentController::class, 'sucesso'])->name('pagamento.sucesso');
 
