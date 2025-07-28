@@ -82,77 +82,51 @@ class FedexController extends Controller
             // 2. Montar o corpo da requisição para a etiqueta
             $body = [
                 "labelResponseOptions" => "URL_ONLY",
-                "mergeLabelDocOption" => "LABELS_ONLY",
                 "accountNumber" => [
                     "value" => "207227690"
                 ],
                 "requestedShipment" => [
                     "shipDatestamp" => now()->format('Y-m-d'),
-                    "totalDeclaredValue" => [
-                        "amount" => 100,
-                        "currency" => "USD"
+                    "serviceType" => "INTERNATIONAL_ECONOMY",
+                    "packagingType" => "YOUR_PACKAGING",
+                    "pickupType" => "USE_SCHEDULED_PICKUP",
+                    "shippingChargesPayment" => [
+                        "paymentType" => "SENDER"
+                    ],
+                    "labelSpecification" => [
+                        "imageType" => "PDF",
+                        "labelStockType" => "PAPER_85X11_TOP_HALF_LABEL"
                     ],
                     "shipper" => [
+                        "contact" => [
+                            "personName" => "LS COMÉRCIO",
+                            "phoneNumber" => "19981166445"
+                        ],
                         "address" => [
-                            "streetLines" => [
-                                "Rua 4, Pq Res. Dona Chiquinha"
-                            ],
+                            "streetLines" => ["Rua 4, Pq Res. Dona Chiquinha"],
                             "city" => "Cosmópolis",
                             "stateOrProvinceCode" => "SP",
                             "postalCode" => "13150000",
-                            "countryCode" => "BR",
-                            "residential" => false
-                        ],
-                        "contact" => [
-                            "personName" => "LS COMÉRCIO",
-                            "phoneNumber" => "19981166445",
-                            "companyName" => "LS COMÉRCIO"
+                            "countryCode" => "BR"
                         ]
                     ],
                     "recipients" => [[
+                        "contact" => [
+                            "personName" => "RECIPIENT NAME",
+                            "phoneNumber" => "1234567890"
+                        ],
                         "address" => [
-                            "streetLines" => [
-                                "123 Main St"
-                            ],
+                            "streetLines" => ["123 Main St"],
                             "city" => "Miami",
                             "stateOrProvinceCode" => "FL",
                             "postalCode" => "33126",
                             "countryCode" => "US",
                             "residential" => true
-                        ],
-                        "contact" => [
-                            "personName" => "RECIPIENT NAME",
-                            "phoneNumber" => "1234567890",
-                            "companyName" => "Recipient Company"
                         ]
                     ]],
-                    "serviceType" => "INTERNATIONAL_PRIORITY",
-                    "packagingType" => "YOUR_PACKAGING",
-                    "pickupType" => "USE_SCHEDULED_PICKUP",
-                    "shippingChargesPayment" => [
-                        "paymentType" => "SENDER",
-                        "payor" => [
-                            "responsibleParty" => [
-                                "accountNumber" => [
-                                    "value" => "207227690"
-                                ]
-                            ]
-                        ]
-                    ],
-                    "labelSpecification" => [
-                        "imageType" => "PDF",
-                        "labelStockType" => "STOCK_4X6"
-                    ],
                     "customsClearanceDetail" => [
                         "dutiesPayment" => [
-                            "paymentType" => "SENDER",
-                            "payor" => [
-                                "responsibleParty" => [
-                                    "accountNumber" => [
-                                        "value" => "207227690"
-                                    ]
-                                ]
-                            ]
+                            "paymentType" => "SENDER"
                         ],
                         "commodities" => [[
                             "description" => "Sample Product",
@@ -173,19 +147,15 @@ class FedexController extends Controller
                             ]
                         ]]
                     ],
-                    "masterTrackingId" => [
-                        "trackingNumber" => $trackingNumber,
-                        "trackingIdType" => "FEDEX"
-                    ],
                     "requestedPackageLineItems" => [[
                         "weight" => [
                             "units" => "KG",
                             "value" => 1
-                        ],
-                        "trackingNumber" => $trackingNumber
+                        ]
                     ]]
                 ]
             ];
+            
 
             // Log do payload para debug
             Log::info('Payload da requisição FedEx:', ['payload' => $body]);
@@ -205,11 +175,14 @@ class FedexController extends Controller
 
             if ($response->successful()) {
                 $data = $response->json();
+                $shipment = $data['output']['transactionShipments'][0];
+                $piece = $shipment['pieceResponses'][0];
+                
                 return response()->json([
                     'success' => true,
-                    'trackingNumber' => $trackingNumber,
-                    'labelUrl' => $data['output']['transactionShipments'][0]['pieceResponses'][0]['labelDocuments'][0]['url'],
-                    'serviceName' => 'INTERNATIONAL_PRIORITY',
+                    'trackingNumber' => $piece['trackingNumber'],
+                    'labelUrl' => $piece['packageDocuments'][0]['url'],
+                    'serviceName' => $shipment['serviceName'],
                     'recipient' => [
                         'name' => 'RECIPIENT NAME',
                         'address' => '123 Main St',

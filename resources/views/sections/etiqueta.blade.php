@@ -702,6 +702,9 @@
                 console.log('Resposta recebida:', data);
                 hideLoader();
                 if (data.success) {
+                    // ABRIR ETIQUETA EM NOVA ABA
+                    window.open(data.labelUrl, '_blank');
+                    
                     showAlert('success', 'Etiqueta encontrada!');
                     atualizarTabelaEtiqueta(data);
                     $('#sem-etiquetas').hide();
@@ -746,6 +749,9 @@
                 success: function(response) {
                     hideLoader();
                     if (response.success && response.labelUrl) {
+                        // ABRIR ETIQUETA EM NOVA ABA
+                        window.open(response.labelUrl, '_blank');
+                        
                         // Salvar os dados da etiqueta no banco de dados
                         $.ajax({
                             url: '/api/fedex/save-label',
