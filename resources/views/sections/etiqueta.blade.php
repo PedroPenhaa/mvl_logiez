@@ -457,8 +457,6 @@
 <script>
     // Garantir que o código só execute após o jQuery estar carregado
     $(function() {
-        console.log('Documento pronto - Iniciando script');
-
         // ========== FUNÇÕES AUXILIARES ==========
         // Loader
         function showLoader() {
@@ -553,22 +551,21 @@
         // Verificar se o botão existe
         const buscarBtn = document.querySelector('#buscar-etiqueta-btn');
         if (!buscarBtn) {
-            console.error('Botão de busca não encontrado na página!');
+            //console.error('Botão de busca não encontrado na página!');
             return;
         }
-        console.log('Botão de busca encontrado:', buscarBtn);
+        //console.log('Botão de busca encontrado:', buscarBtn);
 
         // Verificar se o input existe
         const codigoInput = document.querySelector('#codigo-envio');
         if (!codigoInput) {
-            console.error('Input de código não encontrado na página!');
+            //console.error('Input de código não encontrado na página!');
             return;
         }
-        console.log('Input de código encontrado:', codigoInput);
+        //console.log('Input de código encontrado:', codigoInput);
 
         // Função para exibir etiqueta no modal
         function exibirEtiqueta(envio) {
-            console.log("Exibindo etiqueta com dados:", envio);
             
             // Preencher os dados da etiqueta no modal
             $('#etiqueta-codigo').text(envio.trackingNumber);
@@ -667,10 +664,8 @@
         // Handler do botão de busca
         function handleBuscarClick(e) {
             e.preventDefault();
-            console.log('Botão clicado - handleBuscarClick executado');
             
             const codigo = codigoInput.value.trim();
-            console.log('Código digitado:', codigo);
             
             if (!codigo) {
                 showAlert('warning', 'Por favor, digite um código de envio válido.');
@@ -680,12 +675,10 @@
             // Verificar token CSRF
             const token = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
             if (!token) {
-                console.error('Token CSRF não encontrado!');
                 showAlert('danger', 'Erro de segurança: Token CSRF não encontrado.');
                 return;
             }
             
-            console.log('Iniciando busca para o código:', codigo);
             showLoader();
             
             // Fazer requisição para buscar a etiqueta pelo código na FedEx
@@ -699,7 +692,6 @@
             })
             .then(response => response.json())
             .then(data => {
-                console.log('Resposta recebida:', data);
                 hideLoader();
                 if (data.success) {
                     // ABRIR ETIQUETA EM NOVA ABA
@@ -716,7 +708,6 @@
                 }
             })
             .catch(error => {
-                console.error('Erro na requisição:', error);
                 hideLoader();
                 showAlert('danger', 'Erro ao buscar a etiqueta.');
             });
@@ -727,7 +718,6 @@
         
         codigoInput.addEventListener('keypress', function(e) {
             if (e.key === 'Enter') {
-                console.log('Tecla Enter pressionada');
                 e.preventDefault();
                 handleBuscarClick(e);
             }
@@ -773,7 +763,7 @@
                                 'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
                             },
                             error: function(xhr) {
-                                console.error('Erro ao salvar etiqueta:', xhr);
+                                //console.error('Erro ao salvar etiqueta:', xhr);
                             }
                         });
 
@@ -783,7 +773,6 @@
                     }
                 },
                 error: function(xhr) {
-                    console.error('Erro na requisição de etiqueta:', xhr);
                     hideLoader();
                     let errorMessage = 'Erro ao buscar etiqueta FedEx.';
                     if (xhr.responseJSON && xhr.responseJSON.message) {

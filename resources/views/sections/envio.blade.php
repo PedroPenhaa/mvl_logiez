@@ -2454,7 +2454,6 @@
                     }
                 },
                 error: function(error) {
-                    console.error("Erro ao buscar produtos:", error);
                     $('#select-status').html(`
                         <div class="alert alert-danger border-0 bg-light">
                             <i class="fas fa-times-circle me-2 text-danger"></i>
@@ -2474,7 +2473,6 @@
 
             // Se o campo de busca por descrição estiver vazio, limpar os resultados e o campo NCM
             if ($('#busca-descricao').val() === '') {
-                //console.log("Campo de busca vazio, limpando resultados e NCM");
                 $('#busca-codigo').val(''); // Limpar também o campo de NCM
                 $('#select-status').text('Digite um produto para buscar');
                 $('#produto-unidade').val(''); // Limpar também a unidade
@@ -2499,8 +2497,6 @@
 
         // Evento do botão de limpar busca
         $('#limpar-busca').on('click', function() {
-            //  console.log("Limpando campo de busca e NCM");
-
             // Limpar os campos de entrada
             $('#busca-descricao').val('').focus();
             $('#busca-codigo').val(''); // Limpar o campo de NCM
@@ -2729,7 +2725,7 @@
                     }
                 }
             } catch (error) {
-                console.error('Erro ao acessar dados do Select2:', error);
+                //console.error('Erro ao acessar dados do Select2:', error);
             }
 
             // Se não conseguiu pegar do Select2, tentar pegar dos campos de busca
@@ -3484,12 +3480,6 @@
             const pesoCaixa = $('#peso-caixa-hidden').val();
 
             if (!altura || !largura || !comprimento || !pesoCaixa) {
-                //console.error('Campos de dimensão não preenchidos:', {
-                //    altura: altura,
-                //    largura: largura,
-                //    comprimento: comprimento,
-                //    pesoCaixa: pesoCaixa
-                //});
 
                 // Tentar preencher com os valores da primeira caixa
                 if (caixas.length > 0) {
@@ -3497,13 +3487,6 @@
                     $('#largura-hidden').val(caixas[0].largura);
                     $('#comprimento-hidden').val(caixas[0].comprimento);
                     $('#peso-caixa-hidden').val(caixas[0].peso);
-
-                    //console.log('Dimensões corrigidas com a primeira caixa:', {
-                    //    altura: caixas[0].altura,
-                    //    largura: caixas[0].largura,
-                    //    comprimento: caixas[0].comprimento,
-                    //    pesoCaixa: caixas[0].peso
-                    //});
                 } else {
                     showAlert('Erro ao processar dimensões da caixa. Por favor, tente novamente.', 'danger');
                     return false;
@@ -3532,25 +3515,6 @@
                 }
             }
 
-            // Log para debug
-            //console.log('Enviando dados:', {
-            //    produtos: JSON.parse($('#produtos-json').val() || '[]'),
-            //    caixas: JSON.parse($('#caixas-json').val() || '[]'),
-            //    valorTotal: $('#valor-total-input').val(),
-            //    pesoTotal: $('#peso-total-input').val(),
-            //    dimensoes: {
-            //        altura: $('#altura-hidden').val(),
-            //        largura: $('#largura-hidden').val(),
-            //        comprimento: $('#comprimento-hidden').val(),
-            //        pesoCaixa: $('#peso-caixa-hidden').val()
-            //    },
-            //    servicoEntrega: $('#servico_entrega').val(),
-            //    metodoPagamento: $('#payment_method').val(),
-            //    valorPagamento: $('#payment_amount').val(),
-            //    tipoEnvio: $('#tipo_envio').val(),
-            //    tipoPessoa: $('#tipo_pessoa').val()
-            //});
-
             // Se passou pela validação, enviar o formulário via AJAX
             $.ajax({
                 url: "{{ route('api.envio.processar') }}",
@@ -3560,9 +3524,6 @@
                     // Desabilitar o botão e mostrar indicador de carregamento
                     $('#submit-button').prop('disabled', true).html('<i class="fas fa-spinner fa-spin me-2"></i> Processando...');
 
-                    // Log para verificar o valor do payment_amount
-                    //  console.log('Valor do payment_amount:', $('#payment_amount').val());
-                    //console.log('Tipo do payment_amount:', typeof $('#payment_amount').val());
                 },
                 success: function(response) {
                     // Habilitar o botão novamente
@@ -3764,14 +3725,12 @@
                 const campo = $(campoId);
                 const valor = campo.val() ? campo.val().trim() : '';
                 if (!valor) {
-                    console.log(`❌ Campo ${nomeCampo} está vazio:`, campoId, 'Valor:', campo.val());
+                    //console.log(`❌ Campo ${nomeCampo} está vazio:`, campoId, 'Valor:', campo.val());
                     return false;
                 }
-                console.log(`✅ Campo ${nomeCampo} está preenchido:`, campoId, 'Valor:', valor);
+                //console.log(`✅ Campo ${nomeCampo} está preenchido:`, campoId, 'Valor:', valor);
                 return true;
             }
-            
-            console.log('=== INICIANDO VALIDAÇÃO DOS CAMPOS ===');
             
             // Validar campos de origem
             const camposOrigem = [
@@ -3797,7 +3756,6 @@
                 { id: '#destino_email', nome: 'Email de Destino' }
             ];
             
-            console.log('=== VALIDANDO CAMPOS DE ORIGEM ===');
             // Verificar campos de origem
             for (let campo of camposOrigem) {
                 if (!validarCampo(campo.id, campo.nome)) {
@@ -3807,7 +3765,6 @@
                 }
             }
             
-            console.log('=== VALIDANDO CAMPOS DE DESTINO ===');
             // Verificar campos de destino
             for (let campo of camposDestino) {
                 if (!validarCampo(campo.id, campo.nome)) {
@@ -3816,9 +3773,6 @@
                     return;
                 }
             }
-            
-            // Se chegou até aqui, todos os campos estão preenchidos
-            console.log('🎉 Todos os campos estão preenchidos corretamente!');
             
             // Abrir modal de revisão
             const modal = new bootstrap.Modal(document.getElementById('modal-revisao-final'));

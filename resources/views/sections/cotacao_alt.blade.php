@@ -120,7 +120,7 @@ $(document).ready(function() {
                     '</div>'
                 ).show();
                 
-                console.error('Erro:', xhr);
+                //console.error('Erro:', xhr);
             }
         });
     });

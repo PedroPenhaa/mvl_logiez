@@ -728,25 +728,22 @@
 <script>
 // Verificar se jQuery está disponível
 if (typeof jQuery === 'undefined') {
-    console.error('jQuery não está disponível. Aguardando carregamento...');
     // Aguardar o carregamento do jQuery
     window.addEventListener('load', function() {
         if (typeof jQuery !== 'undefined') {
-            console.log('jQuery carregado, inicializando script...');
+            //console.log('jQuery carregado, inicializando script...');
             initializeRastreamentoScript();
         } else {
-            console.error('jQuery ainda não está disponível após carregamento da página');
+            //console.error('jQuery ainda não está disponível após carregamento da página');
         }
     });
 } else {
-    console.log('jQuery já está disponível, inicializando script...');
+    //console.log('jQuery já está disponível, inicializando script...');
     initializeRastreamentoScript();
 }
 
 function initializeRastreamentoScript() {
     $(document).ready(function() {
-        console.log('Document ready, inicializando funcionalidades de rastreamento...');
-        
         // GARANTIR QUE O LOADER ESTÁ OCULTO DESDE O INÍCIO
         ocultarLoader();
         
@@ -774,11 +771,11 @@ function initializeRastreamentoScript() {
             
             // Log no console do navegador
             if (type === 'error') {
-                console.error(message, data);
+                //console.error(message, data);
             } else if (type === 'warn') {
-                console.warn(message, data);
+                //console.warn(message, data);
             } else {
-                console.log(message, data);
+                //console.log(message, data);
             }
             
             // Atualizar a exibição de logs
@@ -866,7 +863,6 @@ function initializeRastreamentoScript() {
         
         // Função para ocultar o loader de forma robusta
         function ocultarLoader() {
-            console.log('Ocultando loader de forma robusta');
             const loader = document.getElementById('rastreamento-loader');
             if (loader) {
                 loader.style.display = 'none';
@@ -879,7 +875,6 @@ function initializeRastreamentoScript() {
         
         // Função para mostrar o loader
         function mostrarLoader() {
-            console.log('Mostrando loader');
             const loader = document.getElementById('rastreamento-loader');
             if (loader) {
                 loader.style.display = 'flex';
@@ -930,7 +925,6 @@ function initializeRastreamentoScript() {
         
         // Função para mostrar os resultados do rastreamento
         function mostrarResultadoRastreamento(response) {
-            console.log('Mostrando resultado do rastreamento:', response);
             
             // Preencher dados do resultado
             $('#rastreamento-codigo').text(response.codigo);
@@ -996,7 +990,6 @@ function initializeRastreamentoScript() {
         
         // Função para preencher a timeline
         function preencherTimeline(eventos) {
-            console.log('Preenchendo timeline com eventos:', eventos);
             
             const timeline = $('#rastreamento-timeline');
             timeline.empty();
@@ -1131,11 +1124,9 @@ function initializeRastreamentoScript() {
         
         // Função para enviar a solicitação AJAX de rastreamento
         function enviarSolicitacaoRastreamento(forcarSimulacao) {
-            console.log('Enviando solicitação de rastreamento:', { codigoRastreamento, forcarSimulacao });
             
             // Timeout de segurança para ocultar loader após 30 segundos
             setTimeout(function() {
-                console.log('Timeout de segurança - ocultando loader');
                 ocultarLoader();
             }, 30000);
             
@@ -1149,12 +1140,9 @@ function initializeRastreamentoScript() {
                 },
                 dataType: 'json',
                 success: function(response) {
-                    console.log('Resposta da API:', response);
-                    console.log('OCULTANDO LOADER AGORA!');
                     
                     // OCULTAR LOADER IMEDIATAMENTE
                     ocultarLoader();
-                    console.log('Loader ocultado com sucesso');
                     
                     if (response.success) {
                         // Mostrar mensagem de sucesso
@@ -1165,7 +1153,6 @@ function initializeRastreamentoScript() {
                     } else {
                         // Verificar se é o código especial
                         if (codigoRastreamento === '794616896420') {
-                            console.log('Código de rastreamento especial detectado: ' + codigoRastreamento);
                             // Tentar forçar simulação automaticamente para esse código
                             enviarSolicitacaoRastreamento(true);
                             return;
@@ -1185,12 +1172,8 @@ function initializeRastreamentoScript() {
                     }
                 },
                 error: function(xhr) {
-                    console.error('Erro na requisição AJAX:', xhr);
-                    console.log('OCULTANDO LOADER POR ERRO!');
-                    
                     // OCULTAR LOADER IMEDIATAMENTE
                     ocultarLoader();
-                    console.log('Loader ocultado por erro com sucesso');
                     
                     let errorMsg = 'Erro ao processar a solicitação.';
                     if (xhr.responseJSON && xhr.responseJSON.message) {
@@ -1201,7 +1184,6 @@ function initializeRastreamentoScript() {
                     $('#rastreamento-error-message').text(errorMsg);
                 },
                 complete: function() {
-                    console.log('Função complete executada - ocultando loader como garantia');
                     // Garantia adicional - ocultar loader novamente
                     ocultarLoader();
                 }
@@ -1221,7 +1203,6 @@ function initializeRastreamentoScript() {
         // Verificar se existe o parâmetro hash na URL
         const hashParam = getParameterByName('hash');
         if (hashParam) {
-            console.log('Hash de rastreamento detectado na URL:', hashParam);
             // Preencher o campo com o hash apenas
             $('#codigo_rastreamento').val(hashParam);
             codigoRastreamento = hashParam;
@@ -1231,7 +1212,6 @@ function initializeRastreamentoScript() {
         // Processar formulário de rastreamento via AJAX
         $('#rastreamento-form').on('submit', function(e) {
             e.preventDefault();
-            console.log('Formulário de rastreamento submetido');
             
             // Armazenar o código de rastreamento
             codigoRastreamento = $('#codigo_rastreamento').val().trim();
@@ -1334,8 +1314,6 @@ function initializeRastreamentoScript() {
         $('.menu-item').removeClass('active');
         $('.menu-item[data-section="rastreamento"]').addClass('active');
         $('#content-container').show();
-        
-        console.log('Script de rastreamento inicializado com sucesso');
     });
 }
 </script>

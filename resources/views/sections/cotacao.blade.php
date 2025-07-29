@@ -206,17 +206,10 @@ $(document).ready(function() {
     
     // Função para processar a resposta
     function processarResposta(response) {
-        // Debug: verificar a estrutura da resposta
-        console.log('Resposta completa:', response);
-        
         // Verificar se a resposta está dentro de um objeto 'data'
         if (response.data && response.data.success !== undefined) {
             response = response.data;
         }
-        
-        console.log('response.success:', response.success);
-        console.log('response.cotacoesFedEx:', response.cotacoesFedEx);
-        console.log('response.cotacoesFedEx.length:', response.cotacoesFedEx ? response.cotacoesFedEx.length : 'undefined');
         
         if (response.success === false) {
             // Mostrar mensagem de erro
@@ -270,11 +263,6 @@ $(document).ready(function() {
         function formatarTempoEntrega(tempoEntrega, dataChegada) {
             try {
                 if (!tempoEntrega) return 'Consultar';
-                
-                // Debug para verificar os dados recebidos
-                console.log('Tempo de entrega recebido:', tempoEntrega);
-                console.log('Data de chegada recebida:', dataChegada);
-                console.log('Tipo da data de chegada:', typeof dataChegada);
                 
                 var html = '<div class="tempo-entrega-info">';
                 
@@ -424,7 +412,7 @@ $(document).ready(function() {
                 html += '</div>';
                 return html;
             } catch (error) {
-                console.error('Erro na função formatarTempoEntrega:', error);
+                //console.error('Erro na função formatarTempoEntrega:', error);
                 return tempoEntrega || 'Consultar';
             }
         }
@@ -472,18 +460,12 @@ $(document).ready(function() {
                 html += '</tr></thead><tbody>';
                 
                 response.cotacoesFedEx.forEach(function(cotacao) {
-                    console.log('Processando cotação:', cotacao);
-                    console.log('servico:', cotacao.servico);
-                    console.log('tempoEntrega:', cotacao.tempoEntrega);
-                    console.log('dataEntrega:', cotacao.dataEntrega);
-                    
                     html += '<tr>';
                     html += '<td>' + cotacao.servico + '</td>';
                     html += '<td>';
                     try {
                         html += formatarTempoEntrega(cotacao.tempoEntrega, cotacao.dataEntrega);
                     } catch (error) {
-                        console.error('Erro ao formatar tempo de entrega:', error);
                         html += cotacao.tempoEntrega || 'Consultar';
                     }
                     html += '</td>';
@@ -525,9 +507,6 @@ $(document).ready(function() {
             
             // Exibir resultados
             $('#cotacao-resultado').html(html).fadeIn();
-            
-            // Debug: verificar se o HTML foi gerado
-            console.log('HTML gerado:', html);
             
             // Scroll suave até os resultados
             $('html, body').animate({
