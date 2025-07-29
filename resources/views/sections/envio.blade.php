@@ -509,6 +509,16 @@
                                                 <option value="pj">Pessoa Jurídica</option>
                                             </select>
                                         </div>
+                                        <!-- Campo CPF (aparece quando seleciona Pessoa Física) -->
+                                        <div class="col-md-12 mb-3" id="cpf-field" style="display: none;">
+                                            <label for="cpf" class="form-label required"><i class="fas fa-id-card me-1"></i> CPF</label>
+                                            <input type="text" class="form-control" id="cpf" name="cpf" placeholder="000.000.000-00" maxlength="14">
+                                        </div>
+                                        <!-- Campo CNPJ (aparece quando seleciona Pessoa Jurídica) -->
+                                        <div class="col-md-12 mb-3" id="cnpj-field" style="display: none;">
+                                            <label for="cnpj" class="form-label required"><i class="fas fa-building me-1"></i> CNPJ</label>
+                                            <input type="text" class="form-control" id="cnpj" name="cnpj" placeholder="00.000.000/0000-00" maxlength="18">
+                                        </div>
                                     </div>
                                     <div class="text-end">
                                         <button type="button" class="btn btn-primary" id="btn-step-1-next">Continuar</button>
@@ -3660,6 +3670,34 @@
         // Inicializar wizard
         mostrarEtapa(etapaAtual);
 
+        // Evento para controlar exibição dos campos CPF/CNPJ baseado no tipo de pessoa
+        $('#tipo_pessoa').on('change', function() {
+            const tipoPessoa = $(this).val();
+            
+            // Ocultar ambos os campos primeiro
+            $('#cpf-field').hide();
+            $('#cnpj-field').hide();
+            
+            // Limpar os valores dos campos
+            $('#cpf').val('');
+            $('#cnpj').val('');
+            
+            // Mostrar o campo apropriado baseado na seleção
+            if (tipoPessoa === 'pf') {
+                $('#cpf-field').show();
+                $('#cpf').prop('required', true);
+                $('#cnpj').prop('required', false);
+            } else if (tipoPessoa === 'pj') {
+                $('#cnpj-field').show();
+                $('#cnpj').prop('required', true);
+                $('#cpf').prop('required', false);
+            } else {
+                // Nenhum tipo selecionado, remover required de ambos
+                $('#cpf').prop('required', false);
+                $('#cnpj').prop('required', false);
+            }
+        });
+
         // Eventos dos botões do wizard
         $('#btn-step-1-next').on('click', function() {
             // Validar campos da etapa 1
@@ -3670,6 +3708,22 @@
             if (!$('#tipo_pessoa').val()) {
                 showAlert('Por favor, selecione o tipo de pessoa.', 'warning');
                 return;
+            }
+            
+            // Validar CPF ou CNPJ baseado no tipo de pessoa selecionado
+            const tipoPessoa = $('#tipo_pessoa').val();
+            if (tipoPessoa === 'pf') {
+                if (!$('#cpf').val()) {
+                    showAlert('Por favor, preencha o CPF.', 'warning');
+                    $('#cpf').focus();
+                    return;
+                }
+            } else if (tipoPessoa === 'pj') {
+                if (!$('#cnpj').val()) {
+                    showAlert('Por favor, preencha o CNPJ.', 'warning');
+                    $('#cnpj').focus();
+                    return;
+                }
             }
             
             etapaAtual = 2;
@@ -3971,6 +4025,54 @@
                 if (cep.replace(/\D/g, '').length === 8) {
                     buscarCEP(cep, 'destino');
                 }
+            });
+
+            // Máscara para o campo de CPF
+            $('#cpf').on('input', function() {
+                // Remove caracteres não numéricos
+                let cpf = $(this).val().replace(/\D/g, '');
+
+                // Limita a 11 dígitos
+                if (cpf.length > 11) {
+                    cpf = cpf.substring(0, 11);
+                }
+
+                // Formata o CPF: 000.000.000-00
+                if (cpf.length > 9) {
+                    cpf = cpf.substring(0, 3) + '.' + cpf.substring(3, 6) + '.' + cpf.substring(6, 9) + '-' + cpf.substring(9);
+                } else if (cpf.length > 6) {
+                    cpf = cpf.substring(0, 3) + '.' + cpf.substring(3, 6) + '.' + cpf.substring(6);
+                } else if (cpf.length > 3) {
+                    cpf = cpf.substring(0, 3) + '.' + cpf.substring(3);
+                }
+
+                // Atualiza o valor do campo
+                $(this).val(cpf);
+            });
+
+            // Máscara para o campo de CNPJ
+            $('#cnpj').on('input', function() {
+                // Remove caracteres não numéricos
+                let cnpj = $(this).val().replace(/\D/g, '');
+
+                // Limita a 14 dígitos
+                if (cnpj.length > 14) {
+                    cnpj = cnpj.substring(0, 14);
+                }
+
+                // Formata o CNPJ: 00.000.000/0000-00
+                if (cnpj.length > 12) {
+                    cnpj = cnpj.substring(0, 2) + '.' + cnpj.substring(2, 5) + '.' + cnpj.substring(5, 8) + '/' + cnpj.substring(8, 12) + '-' + cnpj.substring(12);
+                } else if (cnpj.length > 8) {
+                    cnpj = cnpj.substring(0, 2) + '.' + cnpj.substring(2, 5) + '.' + cnpj.substring(5, 8) + '/' + cnpj.substring(8);
+                } else if (cnpj.length > 5) {
+                    cnpj = cnpj.substring(0, 2) + '.' + cnpj.substring(2, 5) + '.' + cnpj.substring(5);
+                } else if (cnpj.length > 2) {
+                    cnpj = cnpj.substring(0, 2) + '.' + cnpj.substring(2);
+                }
+
+                // Atualiza o valor do campo
+                $(this).val(cnpj);
             });
 
             // Função para buscar informações do CEP usando a API ViaCEP
