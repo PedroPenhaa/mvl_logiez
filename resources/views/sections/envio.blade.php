@@ -768,7 +768,10 @@
                     <!-- Botão de Continuar -->
                     <div class="row">
                         <div class="col-12">
-                            <div class="d-flex justify-content-end">
+                            <div class="d-flex justify-content-between">
+                                <button type="button" class="btn btn-outline-secondary btn-lg px-4" id="btn-step-2-back">
+                                    <i class="fas fa-arrow-left me-2"></i>Voltar
+                                </button>
                                 <button type="button" class="btn btn-primary btn-lg px-4" id="btn-step-2-next">
                                     <i class="fas fa-arrow-right me-2"></i>Continuar
                                 </button>
@@ -888,7 +891,12 @@
                         </div>
                     </div>
                     <div class="text-end">
-                        <button type="button" class="btn btn-primary" id="btn-step-3-next">Continuar</button>
+                        <div class="d-flex justify-content-between">
+                            <button type="button" class="btn btn-outline-secondary" id="btn-step-3-back">
+                                <i class="fas fa-arrow-left me-2"></i>Voltar
+                            </button>
+                            <button type="button" class="btn btn-primary" id="btn-step-3-next">Continuar</button>
+                        </div>
                     </div>
                 </div>
                 <!-- Etapa 4: Revisão Final (modal será aberto via JS) -->
@@ -999,9 +1007,14 @@
 
                                     <!-- Botão de Finalizar -->
                                     <div class="mt-4">
-                                        <button type="submit" class="btn btn-success btn-lg w-100" id="finalizar-pagamento">
-                                            <i class="fas fa-check-circle me-2"></i>Finalizar Pagamento
-                                        </button>
+                                        <div class="d-flex justify-content-between">
+                                            <button type="button" class="btn btn-outline-secondary btn-lg" id="btn-step-6-back">
+                                                <i class="fas fa-arrow-left me-2"></i>Voltar
+                                            </button>
+                                            <button type="submit" class="btn btn-success btn-lg" id="finalizar-pagamento">
+                                                <i class="fas fa-check-circle me-2"></i>Finalizar Pagamento
+                                            </button>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
@@ -3898,6 +3911,34 @@
             mostrarEtapa(etapaAtual);
         });
 
+        // ===== EVENTOS DOS BOTÕES VOLTAR =====
+        
+        // Botão voltar da etapa 2 para etapa 1
+        $(document).on('click', '#btn-step-2-back', function() {
+            etapaAtual = 1;
+            mostrarEtapa(etapaAtual);
+        });
+
+        // Botão voltar da etapa 3 para etapa 2
+        $(document).on('click', '#btn-step-3-back', function() {
+            etapaAtual = 2;
+            mostrarEtapa(etapaAtual);
+        });
+
+        // Botão voltar da etapa 5 para etapa 3
+        $(document).on('click', '#btn-step-5-back', function() {
+            etapaAtual = 3;
+            mostrarEtapa(etapaAtual);
+        });
+
+        // Botão voltar da etapa 6 para etapa 5
+        $(document).on('click', '#btn-step-6-back', function() {
+            etapaAtual = 5;
+            mostrarEtapa(etapaAtual);
+        });
+
+        // ===== FIM EVENTOS DOS BOTÕES VOLTAR =====
+
         // Função para montar o resumo da revisão
         function montarResumoRevisao() {
             let resumo = '<div class="row">';
@@ -4429,7 +4470,10 @@
         
         // Adicionar botão de continuar
         container.append(`
-            <div class="text-end mt-4">
+            <div class="d-flex justify-content-between mt-4">
+                <button type="button" class="btn btn-outline-secondary btn-lg" id="btn-step-5-back">
+                    <i class="fas fa-arrow-left me-2"></i>Voltar
+                </button>
                 <button type="button" class="btn btn-primary btn-lg" id="btn-step-5-next" disabled>
                     <i class="fas fa-arrow-right me-2"></i>Continuar
                 </button>
