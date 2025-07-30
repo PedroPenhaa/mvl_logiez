@@ -327,6 +327,45 @@ class SectionController extends Controller
             $resultado['cotacoesFedEx'] = $cotacoesProcessadas;
             $resultado['cotacaoDolar'] = $valorDolar;
             
+            // Salvar cotação na tabela quotes
+            try {
+                $userId = \Illuminate\Support\Facades\Auth::check() ? \Illuminate\Support\Facades\Auth::id() : null;
+                
+                // Salvar apenas um registro com a primeira cotação
+                if (!empty($cotacoesProcessadas)) {
+                    $cotacao = $cotacoesProcessadas[0]; // Pega a primeira cotação
+                    
+                    \App\Models\Quote::create([
+                        'user_id' => $userId,
+                        'origin_postal_code' => $request->origem,
+                        'origin_country' => 'BR',
+                        'destination_postal_code' => $request->destino,
+                        'destination_country' => 'US',
+                        'package_height' => $request->altura,
+                        'package_width' => $request->largura,
+                        'package_length' => $request->comprimento,
+                        'package_weight' => $request->peso,
+                        'carrier' => 'FedEx',
+                        'service_code' => $cotacao['codigoServico'] ?? '',
+                        'service_name' => $cotacao['nomeServico'] ?? '',
+                        'delivery_time_min' => $cotacao['prazoMinimo'] ?? 0,
+                        'delivery_time_max' => $cotacao['prazoMaximo'] ?? 0,
+                        'total_price' => $cotacao['valorTotal'] ?? 0,
+                        'currency' => $cotacao['moeda'] ?? 'USD',
+                        'exchange_rate' => $valorDolar,
+                        'total_price_brl' => str_replace(['.', ','], ['', '.'], $cotacao['valorTotalBRL'] ?? 0),
+                        'request_data' => $request->all(),
+                        'response_data' => $resultado,
+                        'is_simulation' => $resultado['simulado'] ?? false,
+                        'quote_reference' => uniqid('QT'),
+                        'expires_at' => now()->addDays(7),
+                        'ip_address' => $request->ip(),
+                        'user_agent' => $request->userAgent()
+                    ]);
+                }
+            } catch (\Exception $e) {
+            }
+            
             return response()->json([
                 'status' => 'success',
                 'data' => $resultado
@@ -653,7 +692,6 @@ class SectionController extends Controller
             'codigo_rastreamento' => 'required|string',
         ]);
         
-        // Log especial para o código de rastreamento específico
         if ($request->codigo_rastreamento === '794616896420') {
         }
         
