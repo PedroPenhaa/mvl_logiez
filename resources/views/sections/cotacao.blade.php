@@ -412,7 +412,6 @@ $(document).ready(function() {
                 html += '</div>';
                 return html;
             } catch (error) {
-                //console.error('Erro na função formatarTempoEntrega:', error);
                 return tempoEntrega || 'Consultar';
             }
         }

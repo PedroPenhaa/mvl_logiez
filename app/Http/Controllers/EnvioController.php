@@ -75,16 +75,6 @@ class EnvioController extends Controller
     public function processar(Request $request)
     {
         try {
-            // Log inicial para depuração
-            Log::info('Iniciando processamento de envio', [
-                'request_data' => $request->except(['card_number', 'card_cvv', 'card_cpf']), // Excluir dados sensíveis
-                'user_id' => Auth::id()
-            ]);
-            
-            // Console log para debugging no frontend
-            $logScripts = [];
-            $logScripts[] = "<script>console.log('INICIANDO PROCESSAMENTO DE ENVIO');</script>";
-            
             // Validar dados básicos
             $produtos = json_decode($request->produtos_json, true);
             if (empty($produtos)) {
@@ -103,15 +93,6 @@ class EnvioController extends Controller
             if (!$request->payment_method || !$request->payment_amount) {
                 throw new \Exception('Informações de pagamento incompletas.');
             }
-            
-            // Log dos dados após validação inicial
-            Log::info('Dados validados', [
-                'produtos_count' => count($produtos),
-                'caixas_count' => count($caixas),
-                'servico_entrega' => $request->servico_entrega,
-                'payment_method' => $request->payment_method,
-                'payment_amount' => $request->payment_amount
-            ]);
             
             // 1. Criar registro de envio (shipment)
             $shipment = new Shipment();
@@ -133,12 +114,6 @@ class EnvioController extends Controller
             $shipment->tipo_envio = $request->tipo_envio;
             $shipment->tipo_pessoa = $request->tipo_pessoa;
             $shipment->save();
-            
-            // Log de criação do envio
-            Log::info('Registro de envio criado', [
-                'shipment_id' => $shipment->id,
-                'status' => $shipment->status
-            ]);
             
             // 2. Salvar endereço do remetente
             $enderecoPagador = $request->origem_cep; // Usado para Asaas
@@ -184,16 +159,6 @@ class EnvioController extends Controller
                 $shipmentItem->country_of_origin = 'BR';
                 $shipmentItem->harmonized_code = $produto['codigo'] ?? null;
                 $shipmentItem->save();
-                
-                // Log para debug de itens criados
-                Log::info('Item de envio adicionado', [
-                    'shipment_id' => $shipment->id,
-                    'description' => $shipmentItem->description,
-                    'weight' => $shipmentItem->weight,
-                    'quantity' => $shipmentItem->quantity,
-                    'unit_price' => $shipmentItem->unit_price,
-                    'harmonized_code' => $shipmentItem->harmonized_code
-                ]);
             }
             
             // 5. Processar pagamento via Asaas
@@ -219,16 +184,7 @@ class EnvioController extends Controller
                         $shipment->status = 'created';
                         $shipment->save();
                         
-                        Log::info('Envio processado com sucesso na FedEx', [
-                            'shipment_id' => $shipment->id,
-                            'tracking_number' => $shipment->tracking_number
-                        ]);
                     } else {
-                        Log::error('Erro ao criar envio na FedEx', [
-                            'shipment_id' => $shipment->id,
-                            'error' => $respostaFedex['message'] ?? 'Erro desconhecido'
-                        ]);
-                        
                         // Não lançar exceção aqui, apenas registrar o erro
                         // O envio será processado posteriormente quando o pagamento for confirmado
                     }
@@ -250,43 +206,17 @@ class EnvioController extends Controller
                     'label_url' => $shipment->shipping_label_url
                 ],
                 'payment' => $resultadoPagamento,
-                'logs' => session('logScripts', []),
                 'nextStep' => 'confirmacao',
                 'hash' => base64_encode($shipment->id . '|' . $shipment->created_at->timestamp)
             ];
             
-            // Log para debug
-            Log::info('Resposta enviada ao frontend', [
-                'response' => collect($resposta)->except(['logs'])->toArray()
-            ]);
-            
             return response()->json($resposta);
             
         } catch (\Exception $e) {
-            Log::error('Erro ao processar requisição de envio', [
-                'error' => $e->getMessage(),
-                'trace' => $e->getTraceAsString()
-            ]);
-            
-            // Console log para frontend
-            $logScript = "<script>
-                console.error('ENVIO PROCESS ERROR:', " . json_encode([
-                    'message' => $e->getMessage(),
-                    'file' => $e->getFile(),
-                    'line' => $e->getLine(),
-                    'stack' => $e->getTrace()
-                ]) . ");
-            </script>";
-            
-            // Adicionar os logs à sessão
-            $logScripts = session('logScripts', []);
-            $logScripts[] = $logScript;
-            session(['logScripts' => $logScripts]);
             
             return response()->json([
                 'success' => false,
                 'message' => 'Erro ao processar envio: ' . $e->getMessage(),
-                'logs' => session('logScripts', [])
             ], 500);
         }
     }
@@ -308,13 +238,6 @@ class EnvioController extends Controller
     
     private function processarEnvioFedex($shipment)
     {
-        // Log para debug
-        Log::info('Iniciando processamento de envio FedEx', [
-            'shipment_id' => $shipment->id,
-            'carrier' => $shipment->carrier,
-            'service_code' => $shipment->service_code
-        ]);
-        
         try {
             // Preparar dados do remetente
             $dadosRemetente = [
@@ -366,37 +289,6 @@ class EnvioController extends Controller
                 ];
             }
             
-            // Log para debug
-            Log::info('Dados preparados para envio à FedEx', [
-                'remetente' => $dadosRemetente,
-                'destinatario' => $dadosDestinatario,
-                'pacote' => $dadosPacote,
-                'produtos' => $dadosProdutos,
-                'servico' => $shipment->service_code
-            ]);
-            
-            // Verificar se temos todos os campos necessários
-            Log::info('Verificação de campos obrigatórios:', [
-                'remetente_name' => isset($dadosRemetente['name']) ? 'OK' : 'FALTANDO',
-                'remetente_phone' => isset($dadosRemetente['phone']) ? 'OK' : 'FALTANDO',
-                'remetente_email' => isset($dadosRemetente['email']) ? 'OK' : 'FALTANDO',
-                'remetente_country' => isset($dadosRemetente['country']) ? 'OK' : 'FALTANDO',
-                'produto_description' => !empty($dadosProdutos) && isset($dadosProdutos[0]['description']) ? 'OK' : 'FALTANDO',
-                'produto_weight' => !empty($dadosProdutos) && isset($dadosProdutos[0]['weight']) ? 'OK' : 'FALTANDO'
-            ]);
-            
-            // Console log para frontend
-            $logScript = "<script>
-                console.log('FEDEX SHIPMENT REQUEST DATA:', " . json_encode([
-                    'shipment_id' => $shipment->id,
-                    'service_code' => $shipment->service_code,
-                    'package' => $dadosPacote,
-                    'sender' => array_intersect_key($dadosRemetente, array_flip(['name', 'city', 'state', 'postalCode', 'country'])),
-                    'recipient' => array_intersect_key($dadosDestinatario, array_flip(['name', 'city', 'state', 'postalCode', 'country'])),
-                    'items_count' => count($dadosProdutos)
-                ]) . ");
-            </script>";
-            
             // Enviar para a FedEx usando o serviço
             $response = $this->fedexService->criarEnvio(
                 $dadosRemetente,
@@ -406,23 +298,6 @@ class EnvioController extends Controller
                 $shipment->service_code
             );
             
-            // Log para debug
-            Log::info('Resposta da API FedEx', [
-                'shipment_id' => $shipment->id,
-                'response' => $response
-            ]);
-            
-            // Console log para frontend
-            $logScript .= "<script>
-                console.log('FEDEX SHIPMENT RESPONSE:', " . json_encode($response) . ");
-            </script>";
-            
-            // Adicionar os logs à sessão
-            $logScripts = session('logScripts', []);
-            $logScripts[] = $logScript;
-            session(['logScripts' => $logScripts]);
-            
-            // Simular retorno para ambiente de desenvolvimento
             // Quando tivermos a integração real com a FedEx, usaremos a $response recebida
             if (app()->environment('production') && isset($response['success']) && $response['success']) {
                 return $response;
@@ -436,33 +311,6 @@ class EnvioController extends Controller
                 'label_url' => 'https://logiez.io/labels/sample.pdf'
             ];
         } catch (\Exception $e) {
-            Log::error('Erro ao processar envio FedEx', [
-                'shipment_id' => $shipment->id,
-                'error' => $e->getMessage(),
-                'trace' => $e->getTraceAsString()
-            ]);
-            
-            // Console log para frontend
-            $logScript = "<script>
-                console.error('FEDEX SHIPMENT ERROR:', " . json_encode([
-                    'message' => $e->getMessage(),
-                    'file' => $e->getFile(),
-                    'line' => $e->getLine(),
-                    'trace' => explode("\n", $e->getTraceAsString()),
-                    'shipment' => [
-                        'id' => $shipment->id,
-                        'service_code' => $shipment->service_code,
-                        'address_data_found' => $shipment->senderAddress && $shipment->recipientAddress ? 'yes' : 'no',
-                        'items_count' => $shipment->items->count()
-                    ]
-                ]) . ");
-            </script>";
-            
-            // Adicionar os logs à sessão
-            $logScripts = session('logScripts', []);
-            $logScripts[] = $logScript;
-            session(['logScripts' => $logScripts]);
-            
             return [
                 'success' => false,
                 'message' => 'Erro ao processar envio: ' . $e->getMessage()
@@ -473,12 +321,6 @@ class EnvioController extends Controller
     private function processarPagamento($shipment, $request)
     {
         try {
-            Log::info('Iniciando processamento de pagamento', [
-                'shipment_id' => $shipment->id,
-                'payment_method' => $request->payment_method,
-                'value' => $request->payment_amount ?? $shipment->valor,
-            ]);
-
             // Verificar se o método de pagamento é válido
             $paymentMethod = $request->payment_method;
             if (!in_array($paymentMethod, ['credit_card', 'boleto', 'pix'])) {
@@ -529,14 +371,6 @@ class EnvioController extends Controller
             // Obter token da API do arquivo de configuração
             $apiToken = config('services.asaas.token');
             
-            // Log para diagnóstico
-            Log::debug('Configuração da API Asaas', [
-                'baseUrl' => $baseUrl,
-                'token_length' => strlen($apiToken),
-                'is_sandbox' => $isSandbox ? 'Sim' : 'Não',
-                'token_source' => 'services.asaas.token'
-            ]);
-
             // Preparar dados comuns para todas as formas de pagamento
             $paymentData = [
                 'customer' => $customerId,
@@ -591,7 +425,6 @@ class EnvioController extends Controller
                 $paymentDataDebug['creditCard']['number'] = '****' . substr($paymentDataDebug['creditCard']['number'], -4);
                 $paymentDataDebug['creditCard']['ccv'] = '***';
             }
-            Log::debug('Dados de pagamento a serem enviados para o Asaas', $paymentDataDebug);
 
             // Enviar requisição para criar o pagamento
             try {
@@ -609,17 +442,9 @@ class EnvioController extends Controller
 
                 $responseData = json_decode($response->getBody(), true);
                 
-                // Log da resposta para debug
-                Log::info('Resposta do Asaas ao criar pagamento', ['response' => $responseData]);
             } catch (\GuzzleHttp\Exception\ClientException $e) {
                 // Capturar erros HTTP específicos
                 $responseBody = $e->getResponse()->getBody()->getContents();
-                Log::error('Erro na requisição HTTP para o Asaas', [
-                    'status_code' => $e->getResponse()->getStatusCode(),
-                    'response_body' => $responseBody,
-                    'request_url' => $e->getRequest()->getUri()->__toString(),
-                    'request_headers' => $e->getRequest()->getHeaders()
-                ]);
                 throw new Exception('Erro na comunicação com o Asaas: ' . $responseBody);
             }
 
@@ -643,7 +468,6 @@ class EnvioController extends Controller
                     $paymentInfoForSession['pixKey'] = $pixData['payload'] ?? null;
                     $paymentInfoForSession['paymentLink'] = $responseData['invoiceUrl'] ?? null;
                 } catch (\Exception $e) {
-                    Log::error('Erro ao buscar QR Code PIX: ' . $e->getMessage());
                 }
             } elseif ($paymentMethod === 'boleto') {
                 // Buscar código de barras do boleto
@@ -652,13 +476,11 @@ class EnvioController extends Controller
                     $paymentInfoForSession['barCode'] = $boletoData['identificationField'] ?? null;
                     $paymentInfoForSession['boletoUrl'] = $responseData['bankSlipUrl'] ?? null;
                 } catch (\Exception $e) {
-                    Log::error('Erro ao buscar código de barras do boleto: ' . $e->getMessage());
                 }
             }
 
             // Salvar na sessão para exibição na página de confirmação
             session(['payment_info' => $paymentInfoForSession]);
-            Log::info('Dados de pagamento salvos na sessão', ['payment_info' => $paymentInfoForSession]);
 
             // Salvar o pagamento no banco de dados
             $payment = new \App\Models\Payment();
@@ -690,12 +512,6 @@ class EnvioController extends Controller
                 'session_data' => $paymentInfoForSession
             ];
         } catch (\Exception $e) {
-            Log::error('Erro ao processar pagamento: ' . $e->getMessage(), [
-                'exception' => get_class($e),
-                'file' => $e->getFile(),
-                'line' => $e->getLine(),
-                'trace' => $e->getTraceAsString()
-            ]);
 
             throw new Exception('Erro ao processar pagamento: ' . $e->getMessage());
         }
@@ -715,14 +531,6 @@ class EnvioController extends Controller
             // Obter token da API do arquivo de configuração
             $apiToken = config('services.asaas.token');
             
-            // Log para diagnóstico
-            Log::debug('Configuração da API Asaas para buscar cliente', [
-                'baseUrl' => $baseUrl,
-                'token_length' => strlen($apiToken),
-                'is_sandbox' => $isSandbox ? 'Sim' : 'Não',
-                'token_source' => 'services.asaas.token'
-            ]);
-            
             // Dados do cliente a partir do request
             $cpfBruto = $request->card_cpf ?? '';
             $cpfLimpo = preg_replace('/\D/', '', $cpfBruto);
@@ -731,11 +539,6 @@ class EnvioController extends Controller
             if (empty($cpfLimpo) || !$this->validarCPF($cpfLimpo)) {
                 // CPF válido para testes: 01234567890 (somente números)
                 $cpfCnpj = '01234567890';
-                Log::warning('CPF inválido ou não informado, usando CPF padrão válido', [
-                    'cpf_informado' => $cpfBruto,
-                    'cpf_limpo' => $cpfLimpo,
-                    'cpf_padrao' => $cpfCnpj
-                ]);
             } else {
                 $cpfCnpj = $cpfLimpo;
             }
@@ -743,11 +546,6 @@ class EnvioController extends Controller
             $email = $request->origem_email ?? $request->email ?? 'cliente'.time().'@exemplo.com';
             $nome = $request->origem_nome ?? $request->name ?? 'Cliente Teste';
             $telefone = $request->origem_telefone ? preg_replace('/\D/', '', $request->origem_telefone) : '';
-            
-            // 1. Primeiro tenta buscar o cliente pelo e-mail
-            Log::info('Buscando cliente no Asaas por e-mail', [
-                'email' => $email
-            ]);
             
             $curl = curl_init();
             curl_setopt_array($curl, [
@@ -769,12 +567,6 @@ class EnvioController extends Controller
             $response = curl_exec($curl);
             $httpCode = curl_getinfo($curl, CURLINFO_HTTP_CODE);
             
-            // Log para diagnóstico
-            Log::debug('Resposta da busca de cliente por e-mail', [
-                'response' => $response,
-                'httpCode' => $httpCode
-            ]);
-            
             curl_close($curl);
             
             if ($httpCode >= 200 && $httpCode < 300) {
@@ -782,25 +574,10 @@ class EnvioController extends Controller
                 
                 if (isset($result['data']) && count($result['data']) > 0) {
                     $customerId = $result['data'][0]['id'];
-                    Log::info('Cliente encontrado no Asaas', [
-                        'customer_id' => $customerId,
-                        'email' => $email
-                    ]);
                     return $customerId;
                 }
             } else {
-                Log::warning('Erro ao buscar cliente por e-mail', [
-                    'httpCode' => $httpCode,
-                    'response' => $response
-                ]);
             }
-            
-            // 2. Se não encontrar pelo e-mail, tenta criar um novo cliente
-            Log::info('Criando novo cliente no Asaas', [
-                'nome' => $nome,
-                'email' => $email,
-                'cpfCnpj' => $cpfCnpj
-            ]);
             
             $postData = json_encode([
                 'name' => $nome,
@@ -831,13 +608,6 @@ class EnvioController extends Controller
             $response = curl_exec($curl);
             $httpCode = curl_getinfo($curl, CURLINFO_HTTP_CODE);
             
-            // Log para diagnóstico
-            Log::debug('Resposta da criação de cliente', [
-                'response' => $response,
-                'httpCode' => $httpCode,
-                'postData' => $postData
-            ]);
-            
             curl_close($curl);
             
             if ($httpCode >= 200 && $httpCode < 300) {
@@ -845,27 +615,13 @@ class EnvioController extends Controller
                 
                 if (isset($result['id'])) {
                     $customerId = $result['id'];
-                    Log::info('Novo cliente criado no Asaas', [
-                        'customer_id' => $customerId,
-                        'nome' => $nome,
-                        'email' => $email
-                    ]);
                     return $customerId;
                 }
             }
             
-            // Se chegou até aqui, ocorreu um erro na criação do cliente
-            Log::error('Erro ao criar cliente no Asaas', [
-                'httpCode' => $httpCode,
-                'response' => $response
-            ]);
-            
             throw new Exception('Não foi possível criar o cliente no Asaas: ' . ($response ?? 'Erro desconhecido'));
             
         } catch (Exception $e) {
-            Log::error('Erro no buscarOuCriarClienteAsaas: ' . $e->getMessage(), [
-                'trace' => $e->getTraceAsString()
-            ]);
             throw $e;
         }
     }
@@ -894,19 +650,16 @@ class EnvioController extends Controller
         if (in_array($cpfLimpo, array_map(function($item) {
             return preg_replace('/[^0-9]/', '', $item);
         }, $knownValidCPFs))) {
-            Log::info("CPF aceito como válido (na lista de CPFs conhecidos): {$cpf}");
             return true;
         }
         
         // CPF deve ter 11 dígitos
         if (strlen($cpfLimpo) != 11) {
-            Log::debug("CPF inválido - comprimento incorreto: " . strlen($cpfLimpo) . " dígitos");
             return false;
         }
         
         // Verificar se todos os dígitos são iguais (caso inválido)
         if (preg_match('/^(\d)\1{10}$/', $cpfLimpo)) {
-            Log::debug("CPF inválido - dígitos repetidos: {$cpf}");
             return false;
         }
         
@@ -914,7 +667,6 @@ class EnvioController extends Controller
         if ($cpfLimpo === '12345678909') {
             // Verificar se estamos em ambiente de produção
             if (!app()->environment('local', 'testing')) {
-                Log::warning("CPF 123.456.789-09 marcado como inválido em ambiente de produção");
                 return false;
             }
         }
@@ -929,7 +681,6 @@ class EnvioController extends Controller
         
         // Verificar o primeiro dígito
         if ($digitoVerificador1 != $cpfLimpo[9]) {
-            Log::debug("CPF {$cpf} inválido - primeiro dígito verificador incorreto: esperado {$digitoVerificador1}, encontrado {$cpfLimpo[9]}");
             return false;
         }
         
@@ -943,12 +694,10 @@ class EnvioController extends Controller
         
         // Verificar o segundo dígito
         if ($digitoVerificador2 != $cpfLimpo[10]) {
-            Log::debug("CPF {$cpf} inválido - segundo dígito verificador incorreto: esperado {$digitoVerificador2}, encontrado {$cpfLimpo[10]}");
             return false;
         }
         
         // Se passou em todas as verificações, o CPF é válido
-        Log::info("CPF válido: {$cpf}");
         return true;
     }
     
@@ -966,9 +715,6 @@ class EnvioController extends Controller
     private function buscarLinhaDigitavelBoleto($baseUrl, $apiToken, $paymentId)
     {
         try {
-            Log::info('Buscando linha digitável do boleto', [
-                'payment_id' => $paymentId
-            ]);
             
             $curl = curl_init();
             curl_setopt_array($curl, [
@@ -991,35 +737,14 @@ class EnvioController extends Controller
             $httpCode = curl_getinfo($curl, CURLINFO_HTTP_CODE);
             $error = curl_error($curl);
             
-            // Log para debug
-            Log::debug('Resposta da busca de linha digitável', [
-                'payment_id' => $paymentId,
-                'httpCode' => $httpCode,
-                'response' => $response,
-                'curl_error' => $error
-            ]);
-            
             curl_close($curl);
             
             if ($httpCode >= 200 && $httpCode < 300) {
                 $result = json_decode($response, true);
-                Log::info('Linha digitável obtida com sucesso', [
-                    'payment_id' => $paymentId,
-                    'identificationField' => $result['identificationField'] ?? null
-                ]);
                 return $result;
             } else {
-                Log::error('Erro ao buscar linha digitável', [
-                    'payment_id' => $paymentId,
-                    'httpCode' => $httpCode,
-                    'response' => $response
-                ]);
             }
         } catch (\Exception $e) {
-            Log::error('Exceção ao buscar linha digitável: ' . $e->getMessage(), [
-                'payment_id' => $paymentId,
-                'trace' => $e->getTraceAsString()
-            ]);
         }
         
         return null;
@@ -1028,9 +753,6 @@ class EnvioController extends Controller
     private function buscarQRCodePix($baseUrl, $apiToken, $paymentId)
     {
         try {
-            Log::info('Buscando QR Code PIX', [
-                'payment_id' => $paymentId
-            ]);
             
             $curl = curl_init();
             curl_setopt_array($curl, [
@@ -1053,36 +775,14 @@ class EnvioController extends Controller
             $httpCode = curl_getinfo($curl, CURLINFO_HTTP_CODE);
             $error = curl_error($curl);
             
-            // Log para debug
-            Log::debug('Resposta da busca do QR Code PIX', [
-                'payment_id' => $paymentId,
-                'httpCode' => $httpCode,
-                'curl_error' => $error,
-                'response_length' => strlen($response) // O QR code pode ser muito grande para logar
-            ]);
-            
             curl_close($curl);
             
             if ($httpCode >= 200 && $httpCode < 300) {
                 $result = json_decode($response, true);
-                Log::info('QR Code PIX obtido com sucesso', [
-                    'payment_id' => $paymentId,
-                    'has_encoded_image' => isset($result['encodedImage']),
-                    'has_payload' => isset($result['payload'])
-                ]);
                 return $result;
             } else {
-                Log::error('Erro ao buscar QR Code PIX', [
-                    'payment_id' => $paymentId,
-                    'httpCode' => $httpCode,
-                    'response' => $response
-                ]);
             }
         } catch (\Exception $e) {
-            Log::error('Exceção ao buscar QR Code PIX: ' . $e->getMessage(), [
-                'payment_id' => $paymentId,
-                'trace' => $e->getTraceAsString()
-            ]);
         }
         
         return null;
@@ -1138,20 +838,12 @@ class EnvioController extends Controller
                         
                         $processed++;
                         
-                        Log::info('Envio processado manualmente', [
-                            'shipment_id' => $shipment->id,
-                            'tracking_number' => $shipment->tracking_number
-                        ]);
                     } else {
                         $errors[] = [
                             'shipment_id' => $shipment->id,
                             'error' => $respostaFedex['message'] ?? 'Erro desconhecido'
                         ];
                         
-                        Log::error('Erro ao processar envio manualmente', [
-                            'shipment_id' => $shipment->id,
-                            'error' => $respostaFedex['message'] ?? 'Erro desconhecido'
-                        ]);
                     }
                 } catch (\Exception $e) {
                     $errors[] = [
@@ -1159,11 +851,6 @@ class EnvioController extends Controller
                         'error' => $e->getMessage()
                     ];
                     
-                    Log::error('Exceção ao processar envio manualmente', [
-                        'shipment_id' => $shipment->id,
-                        'error' => $e->getMessage(),
-                        'trace' => $e->getTraceAsString()
-                    ]);
                 }
             }
             
@@ -1178,11 +865,6 @@ class EnvioController extends Controller
             ]);
             
         } catch (\Exception $e) {
-            Log::error('Erro ao executar processamento manual de envios', [
-                'error' => $e->getMessage(),
-                'trace' => $e->getTraceAsString()
-            ]);
-            
             return response()->json([
                 'success' => false,
                 'message' => 'Erro ao processar envios: ' . $e->getMessage()
@@ -1252,7 +934,6 @@ class EnvioController extends Controller
                 ] : null
             ]);
         } catch (\Exception $e) {
-            Log::error('Erro ao obter detalhes de rastreamento: ' . $e->getMessage());
             
             return response()->json([
                 'success' => false,
@@ -1313,11 +994,6 @@ class EnvioController extends Controller
                         'status' => 'sucesso',
                         'tracking_number' => $shipment->tracking_number
                     ];
-                    \Log::info('Envio processado para pagamento confirmado', [
-                        'payment_id' => $pagamento->id,
-                        'shipment_id' => $shipment->id,
-                        'tracking_number' => $shipment->tracking_number
-                    ]);
                 } else {
                     $resultados[] = [
                         'payment_id' => $pagamento->id,
@@ -1325,11 +1001,6 @@ class EnvioController extends Controller
                         'status' => 'erro',
                         'mensagem' => $respostaFedex['message'] ?? 'Erro desconhecido'
                     ];
-                    \Log::error('Erro ao processar envio FedEx para pagamento confirmado', [
-                        'payment_id' => $pagamento->id,
-                        'shipment_id' => $shipment->id,
-                        'erro' => $respostaFedex['message'] ?? 'Erro desconhecido'
-                    ]);
                 }
             }
             return response()->json([
@@ -1337,10 +1008,6 @@ class EnvioController extends Controller
                 'resultados' => $resultados
             ]);
         } catch (\Exception $e) {
-            \Log::error('Erro ao processar envios pagos para FedEx', [
-                'erro' => $e->getMessage(),
-                'trace' => $e->getTraceAsString()
-            ]);
             return response()->json([
                 'success' => false,
                 'mensagem' => $e->getMessage(),

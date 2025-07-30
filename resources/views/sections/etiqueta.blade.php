@@ -551,18 +551,14 @@
         // Verificar se o botão existe
         const buscarBtn = document.querySelector('#buscar-etiqueta-btn');
         if (!buscarBtn) {
-            //console.error('Botão de busca não encontrado na página!');
             return;
         }
-        //console.log('Botão de busca encontrado:', buscarBtn);
 
         // Verificar se o input existe
         const codigoInput = document.querySelector('#codigo-envio');
         if (!codigoInput) {
-            //console.error('Input de código não encontrado na página!');
             return;
         }
-        //console.log('Input de código encontrado:', codigoInput);
 
         // Função para exibir etiqueta no modal
         function exibirEtiqueta(envio) {
@@ -763,7 +759,6 @@
                                 'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
                             },
                             error: function(xhr) {
-                                //console.error('Erro ao salvar etiqueta:', xhr);
                             }
                         });
 

@@ -85,18 +85,6 @@ class ProcessarPagamentosValidados extends Command
                 $dadosPacote = $this->prepararDadosPacote($shipment);
                 $dadosProdutos = $this->prepararDadosProdutos($shipment);
                 
-                // Log para debug
-                Log::info('ProcessarPagamentosValidados: Dados preparados para envio à FedEx', [
-                    'payment_id' => $pagamento->id,
-                    'shipment_id' => $shipment->id,
-                    'tracking_number' => $shipment->tracking_number,
-                    'remetente' => $dadosRemetente,
-                    'destinatario' => $dadosDestinatario,
-                    'pacote' => $dadosPacote,
-                    'produtos' => $dadosProdutos,
-                    'servico' => $shipment->service_code
-                ]);
-                
                 // Enviar para a FedEx
                 $response = $this->fedexService->criarEnvio(
                     $dadosRemetente,
@@ -107,42 +95,14 @@ class ProcessarPagamentosValidados extends Command
                     false // Não forçar simulação
                 );
                 
-                // Log da resposta bruta
-                Log::info('ProcessarPagamentosValidados: Resposta bruta da FedEx', [
-                    'payment_id' => $pagamento->id,
-                    'shipment_id' => $shipment->id,
-                    'raw_response' => $response
-                ]);
-
-                // Mostrar resposta detalhada no console
-                //$this->info("\n📦 Resposta da API FedEx:");
-                //$this->info("----------------------------------------");
-                //$this->info("Payment ID: " . $pagamento->id);
-                //$this->info("Shipment ID: " . $shipment->id);
-                //$this->info("Status: " . ($response['success'] ? '✅ Sucesso' : '❌ Erro'));
-                
-                // Mostrar resposta completa
-                //$this->info("\n📋 Resposta Completa da API:");
-                //$this->info(json_encode($response, JSON_PRETTY_PRINT));
-                //$this->info("----------------------------------------\n");
 
                 // Verificar se a resposta é válida
                 if (!is_array($response)) {
-                    Log::error('ProcessarPagamentosValidados: Resposta inválida da FedEx', [
-                        'payment_id' => $pagamento->id,
-                        'shipment_id' => $shipment->id,
-                        'response' => $response
-                    ]);
                     throw new \Exception('Resposta inválida da FedEx: formato não reconhecido');
                 }
 
                 // Verificar sucesso da operação
                 if (!isset($response['success'])) {
-                    Log::error('ProcessarPagamentosValidados: Resposta sem indicador de sucesso', [
-                        'payment_id' => $pagamento->id,
-                        'shipment_id' => $shipment->id,
-                        'response' => $response
-                    ]);
                     throw new \Exception('Resposta da FedEx sem indicador de sucesso');
                 }
 
@@ -158,12 +118,6 @@ class ProcessarPagamentosValidados extends Command
                     }
 
                     if (!empty($camposFaltantes)) {
-                        Log::error('ProcessarPagamentosValidados: Campos obrigatórios ausentes na resposta', [
-                            'payment_id' => $pagamento->id,
-                            'shipment_id' => $shipment->id,
-                            'campos_faltantes' => $camposFaltantes,
-                            'response' => $response
-                        ]);
                         throw new \Exception('Resposta incompleta da FedEx: campos obrigatórios ausentes: ' . implode(', ', $camposFaltantes));
                     }
 
@@ -178,12 +132,6 @@ class ProcessarPagamentosValidados extends Command
                     $this->info("Envio processado com sucesso. Tracking: {$response['trackingNumber']}");
                 } else {
                     $errorMessage = isset($response['message']) ? $response['message'] : 'Erro desconhecido';
-                    Log::error('ProcessarPagamentosValidados: Erro na resposta da FedEx', [
-                        'payment_id' => $pagamento->id,
-                        'shipment_id' => $shipment->id,
-                        'error_message' => $errorMessage,
-                        'response' => $response
-                    ]);
 
                     $shipment->status = 'error';
                     $shipment->status_description = 'Erro ao processar envio: ' . $errorMessage;
@@ -193,11 +141,6 @@ class ProcessarPagamentosValidados extends Command
                 }
                 
             } catch (\Exception $e) {
-                Log::error('ProcessarPagamentosValidados: Erro ao processar pagamento', [
-                    'payment_id' => $pagamento->id,
-                    'error' => $e->getMessage(),
-                    'trace' => $e->getTraceAsString()
-                ]);
                 
                 $this->error("Erro ao processar pagamento #{$pagamento->id}: " . $e->getMessage());
             }

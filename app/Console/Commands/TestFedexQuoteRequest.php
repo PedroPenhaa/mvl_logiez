@@ -257,22 +257,6 @@ class TestFedexQuoteRequest extends Command
             // Processar resposta
             $rateData = json_decode($rateResponse, true);
 
-            //dump('-------------------------- TO AQUI --------------------------');
-            //dd($rateResponse);
-
-            Log::info('', [
-
-                $rateData
-            ]);
-
-            // Registrar resposta para análise
-            if ($salvarLog) {
-                Log::info('Resposta completa da API FedEx', [
-                    'httpCode' => $rateHttpCode,
-                    'resposta' => $rateData
-                ]);
-            }
-
             // Extrair cotações da resposta
             $cotacoes = [];
             if (isset($rateData['output']['rateReplyDetails'])) {
@@ -370,11 +354,6 @@ class TestFedexQuoteRequest extends Command
         } catch (\Exception $e) {
             $this->error("\n❌ ERRO NO TESTE");
             $this->error("• Mensagem: " . $e->getMessage());
-
-            Log::error('Erro ao testar API FedEx', [
-                'error' => $e->getMessage(),
-                'trace' => $e->getTraceAsString()
-            ]);
 
             return Command::FAILURE;
         }

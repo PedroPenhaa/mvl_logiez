@@ -166,7 +166,6 @@ class BuscaProdutos extends Command
             return Command::SUCCESS;
         } catch (\Exception $e) {
             $this->error('Erro: ' . $e->getMessage());
-            Log::error('Erro ao buscar produtos SISCOMEX: ' . $e->getMessage());
             return Command::FAILURE;
         }
     }

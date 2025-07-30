@@ -122,11 +122,6 @@ class TestAsaas extends Command
         } catch (\Exception $e) {
             $this->error('❌ Erro ao testar API Asaas: ' . $e->getMessage());
             
-            Log::error('Erro no command TestAsaas', [
-                'erro' => $e->getMessage(),
-                'trace' => $e->getTraceAsString()
-            ]);
-            
             return Command::FAILURE;
         }
     }

@@ -287,14 +287,6 @@
     </div>
 </div>
 
-@php
-    Log::info('Debug View - Payments:', [
-        'pending' => $pendingPayments->count(),
-        'completed' => $completedPayments->count(),
-        'cancelled' => $cancelledPayments->count()
-    ]);
-@endphp
-
 <div class="card">
     <div class="card-body">
         <div class="alert alert-info">

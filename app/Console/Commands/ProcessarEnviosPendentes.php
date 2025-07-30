@@ -143,21 +143,9 @@ class ProcessarEnviosPendentes extends Command
                         
                         $this->info("Envio #{$envio->id} processado com sucesso! Tracking: {$envio->tracking_number}");
                         
-                        // Registrar no log
-                        Log::info('ProcessarEnviosPendentes: Envio processado com sucesso', [
-                            'shipment_id' => $envio->id,
-                            'tracking_number' => $envio->tracking_number,
-                            'payment_id' => $pagamento->id
-                        ]);
                     } else {
                         $this->error("Erro ao processar envio #{$envio->id} na FedEx: " . ($respostaFedex['message'] ?? 'Erro desconhecido'));
                         
-                        // Registrar o erro
-                        Log::error('ProcessarEnviosPendentes: Erro ao processar envio na FedEx', [
-                            'shipment_id' => $envio->id,
-                            'payment_id' => $pagamento->id,
-                            'error' => $respostaFedex['message'] ?? 'Erro desconhecido'
-                        ]);
                     }
                 } else {
                     $this->info("Envio #{$envio->id} com pagamento ainda não confirmado (status: {$pagamento->status})");
@@ -166,12 +154,6 @@ class ProcessarEnviosPendentes extends Command
             } catch (\Exception $e) {
                 $this->error("Erro ao processar envio #{$envio->id}: " . $e->getMessage());
                 
-                // Registrar o erro
-                Log::error('ProcessarEnviosPendentes: Erro ao processar envio', [
-                    'shipment_id' => $envio->id,
-                    'error' => $e->getMessage(),
-                    'trace' => $e->getTraceAsString()
-                ]);
             }
         }
         

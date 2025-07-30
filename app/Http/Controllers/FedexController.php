@@ -54,12 +54,6 @@ class FedexController extends Controller
                 'client_secret' => config('services.fedex.client_secret'),
             ]);
 
-            // Log da resposta de autenticação
-            Log::info('Resposta de autenticação FedEx:', [
-                'status' => $auth->status(),
-                'body' => $auth->json()
-            ]);
-
             if (!$auth->successful()) {
                 return response()->json([
                     'success' => false,
@@ -76,9 +70,6 @@ class FedexController extends Controller
                 ], 401);
             }
 
-            // Log do token obtido (apenas para debug - remover em produção)
-            Log::info('Token de acesso obtido:', ['token' => $accessToken]);
-
             // 2. Montar o corpo da requisição para a etiqueta
             $body = [
                 "labelResponseOptions" => "URL_ONLY",
@@ -86,7 +77,7 @@ class FedexController extends Controller
                     "value" => "207227690"
                 ],
                 "requestedShipment" => [
-                    "shipDatestamp" => now()->format('Y-m-d'),
+                    "shipDatestamp" => "2025-07-25",
                     "serviceType" => "INTERNATIONAL_ECONOMY",
                     "packagingType" => "YOUR_PACKAGING",
                     "pickupType" => "USE_SCHEDULED_PICKUP",
@@ -99,28 +90,28 @@ class FedexController extends Controller
                     ],
                     "shipper" => [
                         "contact" => [
-                            "personName" => "LS COMÉRCIO",
-                            "phoneNumber" => "19981166445"
+                            "personName" => "ISMA",
+                            "phoneNumber" => "3219451819"
                         ],
                         "address" => [
-                            "streetLines" => ["Rua 4, Pq Res. Dona Chiquinha"],
-                            "city" => "Cosmópolis",
-                            "stateOrProvinceCode" => "SP",
-                            "postalCode" => "13150000",
-                            "countryCode" => "BR"
+                            "streetLines" => ["1480 Celebration Blvd #1051"],
+                            "city" => "Kissimmee",
+                            "stateOrProvinceCode" => "FL",
+                            "postalCode" => "34747",
+                            "countryCode" => "US"
                         ]
                     ],
                     "recipients" => [[
                         "contact" => [
-                            "personName" => "RECIPIENT NAME",
-                            "phoneNumber" => "1234567890"
+                            "personName" => "Alinne Oliveira",
+                            "phoneNumber" => "16991442334"
                         ],
                         "address" => [
-                            "streetLines" => ["123 Main St"],
-                            "city" => "Miami",
-                            "stateOrProvinceCode" => "FL",
-                            "postalCode" => "33126",
-                            "countryCode" => "US",
+                            "streetLines" => ["Rua Luis Carvalho Pereira", "504 loja"],
+                            "city" => "Ribeirao Preto",
+                            "stateOrProvinceCode" => "SP",
+                            "postalCode" => "14071",
+                            "countryCode" => "BR",
                             "residential" => true
                         ]
                     ]],
@@ -129,49 +120,45 @@ class FedexController extends Controller
                             "paymentType" => "SENDER"
                         ],
                         "commodities" => [[
-                            "description" => "Sample Product",
+                            "description" => "Mens polo shirts with short sleeves - dryfit fabric breathable, Mens polo shirts with buttons, Basic short sleeve t-shirts, Collar shirts with mesh or knit panels",
                             "countryOfManufacture" => "BR",
                             "quantity" => 1,
                             "quantityUnits" => "PCS",
                             "unitPrice" => [
-                                "amount" => 100,
+                                "amount" => 109.49,
                                 "currency" => "USD"
                             ],
                             "customsValue" => [
-                                "amount" => 100,
+                                "amount" => 109.49,
                                 "currency" => "USD"
                             ],
                             "weight" => [
                                 "units" => "KG",
-                                "value" => 1
+                                "value" => 2.80
                             ]
                         ]]
                     ],
                     "requestedPackageLineItems" => [[
                         "weight" => [
                             "units" => "KG",
-                            "value" => 1
+                            "value" => 2.80
+                        ],
+                        "dimensions" => [
+                            "length" => 14,
+                            "width" => 11,
+                            "height" => 8,
+                            "units" => "CM"
                         ]
                     ]]
                 ]
             ];
             
-
-            // Log do payload para debug
-            Log::info('Payload da requisição FedEx:', ['payload' => $body]);
-
             // 3. Fazer a requisição para a API da FedEx
             $response = Http::withHeaders([
                 'Content-Type' => 'application/json',
                 'X-locale' => 'en_US',
                 'Authorization' => 'Bearer ' . $accessToken
             ])->post('https://apis.fedex.com/ship/v1/shipments', $body);
-
-            // Log da resposta para debug
-            Log::info('Resposta da FedEx:', [
-                'status' => $response->status(),
-                'body' => $response->json()
-            ]);
 
             if ($response->successful()) {
                 $data = $response->json();
@@ -226,7 +213,6 @@ class FedexController extends Controller
             ], $response->status());
 
         } catch (\Exception $e) {
-            Log::error('Erro ao gerar etiqueta:', ['error' => $e->getMessage()]);
             return response()->json([
                 'success' => false,
                 'message' => 'Erro ao gerar etiqueta',

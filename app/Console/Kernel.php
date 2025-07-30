@@ -26,7 +26,6 @@ class Kernel extends ConsoleKernel
                 ->everyThreeMinutes()
                 ->withoutOverlapping()
                 ->after(function () {
-                    Log::info('Comando processar-envios-pendentes executado com sucesso');
                 })
                 ->appendOutputTo(storage_path('logs/processar-envios.log'));
     }

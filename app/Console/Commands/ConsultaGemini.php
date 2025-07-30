@@ -109,7 +109,6 @@ class ConsultaGemini extends Command
             return Command::SUCCESS;
         } catch (\Exception $e) {
             $this->error('Erro ao processar a consulta: ' . $e->getMessage());
-            Log::error('Erro na consulta Gemini: ' . $e->getMessage());
             return Command::FAILURE;
         }
     }

@@ -119,8 +119,6 @@ $(document).ready(function() {
                     '<p>Não foi possível processar sua solicitação.</p>' +
                     '</div>'
                 ).show();
-                
-                //console.error('Erro:', xhr);
             }
         });
     });

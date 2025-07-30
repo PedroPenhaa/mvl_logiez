@@ -86,10 +86,6 @@ class PaymentController extends Controller
             }
 
         } catch (\Exception $e) {
-            Log::error('Erro ao processar pagamento', [
-                'error' => $e->getMessage(),
-                'trace' => $e->getTraceAsString()
-            ]);
 
             return response()->json([
                 'success' => false,

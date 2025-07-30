@@ -59,10 +59,6 @@ class TestFedexAuth extends Command
             return Command::SUCCESS;
         } catch (\Exception $e) {
             $this->error('Erro na autenticação: ' . $e->getMessage());
-            Log::error('Teste de autenticação FedEx falhou', [
-                'erro' => $e->getMessage(),
-                'trace' => $e->getTraceAsString()
-            ]);
             
             return Command::FAILURE;
         }

@@ -15,12 +15,6 @@ class WebhookController extends Controller
      */
     public function asaasWebhook(Request $request)
     {
-        // Log para depuração
-        Log::info('Webhook Asaas recebido', [
-            'headers' => $request->header(),
-            'body' => $request->all()
-        ]);
-        
         // Registrar no histórico de API
         $apiLog = new ApiLog();
         $apiLog->api_service = 'asaas_webhook';
@@ -56,15 +50,6 @@ class WebhookController extends Controller
             $novoStatus = $this->mapearStatus($asaasStatus);
             $statusAnterior = $payment->status;
             
-            // Registrar no log
-            Log::info('Atualizando status de pagamento via webhook', [
-                'payment_id' => $payment->id,
-                'transaction_id' => $payment->transaction_id,
-                'status_anterior' => $statusAnterior,
-                'status_asaas' => $asaasStatus,
-                'novo_status' => $novoStatus
-            ]);
-            
             // Atualizar o status do pagamento
             $payment->status = $novoStatus;
             
@@ -87,12 +72,6 @@ class WebhookController extends Controller
                 $shipment = Shipment::find($payment->shipment_id);
                 
                 if ($shipment && $shipment->status === 'pending_payment') {
-                    // Marcar para processamento posterior (via comando agendado)
-                    Log::info('Envio marcado para processamento', [
-                        'shipment_id' => $shipment->id,
-                        'payment_id' => $payment->id,
-                        'novo_status' => $novoStatus
-                    ]);
                 }
             }
             
@@ -104,12 +83,6 @@ class WebhookController extends Controller
             ]);
             
         } catch (\Exception $e) {
-            // Registrar erro no log
-            Log::error('Erro ao processar webhook do Asaas', [
-                'error' => $e->getMessage(),
-                'trace' => $e->getTraceAsString()
-            ]);
-            
             // Atualizar o registro em api_logs
             $apiLog->status = 'error';
             $apiLog->error_message = $e->getMessage();

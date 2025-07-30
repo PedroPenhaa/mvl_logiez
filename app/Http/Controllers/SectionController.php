@@ -333,7 +333,6 @@ class SectionController extends Controller
             ]);
 
         } catch (\Exception $e) {
-            \Log::error('Erro ao calcular cotação: ' . $e->getMessage());
             
             return response()->json([
                 'status' => 'error',
@@ -368,14 +367,12 @@ class SectionController extends Controller
             }
             
             // Valor padrão em caso de falha
-            Log::warning('Falha ao obter cotação do dólar. Usando valor padrão.');
             return [
                 'success' => false,
                 'data' => date('d/m/Y'),
                 'cotacao' => 5.71
             ];
         } catch (\Exception $e) {
-            Log::error('Erro ao consultar cotação do dólar: ' . $e->getMessage());
             return [
                 'success' => false,
                 'data' => date('d/m/Y'),
@@ -412,16 +409,6 @@ class SectionController extends Controller
             ->first();
             
         if ($existingCotacao) {
-            // Se já existe uma cotação com os mesmos parâmetros e ainda válida, retorna o hash existente
-            Log::info('Cotação com mesmos parâmetros já existe no cache, reutilizando hash', [
-                'hash' => $hash,
-                'parâmetros' => [
-                    'origem' => $request->origem,
-                    'destino' => $request->destino,
-                    'dimensões' => $request->altura . 'x' . $request->largura . 'x' . $request->comprimento,
-                    'peso' => $request->peso
-                ]
-            ]);
             
             return $hash;
         }
@@ -466,23 +453,9 @@ class SectionController extends Controller
                     'created_at' => now()
                 ]);
                 
-                Log::info('Nova cotação salva no cache', [
-                    'hash' => $hash,
-                    'parâmetros' => [
-                        'origem' => $request->origem,
-                        'destino' => $request->destino,
-                        'dimensões' => $request->altura . 'x' . $request->largura . 'x' . $request->comprimento,
-                        'peso' => $request->peso
-                    ]
-                ]);
             } else {
-                Log::info('Cotação já foi inserida por outra thread, ignorando inserção duplicada', [
-                    'hash' => $hash
-                ]);
             }
         } catch (\Exception $e) {
-            // Log o erro mas não interrompa o fluxo
-            Log::error('Erro ao salvar cotação no cache: ' . $e->getMessage());
         }
         
         return $hash;
@@ -496,20 +469,6 @@ class SectionController extends Controller
      */
     public function processarEnvio(Request $request)
     {
-        // Log para diagnosticar problemas
-        Log::info('Dados recebidos no processarEnvio', [
-            'all' => $request->all(),
-            'produtos_json' => $request->produtos_json,
-            'valor_total' => $request->valor_total,
-            'peso_total' => $request->peso_total,
-            'altura' => $request->altura,
-            'largura' => $request->largura,
-            'comprimento' => $request->comprimento,
-            'peso_caixa' => $request->peso_caixa,
-            'caixas_json' => $request->caixas_json,
-            'servico_entrega' => $request->servico_entrega,
-        ]);
-        
         // Validar os dados de entrada
         $request->validate([
             'produtos_json' => 'required|string',
@@ -543,12 +502,6 @@ class SectionController extends Controller
         
         // Decodificar os produtos do JSON
         $produtos = json_decode($request->produtos_json, true);
-        
-        // Log detalhado dos produtos recebidos
-        Log::info('Produtos recebidos para processamento:', [
-            'produtos_json' => $request->produtos_json,
-            'produtos_decodificados' => $produtos
-        ]);
         
         // Verificar se há produtos
         if (empty($produtos)) {
@@ -662,11 +615,6 @@ class SectionController extends Controller
             ]);
             
         } catch (\Exception $e) {
-            Log::error('Erro ao processar envio', [
-                'erro' => $e->getMessage(),
-                'trace' => $e->getTraceAsString()
-            ]);
-            
             return response()->json([
                 'success' => false,
                 'message' => 'Erro ao processar o envio: ' . $e->getMessage(),
@@ -707,13 +655,6 @@ class SectionController extends Controller
         
         // Log especial para o código de rastreamento específico
         if ($request->codigo_rastreamento === '794616896420') {
-            Log::info('====== CONTROLLER: RASTREAMENTO DE CÓDIGO ESPECIAL ======', [
-                'codigo' => $request->codigo_rastreamento,
-                'data_hora' => now()->format('Y-m-d H:i:s'),
-                'ip' => $request->ip(),
-                'user_agent' => $request->header('User-Agent'),
-                'forcarSimulacao' => $request->has('forcarSimulacao') && $request->forcarSimulacao === 'true'
-            ]);
         }
         
         try {
@@ -729,15 +670,6 @@ class SectionController extends Controller
             
             // Log da resposta para o código especial
             if ($request->codigo_rastreamento === '794616896420') {
-                Log::info('====== CONTROLLER: RESPOSTA DO RASTREAMENTO ======', [
-                    'codigo' => $request->codigo_rastreamento,
-                    'sucesso' => $resultado['success'],
-                    'status' => $resultado['statusAtual'] ?? '',
-                    'entregue' => $resultado['entregue'] ?? false,
-                    'simulado' => $resultado['simulado'] ?? true,
-                    'eventos_count' => count($resultado['eventos'] ?? []),
-                    'mensagem' => $resultado['mensagem'] ?? ''
-                ]);
                 
                 // Verificar se temos mensagem "This is a Virtual Response" no resultado original
                 $isVirtualResponse = false;
@@ -751,7 +683,6 @@ class SectionController extends Controller
                 }
                 
                 if ($isVirtualResponse) {
-                    Log::info('====== CÓDIGO 794616896420: RESPOSTA VIRTUAL DETECTADA ======');
                 }
             }
             
@@ -801,10 +732,6 @@ class SectionController extends Controller
                 'mensagem' => $resultado['mensagem'] ?? null
             ]);
         } catch (\Exception $e) {
-            Log::error('Erro ao buscar rastreamento', [
-                'error' => $e->getMessage(),
-                'codigo' => $request->codigo_rastreamento
-            ]);
             
             // Em vez de retornar uma simulação automaticamente, retornamos um erro específico
             // que o front-end identificará para mostrar o modal de escolha
@@ -875,10 +802,6 @@ class SectionController extends Controller
                 'simulado' => $documento['simulado']
             ]);
         } catch (\Exception $e) {
-            Log::error('Erro ao solicitar comprovante de entrega', [
-                'error' => $e->getMessage(),
-                'codigo' => $request->codigo_rastreamento
-            ]);
             
             return response()->json([
                 'success' => false,
@@ -977,8 +900,6 @@ class SectionController extends Controller
             ]);
             
         } catch (\Exception $e) {
-            // Registrar o erro no log
-            \Illuminate\Support\Facades\Log::error('Erro ao atualizar perfil: ' . $e->getMessage());
             
             return response()->json([
                 'success' => false,
@@ -1028,7 +949,6 @@ class SectionController extends Controller
                 return unserialize($cached->value);
             }
         } catch (\Exception $e) {
-            Log::error('Erro ao recuperar cotação do cache: ' . $e->getMessage());
         }
         
         return null;

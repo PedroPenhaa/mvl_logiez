@@ -20,7 +20,6 @@ class ProdutosController extends Controller
         $jsonFilePath = storage_path('app/produtos_receita.json');
         
         if (!File::exists($jsonFilePath)) {
-            Log::error('Arquivo de produtos não encontrado: ' . $jsonFilePath);
             return response()->json([
                 'error' => 'Arquivo de produtos não encontrado',
                 'path' => $jsonFilePath
@@ -40,28 +39,16 @@ class ProdutosController extends Controller
                 }
             }
             
-            Log::info('Requisição de produtos recebida', [
-                'page' => $page,
-                'limit' => $limit,
-                'search' => $search
-            ]);
-            
             $conteudo = File::get($jsonFilePath);
             $todosProdutos = json_decode($conteudo, true);
             
             if (!is_array($todosProdutos)) {
-                Log::error('Erro ao decodificar JSON', [
-                    'conteudo' => substr($conteudo, 0, 100) . '...',
-                    'erro' => json_last_error_msg()
-                ]);
                 
                 return response()->json([
                     'error' => 'Erro ao decodificar JSON',
                     'message' => 'O arquivo não contém JSON válido: ' . json_last_error_msg()
                 ], 500);
             }
-            
-            Log::info('Total de produtos no arquivo: ' . count($todosProdutos));
             
             // Aplicar filtro de busca se fornecido
             if (!empty($search)) {
@@ -71,7 +58,6 @@ class ProdutosController extends Controller
                 
                 // Caso especial para o NCM de Havaianas
                 if ($buscaPorCodigo === '6402.20.00') {
-                    Log::info('Caso especial: busca por Havaianas NCM 6402.20.00');
                     
                     $todosProdutos = array_filter($todosProdutos, function($produto) {
                         // Verificar exatamente o NCM 6402.20.00
@@ -80,10 +66,6 @@ class ProdutosController extends Controller
                     
                     // Reindexar array após filtro
                     $todosProdutos = array_values($todosProdutos);
-                    Log::info('Produtos filtrados para Havaianas:', [
-                        'quantidade' => count($todosProdutos),
-                        'produtos' => $todosProdutos
-                    ]);
                 } 
                 // Filtro normal para outros casos
                 else {
@@ -91,11 +73,6 @@ class ProdutosController extends Controller
                     if (!is_array($search)) {
                         $buscaPorDescricao = $buscaPorCodigo = $search;
                     }
-                    
-                    Log::info('Filtrando produtos', [
-                        'busca_descricao' => $buscaPorDescricao,
-                        'busca_ncm' => $buscaPorCodigo
-                    ]);
                     
                     $todosProdutos = array_filter($todosProdutos, function($produto) use ($buscaPorDescricao, $buscaPorCodigo) {
                         // Verificar correspondência por descrição
@@ -107,14 +84,6 @@ class ProdutosController extends Controller
                             $codigoProdutoNormalizado = str_replace('.', '', $produto['codigo']);
                             $buscaPorCodigoNormalizado = str_replace('.', '', $buscaPorCodigo);
                             
-                            // Log detalhado para depuração
-                            Log::debug('Comparando códigos NCM', [
-                                'busca_original' => $buscaPorCodigo,
-                                'busca_normalizado' => $buscaPorCodigoNormalizado,
-                                'produto_codigo' => $produto['codigo'],
-                                'produto_normalizado' => $codigoProdutoNormalizado
-                            ]);
-                            
                             // Para NCMs completos (8 dígitos como 6402.20.00), verificar correspondência exata
                             if (strlen($buscaPorCodigoNormalizado) >= 8) {
                                 // Comparação exata do início do código (ignora subcategorias)
@@ -123,10 +92,6 @@ class ProdutosController extends Controller
                                 // Case específico para Havaianas (6402.20.00)
                                 if ($buscaPorCodigo === '6402.20.00' && $produto['codigo'] === '6402.20.00') {
                                     $matchCodigo = true;
-                                    Log::info('Match exato encontrado para Havaianas', [
-                                        'codigo' => $produto['codigo'],
-                                        'descricao' => $produto['descricao']
-                                    ]);
                                 }
                             }
                             // Para NCMs parciais, verificar se o início corresponde
@@ -139,11 +104,6 @@ class ProdutosController extends Controller
                         
                         // Log para debug de cada comparação
                         if (!empty($buscaPorCodigo) && $matchCodigo) {
-                            Log::info('Match encontrado para NCM', [
-                                'busca' => $buscaPorCodigo,
-                                'produto_codigo' => $produto['codigo'],
-                                'produto_descricao' => $produto['descricao']
-                            ]);
                         }
                         
                         // Retornar true se ambos os filtros aplicáveis encontrarem correspondência
@@ -152,7 +112,6 @@ class ProdutosController extends Controller
                     
                     // Reindexar array após filtro
                     $todosProdutos = array_values($todosProdutos);
-                    Log::info('Produtos filtrados: ' . count($todosProdutos));
                 }
             }
             
@@ -163,14 +122,6 @@ class ProdutosController extends Controller
             $offset = ($page - 1) * $limit;
             $produtos = array_slice($todosProdutos, $offset, $limit);
             
-            Log::info('Retornando produtos', [
-                'pagina' => $page,
-                'de' => $offset + 1,
-                'ate' => $offset + count($produtos),
-                'total' => $total,
-                'qtd_retornada' => count($produtos)
-            ]);
-            
             return response()->json([
                 'produtos' => $produtos,
                 'total' => $total,
@@ -179,12 +130,6 @@ class ProdutosController extends Controller
                 'totalPages' => ceil($total / $limit)
             ]);
         } catch (\Exception $e) {
-            Log::error('Erro ao ler arquivo de produtos', [
-                'mensagem' => $e->getMessage(),
-                'arquivo' => $e->getFile(),
-                'linha' => $e->getLine(),
-                'trace' => $e->getTraceAsString()
-            ]);
             
             return response()->json([
                 'error' => 'Erro ao ler o arquivo de produtos',
@@ -254,7 +199,6 @@ class ProdutosController extends Controller
             ]);
             
         } catch (\Exception $e) {
-            Log::error('Erro na consulta Gemini: ' . $e->getMessage());
             
             return response()->json([
                 'success' => false,
@@ -284,17 +228,9 @@ class ProdutosController extends Controller
             // Formatar o NCM: remover pontos e zeros à esquerda
             $ncmFormatado = preg_replace('/^0+/', '', str_replace('.', '', $ncm));
             
-            Log::info('Consultando unidade tributária', [
-                'ncm_original' => $ncm,
-                'ncm_formatado' => $ncmFormatado
-            ]);
-            
             $caminhoArquivo = storage_path('app/Unidade_trib.csv');
             
             if (!file_exists($caminhoArquivo)) {
-                Log::error('Arquivo Unidade_trib.csv não encontrado', [
-                    'caminho' => $caminhoArquivo
-                ]);
                 
                 return response()->json([
                     'success' => false,
@@ -313,13 +249,7 @@ class ProdutosController extends Controller
                 }
                 fclose($handle);
                 
-                Log::debug('Primeiras linhas do arquivo CSV:', [
-                    'linhas' => $primeiraLinhas
-                ]);
             } catch (\Exception $e) {
-                Log::error('Erro ao ler amostra do arquivo:', [
-                    'erro' => $e->getMessage()
-                ]);
             }
             
             // Abrir o arquivo CSV
@@ -346,11 +276,6 @@ class ProdutosController extends Controller
                 if ($linha[0] == $ncmFormatado) {
                     $unidade = $linha[1]; // Coluna 1 é a unidade (abreviatura)
                     $nomeUnidade = $linha[2]; // Coluna 2 é o nome completo da unidade
-                    Log::info('Unidade encontrada', [
-                        'ncm' => $ncmFormatado,
-                        'unidade' => $unidade,
-                        'nome_unidade' => $nomeUnidade
-                    ]);
                     break;
                 }
             }
@@ -365,12 +290,6 @@ class ProdutosController extends Controller
                     'nome_unidade' => $nomeUnidade
                 ]);
             } else {
-                Log::warning('Unidade não encontrada', [
-                    'ncm_original' => $ncm,
-                    'ncm_formatado' => $ncmFormatado,
-                    'linhas_verificadas' => $linhasVerificadas,
-                    'amostras_proximas' => $linhasEncontradas
-                ]);
                 
                 return response()->json([
                     'success' => false,
@@ -378,12 +297,6 @@ class ProdutosController extends Controller
                 ]);
             }
         } catch (\Exception $e) {
-            Log::error('Erro ao consultar unidade tributária', [
-                'ncm' => $ncm,
-                'mensagem' => $e->getMessage(),
-                'arquivo' => $e->getFile(),
-                'linha' => $e->getLine()
-            ]);
             
             return response()->json([
                 'success' => false,

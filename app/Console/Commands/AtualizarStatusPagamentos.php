@@ -79,15 +79,6 @@ class AtualizarStatusPagamentos extends Command
                 
                 curl_close($curl);
                 
-                // Log para debug
-                Log::info('AtualizarStatusPagamentos: Resposta do Asaas', [
-                    'payment_id' => $pagamento->id,
-                    'transaction_id' => $pagamento->transaction_id,
-                    'http_code' => $httpCode,
-                    'response' => $response,
-                    'error' => $err
-                ]);
-                
                 // Se ocorrer erro na requisição
                 if ($err) {
                     $this->error("Erro na requisição para Asaas: {$err}");
@@ -125,13 +116,6 @@ class AtualizarStatusPagamentos extends Command
                             
                             $this->info("Status atualizado: {$statusAnterior} -> {$novoStatus}");
                             
-                            // Log para registro da alteração
-                            Log::info('AtualizarStatusPagamentos: Status atualizado', [
-                                'payment_id' => $pagamento->id,
-                                'transaction_id' => $pagamento->transaction_id,
-                                'status_anterior' => $statusAnterior,
-                                'novo_status' => $novoStatus
-                            ]);
                         } else {
                             $this->info("Status não mudou: {$statusAnterior}");
                         }
@@ -140,21 +124,10 @@ class AtualizarStatusPagamentos extends Command
                     }
                 } else {
                     $this->error("Erro ao verificar pagamento: HTTP {$httpCode}");
-                    Log::error('AtualizarStatusPagamentos: Erro ao verificar pagamento', [
-                        'payment_id' => $pagamento->id,
-                        'transaction_id' => $pagamento->transaction_id,
-                        'http_code' => $httpCode,
-                        'response' => $response
-                    ]);
                 }
                 
             } catch (\Exception $e) {
                 $this->error("Erro ao processar pagamento #{$pagamento->id}: " . $e->getMessage());
-                Log::error('AtualizarStatusPagamentos: Erro ao processar pagamento', [
-                    'payment_id' => $pagamento->id,
-                    'error' => $e->getMessage(),
-                    'trace' => $e->getTraceAsString()
-                ]);
             }
         }
         

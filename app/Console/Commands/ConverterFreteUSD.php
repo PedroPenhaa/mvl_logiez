@@ -72,7 +72,6 @@ class ConverterFreteUSD extends Command
             }
         } catch (\Exception $e) {
             $this->error('Erro ao consultar cotação do dólar: ' . $e->getMessage());
-            Log::error('Erro ao consultar cotação do dólar: ' . $e->getMessage());
             return Command::FAILURE;
         }
     }

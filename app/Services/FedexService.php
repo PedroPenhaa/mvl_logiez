@@ -22,12 +22,6 @@ class FedexService
         $this->clientSecret = config('services.fedex.client_secret');
         $this->shipperAccount = config('services.fedex.shipper_account');
 
-        // Registrar ambiente em uso para diagnóstico
-        Log::info('FedexService inicializado', [
-            'ambiente' => 'Produção',
-            'apiUrl' => $this->apiUrl,
-            'client_id' => substr($this->clientId, 0, 5) . '...' . substr($this->clientId, -5)
-        ]);
     }
     
     /**
@@ -62,16 +56,6 @@ class FedexService
         
         if (!$forceRefresh && Cache::has($cacheKey)) {
             $token = Cache::get($cacheKey);
-            
-            // Se estiver processando um código especial, fazer log
-            if (self::$trackingSpecialCode) {
-                Log::info('======= TOKEN FEDEX DO CACHE =======', [
-                    'Token' => substr($token, 0, 10) . '...' . substr($token, -10),
-                    'Operacao' => $operation,
-                    'Usado_Para' => 'Rastreamento do código ' . self::$trackingSpecialCode
-                ]);
-            }
-            
             return $token;
         }
     
@@ -94,14 +78,6 @@ class FedexService
         
         // Se estiver processando um código especial, fazer log
         if (self::$trackingSpecialCode) {
-            Log::info('======= SOLICITAÇÃO DE TOKEN FEDEX =======', [
-                'URL' => $authUrl,
-                'Payload' => $tokenPayload,
-                'Client_ID' => $clientId,
-                'Client_Secret' => substr($clientSecret, 0, 5) . '...' . substr($clientSecret, -5),
-                'Operacao' => $operation,
-                'Usado_Para' => 'Rastreamento do código ' . self::$trackingSpecialCode
-            ]);
         }
         
         $response = Http::asForm()->post($authUrl, $tokenPayload);
@@ -134,13 +110,6 @@ class FedexService
         
         // Se estiver processando um código especial, fazer log
         if (self::$trackingSpecialCode) {
-            Log::info('======= NOVO TOKEN FEDEX OBTIDO =======', [
-                'Token' => substr($token, 0, 10) . '...' . substr($token, -10),
-                'Expira_Em' => $expiresIn . ' segundos',
-                'Operacao' => $operation,
-                'Usado_Para' => 'Rastreamento do código ' . self::$trackingSpecialCode,
-                'Resposta_Completa' => $data
-            ]);
         }
     
         return $token;
@@ -359,11 +328,6 @@ class FedexService
             return $resultado;
     
         } catch (\Exception $e) {
-            Log::error('Erro ao calcular cotação FedEx', [
-                'erro' => $e->getMessage(),
-                'trace' => $e->getTraceAsString()
-            ]);
-    
             // Em caso de erro, retornar simulação como fallback
             return $this->simularCotacao($origem, $destino, $altura, $largura, $comprimento, $peso);
         }
@@ -515,13 +479,6 @@ class FedexService
             $cotacoes[$key]['valorTotalBRL'] = number_format($valorBRL, 2, ',', '.');
         }
         
-        // Log dos resultados da cotação
-        Log::info('Resultado da simulação de cotação', [
-            'cotacoes_count' => count($cotacoes),
-            'cotacoes' => $cotacoes,
-            'cotacao_dolar' => $valorDolar
-        ]);
-        
         // Adicionar informações de simulação
         return [
             'success' => true,
@@ -561,15 +518,12 @@ class FedexService
                 }
             }
             
-            // Valor padrão em caso de falha
-            Log::warning('Falha ao obter cotação do dólar. Usando valor padrão.');
             return [
                 'success' => false,
                 'data' => date('d/m/Y'),
                 'cotacao' => 5.71
             ];
         } catch (\Exception $e) {
-            Log::error('Erro ao consultar cotação do dólar: ' . $e->getMessage());
             return [
                 'success' => false,
                 'data' => date('d/m/Y'),
@@ -600,15 +554,6 @@ class FedexService
             $this->clientSecret = $specialTrackingConfig['client_secret'];
             $this->apiUrl = $specialTrackingConfig['api_url'];
             
-            Log::info('======= RASTREAMENTO FEDEX - CÓDIGO ESPECIAL =======', [
-                'Data/Hora' => now()->format('Y-m-d H:i:s'),
-                'Tracking Number' => $trackingNumber,
-                'Client_ID' => $this->clientId,
-                'Client_Secret' => substr($this->clientSecret, 0, 5) . '...' . substr($this->clientSecret, -5),
-                'API_URL' => $this->apiUrl,
-                'Shipper_Account' => $this->shipperAccount,
-                'Ambiente' => "Teste específico para o código " . $trackingNumber
-            ]);
         }
 
         // Se forçar simulação, usa o método de simulação
@@ -637,18 +582,6 @@ class FedexService
             
             // Log especial para o payload se for o código específico
             if (self::$trackingSpecialCode) {
-                Log::info('======= PAYLOAD DE REQUISIÇÃO FEDEX TRACKING =======', [
-                    'URL' => $trackUrl,
-                    'Transaction_ID' => $transactionId,
-                    'Payload' => json_encode($trackRequest, JSON_PRETTY_PRINT),
-                    'Headers' => [
-                        'Content-Type' => 'application/json',
-                        'Accept' => 'application/json',
-                        'Authorization' => 'Bearer ' . substr($accessToken, 0, 10) . '...',
-                        'X-locale' => 'pt_BR',
-                        'x-customer-transaction-id' => $transactionId
-                    ]
-                ]);
             }
     
             // Fazer a requisição
@@ -679,11 +612,6 @@ class FedexService
             curl_close($trackCurl);
     
             if (self::$trackingSpecialCode) {
-                Log::info('======= RESPOSTA DA REQUISIÇÃO FEDEX TRACKING =======', [
-                    'HTTP_Code' => $trackHttpCode,
-                    'Response' => $trackResponse ? substr($trackResponse, 0, 1000) . '...' : 'Vazia',
-                    'Erro' => $trackErr ?: 'Nenhum'
-                ]);
             }
 
             if ($trackErr) {
@@ -702,11 +630,6 @@ class FedexService
                 foreach ($trackData['output']['alerts'] as $alert) {
                     if (isset($alert['code']) && $alert['code'] === 'VIRTUAL.RESPONSE') {
                         $isVirtualResponse = true;
-                        Log::info('======= RESPOSTA VIRTUAL DETECTADA NA API FEDEX =======', [
-                            'Tracking_Number' => $trackingNumber,
-                            'Alert' => $alert
-                        ]);
-                        // Continuar normalmente pois existem dados de rastreamento válidos
                     }
                 }
             }
@@ -718,22 +641,12 @@ class FedexService
             
             // Se foi detectada uma resposta virtual e o processamento falhou, ativar simulação
             if ($isVirtualResponse && !$result['success']) {
-                Log::info('======= ATIVANDO SIMULAÇÃO PARA RESPOSTA VIRTUAL =======', [
-                    'Tracking_Number' => $trackingNumber
-                ]);
                 return $this->simularRastreamento($trackingNumber);
             }
             
             return $result;
     
         } catch (\Exception $e) {
-            // Registrar o erro no log
-            Log::error('Erro ao rastrear envio FedEx', [
-                'error' => $e->getMessage(),
-                'trackingNumber' => $trackingNumber,
-                'trace' => $e->getTraceAsString()
-            ]);
-    
             // Propagar a exceção para ser tratada pelo controller
             throw $e;
         }
@@ -767,10 +680,6 @@ class FedexService
 
         // Se for um código especial, fazer log dos dados recebidos para processamento
         if (self::$trackingSpecialCode) {
-            Log::info('======= PROCESSANDO DADOS DE RASTREAMENTO FEDEX =======', [
-                'Tracking_Number' => $trackingNumber,
-                'Dados_API' => json_encode($trackData, JSON_PRETTY_PRINT | JSON_PARTIAL_OUTPUT_ON_ERROR)
-            ]);
         }
 
         // Verificar se temos uma resposta virtual
@@ -779,11 +688,6 @@ class FedexService
             foreach ($trackData['output']['alerts'] as $alert) {
                 if (isset($alert['code']) && $alert['code'] === 'VIRTUAL.RESPONSE') {
                     $isVirtualResponse = true;
-                    // É uma resposta virtual, não consideramos como falha
-                    Log::info('======= RESPOSTA VIRTUAL DETECTADA =======', [
-                        'Tracking_Number' => $trackingNumber,
-                        'alert' => $alert
-                    ]);
                     // Continue processando normalmente, pois há dados válidos
                 }
             }
@@ -1160,12 +1064,6 @@ class FedexService
             ];
     
         } catch (\Exception $e) {
-            Log::error('Erro ao solicitar comprovante de entrega FedEx', [
-                'error' => $e->getMessage(),
-                'trackingNumber' => $trackingNumber,
-                'trace' => $e->getTraceAsString()
-            ]);
-    
             // Em caso de erro, informa o erro e retorna nulo
             return [
                 'success' => false,
@@ -1189,15 +1087,6 @@ class FedexService
      */
     public function criarEnvio($dadosRemetente, $dadosDestinatario, $dadosPacote, $dadosProdutos, $servicoEntrega = 'FEDEX_INTERNATIONAL_PRIORITY', $forcarSimulacao = false)
     {
-        // Log dos dados recebidos para debug
-        Log::info('FedexService::criarEnvio - Dados recebidos:', [
-            'remetente' => $dadosRemetente,
-            'destinatario' => $dadosDestinatario,
-            'pacote' => $dadosPacote,
-            'produtos' => $dadosProdutos,
-            'servicoEntrega' => $servicoEntrega,
-            'forcarSimulacao' => $forcarSimulacao
-        ]);
         
         // Verificar campos obrigatórios
         $camposObrigatoriosRemetente = ['name', 'phone', 'email', 'address', 'city', 'state', 'postalCode', 'country'];
@@ -1208,9 +1097,6 @@ class FedexService
         foreach ($camposObrigatoriosRemetente as $campo) {
             if (!isset($dadosRemetente[$campo]) || empty($dadosRemetente[$campo])) {
                 $mensagemErro = "Campo obrigatório não encontrado no remetente: {$campo}";
-                Log::error('FedexService::criarEnvio - ' . $mensagemErro, [
-                    'dados_remetente' => $dadosRemetente
-                ]);
                 throw new \Exception($mensagemErro);
             }
         }
@@ -1219,9 +1105,6 @@ class FedexService
         foreach ($camposObrigatoriosDestinatario as $campo) {
             if (!isset($dadosDestinatario[$campo]) || empty($dadosDestinatario[$campo])) {
                 $mensagemErro = "Campo obrigatório não encontrado no destinatário: {$campo}";
-                Log::error('FedexService::criarEnvio - ' . $mensagemErro, [
-                    'dados_destinatario' => $dadosDestinatario
-                ]);
                 throw new \Exception($mensagemErro);
             }
         }
@@ -1230,9 +1113,6 @@ class FedexService
         foreach ($camposObrigatoriosPacote as $campo) {
             if (!isset($dadosPacote[$campo]) || empty($dadosPacote[$campo])) {
                 $mensagemErro = "Campo obrigatório não encontrado no pacote: {$campo}";
-                Log::error('FedexService::criarEnvio - ' . $mensagemErro, [
-                    'dados_pacote' => $dadosPacote
-                ]);
                 throw new \Exception($mensagemErro);
             }
         }
@@ -1240,7 +1120,6 @@ class FedexService
         // Verificar se temos produtos
         if (empty($dadosProdutos)) {
             $mensagemErro = "Lista de produtos vazia";
-            Log::error('FedexService::criarEnvio - ' . $mensagemErro);
             throw new \Exception($mensagemErro);
         }
         
@@ -1250,9 +1129,6 @@ class FedexService
             foreach ($camposObrigatoriosProduto as $campo) {
                 if (!isset($produto[$campo])) {
                     $mensagemErro = "Campo obrigatório não encontrado no produto {$index}: {$campo}";
-                    Log::error('FedexService::criarEnvio - ' . $mensagemErro, [
-                        'produto' => $produto
-                    ]);
                     throw new \Exception($mensagemErro);
                 }
             }
@@ -1260,7 +1136,6 @@ class FedexService
         
         // Verificar se devemos usar a simulação
         if ($forcarSimulacao || config('app.env') !== 'production') {
-            Log::info('Usando simulação para criação de envio FedEx');
             return $this->simularCriacaoEnvio($dadosRemetente, $dadosDestinatario, $dadosPacote, $dadosProdutos, $servicoEntrega);
         }
         
@@ -1424,11 +1299,6 @@ class FedexService
             
             // Fazer log da resposta em ambiente de desenvolvimento
             if (config('app.debug')) {
-                Log::info('Resposta da API FedEx (Criação de Envio)', [
-                    'HTTP_Code' => $shipHttpCode,
-                    'Response' => $shipResponse ? substr($shipResponse, 0, 1000) . '...' : 'Vazia',
-                    'Erro' => $shipErr ?: 'Nenhum'
-                ]);
             }
             
             if ($shipErr) {
@@ -1467,10 +1337,6 @@ class FedexService
             return $resultado;
             
         } catch (\Exception $e) {
-            Log::error('Erro ao criar envio FedEx', [
-                'erro' => $e->getMessage(),
-                'trace' => $e->getTraceAsString()
-            ]);
             
             // Se forçar simulação está explicitamente definido como true, use simulação, 
             // caso contrário, deixe o erro propagar
@@ -1492,14 +1358,6 @@ class FedexService
      */
     private function simularCriacaoEnvio($dadosRemetente, $dadosDestinatario, $dadosPacote, $dadosProdutos, $servicoEntrega)
     {
-        Log::info('FedexService::simularCriacaoEnvio - Simulando criação de envio', [
-            'remetente' => $dadosRemetente,
-            'destinatario' => $dadosDestinatario,
-            'pacote' => $dadosPacote,
-            'produtos_count' => count($dadosProdutos),
-            'servico' => $servicoEntrega
-        ]);
-        
         // Gerar número de rastreamento simulado
         $prefixos = ['FEDX', '9205', '9612', '7781'];
         $prefixo = $prefixos[array_rand($prefixos)];

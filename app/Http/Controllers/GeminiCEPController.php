@@ -180,7 +180,6 @@ class GeminiCEPController extends Controller
             }
             
         } catch (\Exception $e) {
-            Log::error('Erro na consulta Gemini CEP: ' . $e->getMessage());
             return response()->json([
                 'success' => false,
                 'error' => 'Erro interno do servidor: ' . $e->getMessage()

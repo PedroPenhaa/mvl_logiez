@@ -148,18 +148,6 @@ Route::get('/cotacao-fedex', function () {
 
 // Rota para teste de processamento de envio
 Route::post('/teste-envio', function(Illuminate\Http\Request $request) {
-    // Registrar no log
-    \Illuminate\Support\Facades\Log::info('TESTE-ENVIO: Dados recebidos', [
-        'all' => $request->all(),
-        'produtos_json' => $request->produtos_json,
-        'origem_nome' => $request->origem_nome,
-        'destino_nome' => $request->destino_nome,
-        'altura' => $request->altura,
-        'largura' => $request->largura,
-        'comprimento' => $request->comprimento,
-        'peso_caixa' => $request->peso_caixa,
-        'servico_entrega' => $request->servico_entrega
-    ]);
     
     // Retornar resposta de sucesso simulada
     return response()->json([
@@ -491,7 +479,6 @@ Route::get('/exportar-cotacao-pdf', function (Illuminate\Http\Request $request, 
         
         return $pdf->download('Cotacao_FedEx_' . date('Y-m-d_His') . '.pdf');
     } catch (\Exception $e) {
-        \Illuminate\Support\Facades\Log::error('Erro ao gerar PDF: ' . $e->getMessage());
         return redirect('/cotacao')->with('error', 'Erro ao gerar o PDF da cotação. Por favor, tente novamente.');
     }
 })->name('cotacao.exportar.pdf');
@@ -759,11 +746,6 @@ Route::get('/test-payment-processing', function (App\Http\Controllers\EnvioContr
         $pagamentoReflection = new ReflectionMethod($controller, 'processarPagamento');
         $pagamentoReflection->setAccessible(true);
         
-        // Log para facilitar debug
-        \Illuminate\Support\Facades\Log::info('Iniciando teste de processamento de pagamento', [
-            'dados' => $request->all()
-        ]);
-        
         // Invocar o método de processar pagamento
         $resultadoPagamento = $pagamentoReflection->invoke($controller, $request);
         
@@ -824,18 +806,9 @@ Route::get('/test-direct-payment', function () {
         $reflection = new ReflectionMethod($controller, 'processarPagamento');
         $reflection->setAccessible(true);
         
-        // Log para depuração
-        Log::info('Iniciando teste de pagamento direto', [
-            'shipment_id' => $shipment->id,
-            'payment_method' => $dadosPagamento['payment_method'],
-            'amount' => $dadosPagamento['payment_amount']
-        ]);
-        
         // Chamar o método com os parâmetros corretos
         $resultado = $reflection->invoke($controller, $shipment, $request);
         
-        // Log do resultado
-        Log::info('Resultado do processamento de pagamento', ['resultado' => $resultado]);
         
         return response()->json([
             'success' => true,
@@ -843,12 +816,6 @@ Route::get('/test-direct-payment', function () {
             'resultado' => $resultado
         ]);
     } catch (\Exception $e) {
-        Log::error('Erro no teste de pagamento direto: ' . $e->getMessage(), [
-            'exception' => get_class($e),
-            'file' => $e->getFile(),
-            'line' => $e->getLine(),
-            'trace' => $e->getTraceAsString()
-        ]);
         
         return response()->json([
             'success' => false,

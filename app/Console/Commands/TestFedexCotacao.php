@@ -373,11 +373,6 @@ class TestFedexCotacao extends Command
         } catch (\Exception $e) {
             $this->error('❌ Erro ao calcular cotação: ' . $e->getMessage());
             
-            Log::error('Erro no command TestFedexCotacao', [
-                'erro' => $e->getMessage(),
-                'trace' => $e->getTraceAsString()
-            ]);
-            
             return Command::FAILURE;
         }
     }

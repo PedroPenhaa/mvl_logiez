@@ -1,7 +1,5 @@
 // Script para funcionalidades de pagamento do sistema Logiez
 $(document).ready(function() {
-    console.log('Script de pagamento carregado!');
-    
     // Função para mostrar alertas
     function showAlert(message, type) {
         const alertHtml = `
@@ -34,15 +32,11 @@ $(document).ready(function() {
     
     // Sobrescrever o evento do botão Continuar da etapa 5
     $(document).off('click', '#btn-step-5-next').on('click', '#btn-step-5-next', function() {
-        console.log('Botão Continuar clicado!');
-        
         // Validar se um serviço foi selecionado
         if (!window.servicoSelecionado) {
             showAlert('Por favor, selecione um serviço de entrega.', 'warning');
             return;
         }
-        
-        console.log('Serviço selecionado:', window.servicoSelecionado);
         
         // Armazenar o serviço selecionado no formulário
         $('#servico_entrega').val(window.servicoSelecionado.tipo);
@@ -51,8 +45,6 @@ $(document).ready(function() {
         const servicoInfo = window.cotacoesFedEx.find(c => c.servicoTipo === window.servicoSelecionado.tipo);
         if (servicoInfo) {
             window.servicoInfo = servicoInfo;
-            console.log('Informações do serviço:', servicoInfo);
-            
             // Converter valorTotalBRL de string para número (substituir vírgula por ponto)
             const valorTotalBRL = parseFloat(servicoInfo.valorTotalBRL.replace(',', '.'));
             
@@ -72,8 +64,6 @@ $(document).ready(function() {
                         // Atualizar informações na etapa 6
                         $('#payment-service-name').text(servicoInfo.servico);
                         $('#payment-service-value').text('R$ ' + servicoInfo.valorTotalBRL);
-                        
-                        console.log('Indo para etapa 6...');
                         
                         // Navegar para a etapa 6 diretamente
                         $('[id^="step-"]').addClass('d-none');
@@ -111,7 +101,6 @@ $(document).ready(function() {
     // Sobrescrever o evento do botão Finalizar Pagamento
     $(document).off('click', '#finalizar-pagamento').on('click', '#finalizar-pagamento', function(e) {
         e.preventDefault();
-        console.log('Botão Finalizar Pagamento clicado!');
         
         // Validar se um método foi selecionado
         const paymentMethod = $('input[name="payment_method"]:checked').val();
@@ -259,7 +248,6 @@ $(document).ready(function() {
     
     // Função para processar pagamento
     function processarPagamento(paymentMethod) {
-        console.log('Processando pagamento:', paymentMethod);
         
         // Mostrar loading
         $('#finalizar-pagamento').prop('disabled', true).html('<i class="fas fa-spinner fa-spin me-2"></i>Processando...');
@@ -285,7 +273,6 @@ $(document).ready(function() {
             processData: false,
             contentType: false,
             success: function(response) {
-                console.log('Resposta do pagamento:', response);
                 
                 if (response.success) {
                     // Redirecionar para página de sucesso ou mostrar QR Code do PIX
@@ -316,7 +303,6 @@ $(document).ready(function() {
                 }
             },
             error: function(xhr) {
-                console.error('Erro no pagamento:', xhr);
                 showAlert('Erro ao processar pagamento. Tente novamente.', 'danger');
                 $('#finalizar-pagamento').prop('disabled', false).html('<i class="fas fa-check-circle me-2"></i>Finalizar Pagamento');
             }

@@ -254,11 +254,9 @@ document.addEventListener('DOMContentLoaded', function() {
                 document.getElementById('envio-data').textContent = formatDate(data.shipment.created_at);
                 document.getElementById('payment-method').textContent = formatPaymentMethod(data.payment?.method);
             } else {
-                console.error('Erro ao carregar detalhes:', data.message);
             }
         })
         .catch(error => {
-            console.error('Erro na requisição:', error);
         });
         
     // Adicionar funcionalidade para copiar código PIX

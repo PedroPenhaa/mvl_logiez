@@ -1566,14 +1566,11 @@ if (typeof jQuery === 'undefined') {
     // Aguardar o carregamento do jQuery
     window.addEventListener('load', function() {
         if (typeof jQuery !== 'undefined') {
-            //console.log('jQuery carregado, inicializando script...');
             initializeRastreamentoScript();
         } else {
-            //console.error('jQuery ainda não está disponível após carregamento da página');
         }
     });
 } else {
-    //console.log('jQuery já está disponível, inicializando script...');
     initializeRastreamentoScript();
 }
 
@@ -1606,11 +1603,8 @@ function initializeRastreamentoScript() {
             
             // Log no console do navegador
             if (type === 'error') {
-                //console.error(message, data);
             } else if (type === 'warn') {
-                //console.warn(message, data);
             } else {
-                //console.log(message, data);
             }
             
             // Atualizar a exibição de logs

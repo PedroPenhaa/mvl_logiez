@@ -369,11 +369,6 @@ class TestFedexEnvio extends Command
         } catch (\Exception $e) {
             $this->error('❌ Erro ao criar envio: ' . $e->getMessage());
             
-            Log::error('Erro no command TestFedexEnvio', [
-                'erro' => $e->getMessage(),
-                'trace' => $e->getTraceAsString()
-            ]);
-            
             return Command::FAILURE;
         }
     }

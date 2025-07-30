@@ -1051,15 +1051,12 @@
 <script>
     // Verificar se o jQuery está disponível
     if (typeof jQuery === 'undefined') {
-        //console.error('jQuery não está carregado. Carregando...');
-
         // Adicionar jQuery se não estiver disponível
         var script = document.createElement('script');
         script.src = 'https://code.jquery.com/jquery-3.6.4.min.js';
         script.integrity = 'sha256-oP6HI9z1XaZNBrJURtCoUT5SUnxFr8s3BzRl+cbzUq8=';
         script.crossOrigin = 'anonymous';
         script.onload = function() {
-            //console.log('jQuery carregado com sucesso. Inicializando...');
             inicializarApp();
         };
         document.head.appendChild(script);
@@ -1072,7 +1069,6 @@
 
     // Função para inicializar a aplicação
     function inicializarApp() {
-        //console.log("Documento pronto, iniciando script");
 
         // Função para mostrar alertas
         function showAlert(message, type) {
@@ -1106,19 +1102,15 @@
 
         // Verificar se o Select2 está disponível
         if (typeof $.fn.select2 === 'undefined') {
-            //console.error("Select2 não está carregado! Tentando carregar novamente...");
             // Tentar carregar o Select2 novamente
             $.getScript("https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js")
                 .done(function() {
-                    //console.log("Select2 carregado com sucesso");
                     inicializarSelect2();
                 })
                 .fail(function(jqxhr, settings, exception) {
-                    //console.error("Erro ao carregar Select2:", exception);
                     alert("Erro ao carregar o componente de seleção de produtos. Por favor, recarregue a página.");
                 });
         } else {
-            //console.log("Select2 já está carregado, inicializando...");
             inicializarSelect2();
         }
 
@@ -1802,12 +1794,10 @@
         function inicializarSelect2() {
             // Evitar inicialização múltipla
             if (inicializandoSelect2) {
-                //console.log("Select2 já está sendo inicializado. Aguardando...");
                 return;
             }
 
             inicializandoSelect2 = true;
-            //console.log("Destruindo instância anterior de Select2 caso exista");
 
             // Fechar qualquer dropdown aberto
             $('.select2-container').remove();
@@ -1821,7 +1811,6 @@
             $('#produto-select').empty();
             $('#produto-select').append(new Option('Selecione um produto', '', true, true));
 
-            //console.log("Inicializando novo Select2");
             $('#produto-select').select2({
                 placeholder: 'Selecione ou busque um produto',
                 allowClear: true,
@@ -1844,7 +1833,6 @@
             // Evento ao selecionar um produto
             $('#produto-select').on('select2:select', function(e) {
                 const produtoSelecionado = e.params.data;
-                //console.log("Produto selecionado:", produtoSelecionado);
 
                 // Garantir que temos as propriedades código e NCM
                 const ncm = produtoSelecionado.codigo || produtoSelecionado.id;
@@ -1865,15 +1853,12 @@
                 const unidadeAtual = $('#produto-unidade').val();
 
                 if (!unidadeAtual) {
-                    //console.log("Unidade não preenchida. Buscando unidade para o NCM:", ncm);
 
                     // Buscar a unidade tributária com base no NCM extraído
                     const ncmFormatado = formatarNCMParaBusca(ncm);
-                    //console.log("NCM formatado para busca de unidade:", ncmFormatado);
 
                     buscarUnidadeTributaria(ncm)
                         .done(function(response) {
-                            //console.log("Resposta da busca de unidade:", response);
                             if (response.success && response.unidade) {
                                 // Validar que a unidade é UN ou KG, caso contrário, usar UN como padrão
                                 const unidadeNormalizada = (response.unidade === 'KG' || response.unidade === 'UN') ?
@@ -1881,9 +1866,7 @@
                                     'UN';
 
                                 $('#produto-unidade').val(unidadeNormalizada);
-                                //console.log("Unidade tributária encontrada e normalizada:", unidadeNormalizada);
                             } else {
-                                //console.warn("Unidade não encontrada para o NCM:", ncm);
                                 // Verificar se o nome do produto tem relação com produtos que geralmente são KG
                                 const textoLowerCase = descricao.toLowerCase();
                                 const produtosEmKG = [
@@ -1904,15 +1887,12 @@
 
                                 // Definir a unidade com base na detecção
                                 $('#produto-unidade').val(ehKG ? 'KG' : 'UN');
-                                //console.log(`Unidade inferida pelo nome do produto: ${ehKG ? 'KG' : 'UN'}`);
                             }
                         })
                         .fail(function(error) {
-                            //console.error("Erro ao buscar unidade tributária:", error);
                             $('#produto-unidade').val('UN'); // Valor padrão em caso de erro
                         });
                 } else {
-                    //console.log("Mantendo unidade já preenchida:", unidadeAtual);
                 }
             });
 
@@ -1970,7 +1950,6 @@
                     contentType: 'application/json',
                     dataType: 'json',
                     beforeSend: function() {
-                        //console.log("Enviando consulta para o Gemini para o produto:", buscaDescricao);
                     },
                     success: function(response) {
                         // Ocultar indicador de carregamento
@@ -2029,7 +2008,6 @@
                                 Erro na consulta da IA. Tentando busca direta...
                             </div>
                         `);
-                        //console.error("Erro ao consultar a IA:", error);
                         // Continuar com a busca normal
                         buscarProdutos({
                             descricao: buscaDescricao
@@ -2049,18 +2027,15 @@
 
         // Função para extrair o NCM da resposta do Gemini
         function extrairNCM(texto) {
-            //console.log("Extraindo NCM do texto:", texto);
 
             // Caso específico para Havaianas
             if (texto.toLowerCase().includes('havaianas') && texto.includes('6402.20.00')) {
-                //console.log("Caso especial: Havaianas encontrado com NCM 6402.20.00");
                 return '6402.20.00';
             }
 
             // Primeiro tenta encontrar o NCM entre asteriscos, uma convenção comum
             const boldMatch = texto.match(/\*\*([0-9]{4}\.?[0-9]{2}\.?[0-9]{2})\*\*/);
             if (boldMatch && boldMatch[1]) {
-                //console.log("NCM encontrado em destaque:", boldMatch[1]);
                 return formatarNCM(boldMatch[1]);
             }
 
@@ -2075,12 +2050,10 @@
             for (const padrao of padroes) {
                 const match = texto.match(padrao);
                 if (match && match[1]) {
-                    //console.log("NCM encontrado com padrão:", padrao.toString(), match[1]);
                     return formatarNCM(match[1]);
                 }
             }
 
-            //console.log("Nenhum NCM encontrado no texto");
             return null;
         }
 
@@ -2106,7 +2079,6 @@
 
         // Nova função para extrair a unidade da resposta do Gemini
         function extrairUnidade(texto) {
-            //console.log("Extraindo unidade do texto:", texto);
 
             // Lista de produtos comumente vendidos em KG
             const produtosEmKG = [
@@ -2122,7 +2094,6 @@
             const textoLowerCase = texto.toLowerCase();
             for (const produto of produtosEmKG) {
                 if (textoLowerCase.includes(produto)) {
-                    //console.log(`Produto "${produto}" encontrado no texto, atribuindo unidade KG`);
                     return "KG";
                 }
             }
@@ -2142,7 +2113,6 @@
                 const match = texto.match(padrao);
                 if (match && match[1]) {
                     const unidade = match[1].toUpperCase();
-                    //console.log("Unidade encontrada com padrão:", padrao.toString(), unidade);
                     return unidade === "UN" || unidade === "KG" ? unidade : "UN"; // Padrão para UN se não for KG
                 }
             }
@@ -2160,7 +2130,6 @@
                 textoLowerCase.includes('gramas') ||
                 textoLowerCase.includes('granel') ||
                 textoLowerCase.includes('a peso')) {
-                //console.log("Unidade KG inferida pelo contexto");
                 return "KG";
             }
 
@@ -2174,12 +2143,10 @@
                 textoLowerCase.includes('por unidade') ||
                 textoLowerCase.includes('cada um') ||
                 textoLowerCase.includes('individuais')) {
-                //console.log("Unidade UN inferida pelo contexto");
                 return "UN";
             }
 
             // Se não encontrou nenhuma menção a peso, assume que é unidade
-            //console.log("Unidade padrão UN assumida");
             return "UN";
         }
 
@@ -2191,7 +2158,6 @@
             // Remover zeros à esquerda (mas manter os da direita)
             ncmLimpo = ncmLimpo.replace(/^0+/, '');
 
-            //console.log("Formatando NCM para busca:", ncm, "->", ncmLimpo);
             return ncmLimpo;
         }
 
@@ -2201,7 +2167,6 @@
 
             // Formatar NCM para busca: sem pontos e sem zeros à esquerda
             const ncmFormatado = formatarNCMParaBusca(ncm);
-            //console.log("NCM formatado para busca:", ncmFormatado);
 
             // Fazer requisição AJAX para buscar a unidade no arquivo CSV
             return $.ajax({
@@ -2216,7 +2181,6 @@
 
         // Função para buscar produtos por NCM
         function buscarProdutosPorNCM(ncm) {
-            //console.log("Buscando produtos com NCM:", ncm);
 
             // Adicionar o NCM também no campo de busca por código para visualização
             $('#busca-codigo').val(ncm);
@@ -2269,7 +2233,6 @@
                 },
                 dataType: 'json',
                 success: function(data) {
-                    //console.log("Resultados da busca:", data);
 
                     // Limpar o select novamente para garantir
                     $('#produto-select').empty();
@@ -2294,8 +2257,6 @@
                         // Acionar o change para atualizar o Select2
                         $('#produto-select').trigger('change');
 
-                        //console.log("Opções carregadas:", data.produtos.length);
-
                         // Mostrar quantos produtos foram encontrados e o NCM identificado
                         if (searchParams.codigo) {
                             $('#select-status').html(`
@@ -2308,7 +2269,6 @@
                             // Selecionar automaticamente o primeiro produto da lista se houver apenas um
                             if (data.produtos.length === 1) {
                                 $('#produto-select').val(data.produtos[0].codigo).trigger('change');
-                                //console.log("Produto único selecionado automaticamente:", data.produtos[0]);
                             }
                         } else {
                             $('#select-status').html(`
@@ -2725,7 +2685,6 @@
                     }
                 }
             } catch (error) {
-                //console.error('Erro ao acessar dados do Select2:', error);
             }
 
             // Se não conseguiu pegar do Select2, tentar pegar dos campos de busca
@@ -2744,7 +2703,6 @@
             }
 
             if (produtoSelecionado && produtoSelecionado.id) {
-                //console.log("Produto selecionado:", produtoSelecionado);
 
                 const id = produtoSelecionado.id;
                 const codigo = produtoSelecionado.codigo || id;
@@ -2772,8 +2730,6 @@
                     unidade: unidade
                 };
 
-                //console.log("Produto a ser confirmado:", produtoEmConfirmacao);
-
                 // Preencher as informações no modal
                 $('#modal-produto-nome').text(nome.split(' (NCM:')[0]); // Remover a parte do NCM do nome
                 $('#modal-produto-ncm').text(codigo);
@@ -2800,11 +2756,9 @@
                 if (existingIndex !== -1) {
                     // Se existir, atualiza a quantidade
                     produtos[existingIndex].quantidade += produtoEmConfirmacao.quantidade;
-                    //console.log("Atualizada quantidade do produto existente:", produtos[existingIndex]);
                 } else {
                     // Se não existir, adiciona
                     produtos.push(produtoEmConfirmacao);
-                    //  console.log("Novo produto adicionado:", produtoEmConfirmacao);
                 }
 
                 // Limpar completamente todos os campos de produto
@@ -3093,7 +3047,6 @@
                     $(`#${prefixo}_endereco`).val('');
                 }
             }).fail(function(jqxhr, textStatus, error) {
-                //console.error("Erro ao buscar CEP:", error);
                 alert('Erro ao buscar o CEP. Por favor, digite o endereço manualmente.');
                 $(`#${prefixo}_endereco`).val('');
             });
@@ -3136,9 +3089,6 @@
                             selectCidade.val(novaOpcao.val()).change();
                         }
                     } else {
-                        // O select ainda não tem opções, esperar mais ou transformar em input
-                        //console.log('Select de cidade ainda não carregou, esperando...');
-
                         // Verificar novamente após um curto período
                         setTimeout(function() {
                             // Se ainda não carregou, tentar uma última vez
@@ -3244,8 +3194,6 @@
                 _token: $('input[name="_token"]').val()
             };
 
-            //console.log('Consultando serviços com os dados:', dadosCotacao);
-
             // Fazer requisição para a API de cotação
             $.ajax({
                 url: '/calcular-cotacao',
@@ -3254,8 +3202,6 @@
                 success: function(response) {
                     // Esconder o loader
                     $('#cotacao-loader').hide();
-
-                    //console.log('Resposta da cotação:', response);
 
                     if (response.success) {
                         // Exibir as opções de serviço
@@ -3269,15 +3215,12 @@
                 error: function(xhr) {
                     $('#cotacao-loader').hide();
 
-                    //console.error('Erro na requisição AJAX:', xhr);
-
                     // Tentar extrair mensagem de erro
                     let errorMessage = 'Erro ao consultar serviços. Tente novamente mais tarde.';
                     try {
                         const response = JSON.parse(xhr.responseText);
                         errorMessage = response.message || errorMessage;
                     } catch (e) {
-                        //console.error('Erro ao parsear resposta:', e);
                     }
 
                     showAlert(errorMessage, 'danger');
@@ -3547,7 +3490,6 @@
                         const response = JSON.parse(xhr.responseText);
                         errorMessage = response.message || errorMessage;
                     } catch (e) {
-                        //console.error('Erro ao parsear resposta:', e);
                     }
 
                     showAlert(errorMessage, 'danger');
@@ -3725,10 +3667,8 @@
                 const campo = $(campoId);
                 const valor = campo.val() ? campo.val().trim() : '';
                 if (!valor) {
-                    //console.log(`❌ Campo ${nomeCampo} está vazio:`, campoId, 'Valor:', campo.val());
                     return false;
                 }
-                //console.log(`✅ Campo ${nomeCampo} está preenchido:`, campoId, 'Valor:', valor);
                 return true;
             }
             
@@ -4104,7 +4044,6 @@
                         }
                     },
                     error: function(jqXHR, textStatus, errorThrown) {
-                        //console.log('Erro na primeira tentativa:', textStatus, errorThrown);
                         // Se a primeira API falhar, tentar a segunda
                         tentarApiAlternativa();
                     }
@@ -4112,8 +4051,6 @@
 
                 // Função para preencher os campos com os dados do CEP
                 function preencherCampos(data) {
-                    //console.log(`Dados do CEP (${tipo}):`, data);
-
                     // Preenche os campos com os dados retornados
                     $(campoEndereco).val(data.logradouro || data.rua || '');
                     $(campoCidade).val(data.localidade || data.cidade || '');
@@ -4135,12 +4072,10 @@
                     // Limpa o placeholder
                     $(campoEndereco).attr('placeholder', '');
 
-                    //console.log(`CEP (${tipo}) encontrado e preenchido com sucesso`);
                 }
 
                 // Função para tentar uma API alternativa
                 function tentarApiAlternativa() {
-                    //console.log('Tentando API alternativa para o CEP:', cep);
 
                     // API alternativa: BrasilAPI
                     $.ajax({
@@ -4155,8 +4090,6 @@
                             }
                         },
                         error: function(jqXHR, textStatus, errorThrown) {
-                            //console.log('Erro na segunda tentativa:', textStatus, errorThrown);
-
                             // Última tentativa: API PostalCode
                             $.ajax({
                                 url: `https://ws.apicep.com/cep/${cep}.json`,
@@ -4170,7 +4103,6 @@
                                     }
                                 },
                                 error: function(jqXHR, textStatus, errorThrown) {
-                                    //console.log('Erro na terceira tentativa:', textStatus, errorThrown);
                                     tentarGemini();
                                 }
                             });
@@ -4180,8 +4112,6 @@
 
                 // Função para tentar consulta via Gemini
                 function tentarGemini() {
-                    //console.log('Tentando consulta via Gemini para o CEP:', cep);
-                    
                     // Mostrar indicador de IA
                     $(campoEndereco).attr('placeholder', 'Consultando IA...');
                     
@@ -4217,13 +4147,11 @@
                                 // Mostrar mensagem de sucesso da IA
                                 showAlert(`<strong>Sucesso!</strong> Endereço encontrado via IA para o CEP ${cep}.`, 'success');
                                 
-                                //console.log(`CEP (${tipo}) encontrado via Gemini e preenchido com sucesso`);
                             } else {
                                 informarErro('CEP não encontrado nas APIs tradicionais nem via IA');
                             }
                         },
                         error: function(jqXHR, textStatus, errorThrown) {
-                            //console.log('Erro na consulta Gemini:', textStatus, errorThrown);
                             informarErro('CEP não encontrado');
                         }
                     });
@@ -4239,8 +4167,6 @@
 
                     // Limpa o placeholder
                     $(campoEndereco).attr('placeholder', '');
-
-                    //          console.error(`Erro ao consultar CEP (${tipo}):`, mensagem);
 
                     // Alerta mais amigável
                     showAlert(`<strong>Atenção:</strong> ${mensagem}. Por favor, preencha os dados manualmente.`, 'warning');
@@ -4292,7 +4218,6 @@
                             // Mostrar mensagem de sucesso da IA
                             showAlert(`<strong>Sucesso!</strong> CEP ${cep} encontrado via IA para o endereço informado.`, 'success');
                             
-                            //console.log(`CEP (${tipo}) encontrado via Gemini: ${cep}`);
                         } else {
                             // Limpar placeholder
                             $(`#${tipo}_cep`).attr('placeholder', '');
@@ -4302,8 +4227,6 @@
                         }
                     },
                     error: function(jqXHR, textStatus, errorThrown) {
-                        //console.log('Erro na consulta Gemini para CEP:', textStatus, errorThrown);
-                        
                         // Limpar placeholder
                         $(`#${tipo}_cep`).attr('placeholder', '');
                         
@@ -4714,7 +4637,6 @@
                 document.getElementById('btn-submit').disabled = false;
                 document.getElementById('btn-submit').textContent = 'Finalizar Envio';
 
-                //  console.error('Erro:', error);
             });
     });
 
