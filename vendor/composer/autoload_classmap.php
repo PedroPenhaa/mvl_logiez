@@ -38,6 +38,7 @@ return array(
     'App\\Http\\Controllers\\GeminiCEPController' => $baseDir . '/app/Http/Controllers/GeminiCEPController.php',
     'App\\Http\\Controllers\\HomeController' => $baseDir . '/app/Http/Controllers/HomeController.php',
     'App\\Http\\Controllers\\PagamentoController' => $baseDir . '/app/Http/Controllers/PagamentoController.php',
+    'App\\Http\\Controllers\\PaymentController' => $baseDir . '/app/Http/Controllers/PaymentController.php',
     'App\\Http\\Controllers\\PerfilController' => $baseDir . '/app/Http/Controllers/PerfilController.php',
     'App\\Http\\Controllers\\ProdutoController' => $baseDir . '/app/Http/Controllers/ProdutoController.php',
     'App\\Http\\Controllers\\ProdutosController' => $baseDir . '/app/Http/Controllers/ProdutosController.php',
