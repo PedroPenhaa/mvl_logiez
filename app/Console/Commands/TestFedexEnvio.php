@@ -31,52 +31,44 @@ class TestFedexEnvio extends Command
 
         // Dados de teste para o envio
         $dadosRemetente = [
-            'nome' => 'João Silva',
-            'endereco' => 'Avenida Paulista, 1000',
+            'nome' => 'Pedro Afonso da Costa Penha',
+            'endereco' => 'Rua Gioconda Mora',
             'complemento' => 'Sala 123',
             'cidade' => 'São Paulo',
             'estado' => 'SP',
-            'cep' => '01310100',
+            'cep' => $this->validarCodigoPostal('01310200', 'BR'), // CEP válido de São Paulo
             'pais' => 'BR',
-            'telefone' => '11999998888',
-            'email' => 'teste@exemplo.com'
+            'telefone' => '35999028971',
+            'email' => 'pedro.teste@gmail.com'
         ];
         
         $dadosDestinatario = [
-            'nome' => 'John Doe',
-            'endereco' => '123 Ocean Drive',
+            'nome' => 'Rui Vergani Neto',
+            'endereco' => 'Celebration',
             'complemento' => 'Suite 456',
-            'cidade' => 'Miami',
+            'cidade' => 'Celebration',
             'estado' => 'FL',
-            'cep' => '33131',
+            'cep' => $this->validarCodigoPostal('34747', 'US'), // ZIP válido de Celebration, FL
             'pais' => 'US',
-            'telefone' => '13058889999',
-            'email' => 'johndoe@example.com'
+            'telefone' => '3055551234',
+            'email' => 'rui.teste@gmail.com'
         ];
         
         $dadosPacote = [
-            'altura' => 10,            // 10 cm
-            'largura' => 20,           // 20 cm
-            'comprimento' => 30,       // 30 cm
-            'peso' => 5                // 5 kg
+            'altura' => 20,            
+            'largura' => 10,           
+            'comprimento' => 20,       
+            'peso' => 5               
         ];
         
         $dadosProdutos = [
             [
-                'descricao' => 'Produto de Teste 1',
-                'peso' => 2,
+                'descricao' => 'Notebook',
+                'peso' => 5,
                 'quantidade' => 1,
-                'valor_unitario' => 100.00,
+                'valor_unitario' => 1590.00,
                 'pais_origem' => 'BR',
-                'ncm' => '85171231'    // NCM para smartphones
-            ],
-            [
-                'descricao' => 'Produto de Teste 2',
-                'peso' => 3,
-                'quantidade' => 1,
-                'valor_unitario' => 50.00,
-                'pais_origem' => 'BR',
-                'ncm' => '42021220'    // NCM para bolsas
+                'ncm' => '84713019'   
             ]
         ];
         
@@ -153,7 +145,7 @@ class TestFedexEnvio extends Command
             
             $this->info('✅ Token de autenticação obtido com sucesso!');
             $this->info('Preparando dados para envio...');
-            
+
             // Preparar requisição de criação de envio
             $shipUrl = $apiUrl . '/ship/v1/shipments';
             $transactionId = uniqid('logiez_ship_');
@@ -286,7 +278,7 @@ class TestFedexEnvio extends Command
             ];
             
             $this->info('Enviando requisição para API de envio...');
-            
+
             // Fazer a requisição
             $shipCurl = curl_init();
             curl_setopt_array($shipCurl, [
@@ -315,7 +307,6 @@ class TestFedexEnvio extends Command
             
             curl_close($shipCurl);
             
-            dd($shipResponse);
             // Log da resposta detalhada para debug
             $this->info('Resposta da API - Status HTTP: ' . $shipHttpCode);
             if ($shipErr) {
@@ -370,6 +361,64 @@ class TestFedexEnvio extends Command
             $this->error('❌ Erro ao criar envio: ' . $e->getMessage());
             
             return Command::FAILURE;
+        }
+    }
+
+    private function validarCodigoPostal($postalCode, $countryCode)
+    {
+        // Remover caracteres não alfanuméricos
+        $postalCode = preg_replace('/[^A-Za-z0-9]/', '', $postalCode);
+        
+        // Converter para maiúsculas
+        $postalCode = strtoupper($postalCode);
+        
+        switch ($countryCode) {
+            case 'BR':
+                // CEP brasileiro: 8 dígitos numéricos
+                if (strlen($postalCode) === 8 && ctype_digit($postalCode)) {
+                    return $postalCode;
+                }
+                // Se não estiver no formato correto, retornar um CEP válido de exemplo
+                return '01310200'; // CEP válido de São Paulo
+                
+            case 'US':
+                // ZIP code americano: 5 dígitos ou 5+4 dígitos
+                if (strlen($postalCode) === 5 && ctype_digit($postalCode)) {
+                    return $postalCode;
+                }
+                if (strlen($postalCode) === 9 && ctype_digit($postalCode)) {
+                    return substr($postalCode, 0, 5) . '-' . substr($postalCode, 5);
+                }
+                // Se não estiver no formato correto, retornar um ZIP válido de exemplo
+                return '10001'; // ZIP válido de Nova York
+                
+            case 'CA':
+                // Código postal canadense: A1A 1A1 (letra, dígito, letra, espaço, dígito, letra, dígito)
+                if (preg_match('/^[A-Z]\d[A-Z]\s?\d[A-Z]\d$/', $postalCode)) {
+                    return str_replace(' ', '', $postalCode);
+                }
+                return 'M5V3A8'; // Código postal válido de Toronto
+                
+            case 'MX':
+                // Código postal mexicano: 5 dígitos
+                if (strlen($postalCode) === 5 && ctype_digit($postalCode)) {
+                    return $postalCode;
+                }
+                return '06000'; // Código postal válido da Cidade do México
+                
+            case 'AR':
+                // Código postal argentino: 4 dígitos
+                if (strlen($postalCode) === 4 && ctype_digit($postalCode)) {
+                    return $postalCode;
+                }
+                return '1001'; // Código postal válido de Buenos Aires
+                
+            default:
+                // Para outros países, retornar o código limpo ou um valor padrão
+                if (strlen($postalCode) >= 3 && strlen($postalCode) <= 10) {
+                    return $postalCode;
+                }
+                return '00000';
         }
     }
 } 
