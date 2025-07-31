@@ -248,6 +248,29 @@ class SectionController extends Controller
     }
 
     /**
+     * Calcula a porcentagem baseada no valor conforme as faixas definidas
+     *
+     * @param float $valor
+     * @return float
+     */
+    private function calcularPorcentagem($valor)
+    {
+        if ($valor <= 350.00) {
+            return 0.30; // 30%
+        } elseif ($valor <= 700.00) {
+            return 0.27; // 27%
+        } elseif ($valor <= 1200.00) {
+            return 0.24; // 24%
+        } elseif ($valor <= 2000.00) {
+            return 0.21; // 21%
+        } elseif ($valor <= 3000.00) {
+            return 0.19; // 19%
+        } else {
+            return 0.16; // 16%
+        }
+    }
+
+    /**
      * Processa o cálculo de cotação de envio.
      *
      * @param  \Illuminate\Http\Request  $request
@@ -306,7 +329,11 @@ class SectionController extends Controller
                     $valorUSD = $cotacao['valorTotal'] / $valorDolar;
                     $cotacaoProcessada['valorTotal'] = number_format($valorUSD, 2, '.', '');
                     $cotacaoProcessada['moeda'] = 'USD';
-                    $cotacaoProcessada['valorTotalBRL'] = number_format($cotacao['valorTotal'], 2, ',', '.');
+                    
+                    // Aplicar porcentagem ao valor em BRL
+                    $porcentagem = $this->calcularPorcentagem($cotacao['valorTotal']);
+                    $valorComPorcentagem = $cotacao['valorTotal'] * (1 + $porcentagem);
+                    $cotacaoProcessada['valorTotalBRL'] = number_format($valorComPorcentagem, 2, ',', '.');
                 } 
                 // Se a moeda for USD, adicionar valor em BRL
                /* else if ($cotacao['moeda'] === 'USD') {
