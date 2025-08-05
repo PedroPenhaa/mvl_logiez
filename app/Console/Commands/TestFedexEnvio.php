@@ -4,6 +4,12 @@ namespace App\Console\Commands;
 
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Log;
+use App\Models\Shipment;
+use App\Models\SenderAddress;
+use App\Models\RecipientAddress;
+use App\Models\ShipmentItem;
+use App\Models\ApiLog;
+use Illuminate\Support\Facades\DB;
 
 class TestFedexEnvio extends Command
 {
@@ -341,6 +347,109 @@ class TestFedexEnvio extends Command
                 'dataCriacao' => date('Y-m-d H:i:s'),
                 'simulado' => false
             ];
+            
+            // SALVAR INFORMAÇÕES NO BANCO DE DADOS
+            $this->info('💾 Salvando informações no banco de dados...');
+            
+            try {
+                DB::beginTransaction();
+                
+                // 1. Criar o registro principal do envio
+                $shipment = Shipment::create([
+                    'tracking_number' => $trackingNumber,
+                    'shipment_id' => $shipmentId,
+                    'carrier' => 'FEDEX',
+                    'tipo_envio' => 'venda', // Valor padrão para teste
+                    'tipo_pessoa' => 'pf', // Valor padrão para teste
+                    'service_code' => $servicoEntrega,
+                    'service_name' => $servicoEntrega,
+                    'label_url' => $labelUrl,
+                    'label_format' => 'PDF',
+                    'status' => 'created',
+                    'status_description' => 'Envio criado com sucesso',
+                    'last_status_update' => now(),
+                    'package_height' => $dadosPacote['altura'],
+                    'package_width' => $dadosPacote['largura'],
+                    'package_length' => $dadosPacote['comprimento'],
+                    'package_weight' => $dadosPacote['peso'],
+                    'currency' => 'USD',
+                    'ship_date' => $shipDate,
+                    'is_simulation' => false,
+                    'was_delivered' => false,
+                    'has_issues' => false,
+                ]);
+                
+                // 2. Criar endereço do remetente
+                SenderAddress::create([
+                    'shipment_id' => $shipment->id,
+                    'name' => $dadosRemetente['nome'],
+                    'phone' => $dadosRemetente['telefone'],
+                    'email' => $dadosRemetente['email'],
+                    'address' => $dadosRemetente['endereco'],
+                    'address_complement' => $dadosRemetente['complemento'],
+                    'city' => $dadosRemetente['cidade'],
+                    'state' => $dadosRemetente['estado'],
+                    'postal_code' => $dadosRemetente['cep'],
+                    'country' => $dadosRemetente['pais'],
+                    'is_residential' => false,
+                ]);
+                
+                // 3. Criar endereço do destinatário
+                RecipientAddress::create([
+                    'shipment_id' => $shipment->id,
+                    'name' => $dadosDestinatario['nome'],
+                    'phone' => $dadosDestinatario['telefone'],
+                    'email' => $dadosDestinatario['email'],
+                    'address' => $dadosDestinatario['endereco'],
+                    'address_complement' => $dadosDestinatario['complemento'],
+                    'city' => $dadosDestinatario['cidade'],
+                    'state' => $dadosDestinatario['estado'],
+                    'postal_code' => $dadosDestinatario['cep'],
+                    'country' => $dadosDestinatario['pais'],
+                    'is_residential' => false,
+                ]);
+                
+                // 4. Criar itens do envio
+                foreach ($dadosProdutos as $produto) {
+                    ShipmentItem::create([
+                        'shipment_id' => $shipment->id,
+                        'description' => $produto['descricao'],
+                        'weight' => $produto['peso'],
+                        'quantity' => $produto['quantidade'],
+                        'unit_price' => $produto['valor_unitario'],
+                        'total_price' => $produto['valor_unitario'] * $produto['quantidade'],
+                        'currency' => 'USD',
+                        'country_of_origin' => $produto['pais_origem'],
+                        'harmonized_code' => $produto['ncm'],
+                    ]);
+                }
+                
+                // 5. Registrar log da API
+                ApiLog::create([
+                    'api_service' => 'FEDEX',
+                    'endpoint' => $shipUrl,
+                    'http_method' => 'POST',
+                    'request_data' => json_encode($shipRequest),
+                    'response_data' => json_encode($shipData),
+                    'response_code' => $shipHttpCode,
+                    'status' => 'success',
+                    'created_at' => now(),
+                ]);
+                
+                DB::commit();
+                
+                $this->info('✅ Dados salvos no banco com sucesso!');
+                $this->info("ID do envio no banco: {$shipment->id}");
+                
+            } catch (\Exception $e) {
+                DB::rollBack();
+                $this->error('❌ Erro ao salvar no banco: ' . $e->getMessage());
+                Log::error('Erro ao salvar envio no banco: ' . $e->getMessage(), [
+                    'tracking_number' => $trackingNumber,
+                    'shipment_id' => $shipmentId,
+                    'error' => $e->getMessage()
+                ]);
+            }
             
             // Imprimir resultado do envio
             $this->newLine();
