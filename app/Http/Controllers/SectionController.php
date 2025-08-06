@@ -12,6 +12,7 @@ use Illuminate\Support\Facades\Auth;
 use App\Models\Payment;
 use App\Models\Shipment;
 use App\Models\UserProfile;
+use App\Models\User;
 
 
 class SectionController extends Controller
@@ -970,6 +971,96 @@ class SectionController extends Controller
         $shipmentId = $shipData['output']['transactionShipments'][0]['shipmentDocuments'][0]['shipmentId'] ?? null;
         $labelUrl = $shipData['output']['transactionShipments'][0]['shipmentDocuments'][0]['url'] ?? null;
         
+        // Salvar dados do envio no banco de dados
+        try {
+            $userId = \Illuminate\Support\Facades\Auth::check() ? \Illuminate\Support\Facades\Auth::id() : null;
+            
+            // Criar o registro principal do shipment
+            $shipment = \App\Models\Shipment::create([
+                'user_id' => $userId,
+                'tracking_number' => $trackingNumber,
+                'shipment_id' => $shipmentId,
+                'carrier' => 'FEDEX',
+                'service_code' => $servicoEntrega,
+                'service_name' => $servicoEntrega,
+                'label_url' => $labelUrl,
+                'label_format' => 'PDF',
+                'status' => 'created',
+                'status_description' => 'Envio criado com sucesso',
+                'last_status_update' => now(),
+                'package_height' => $dadosPacote['altura'],
+                'package_width' => $dadosPacote['largura'],
+                'package_length' => $dadosPacote['comprimento'],
+                'package_weight' => $dadosPacote['peso'],
+                'total_price' => 0, // Será calculado se necessário
+                'currency' => 'USD',
+                'total_price_brl' => 0, // Será calculado se necessário
+                'ship_date' => $shipDate,
+                'is_simulation' => false,
+                'was_delivered' => false,
+                'has_issues' => false,
+                'tipo_envio' => 'venda',
+                'tipo_pessoa' => 'pf'
+            ]);
+            
+            // Criar endereço do remetente
+            \App\Models\SenderAddress::create([
+                'shipment_id' => $shipment->id,
+                'name' => $dadosRemetente['nome'],
+                'phone' => $dadosRemetente['telefone'],
+                'email' => $dadosRemetente['email'],
+                'address' => $dadosRemetente['endereco'],
+                'address_complement' => $dadosRemetente['complemento'] ?? null,
+                'city' => $dadosRemetente['cidade'],
+                'state' => $dadosRemetente['estado'],
+                'postal_code' => $dadosRemetente['cep'],
+                'country' => $dadosRemetente['pais'],
+                'is_residential' => false
+            ]);
+            
+            // Criar endereço do destinatário
+            \App\Models\RecipientAddress::create([
+                'shipment_id' => $shipment->id,
+                'name' => $dadosDestinatario['nome'],
+                'phone' => $dadosDestinatario['telefone'],
+                'email' => $dadosDestinatario['email'],
+                'address' => $dadosDestinatario['endereco'],
+                'address_complement' => $dadosDestinatario['complemento'] ?? null,
+                'city' => $dadosDestinatario['cidade'],
+                'state' => $dadosDestinatario['estado'],
+                'postal_code' => $dadosDestinatario['cep'],
+                'country' => $dadosDestinatario['pais'],
+                'is_residential' => false
+            ]);
+            
+            // Criar itens do envio
+            foreach ($dadosProdutos as $produto) {
+                \App\Models\ShipmentItem::create([
+                    'shipment_id' => $shipment->id,
+                    'description' => $produto['descricao'],
+                    'weight' => $produto['peso'],
+                    'quantity' => $produto['quantidade'],
+                    'unit_price' => $produto['valor_unitario'],
+                    'total_price' => $produto['valor_unitario'] * $produto['quantidade'],
+                    'currency' => 'USD',
+                    'country_of_origin' => $produto['pais_origem'],
+                    'harmonized_code' => $produto['ncm']
+                ]);
+            }
+            
+            Log::info('✅ Dados do envio salvos no banco com sucesso:', [
+                'shipment_id' => $shipment->id,
+                'tracking_number' => $trackingNumber
+            ]);
+            
+        } catch (\Exception $e) {
+            Log::error('❌ Erro ao salvar dados do envio no banco:', [
+                'error' => $e->getMessage(),
+                'tracking_number' => $trackingNumber
+            ]);
+            // Não interromper o fluxo se houver erro no salvamento
+        }
+        
         $resultado = [
             'success' => true,
             'trackingNumber' => $trackingNumber,
@@ -1283,9 +1374,11 @@ class SectionController extends Controller
         
         try {
             // Atualizar apenas os campos que existem na tabela users (name e email)
-            $user->name = $request->nome;
-            $user->email = $request->email;
-            $user->save();
+            if ($user instanceof \App\Models\User) {
+                $user->name = $request->nome;
+                $user->email = $request->email;
+                $user->save();
+            }
             
             // Verificar se o usuário tem um perfil, se não tiver, criar um
             $userProfile = $user->profile;
