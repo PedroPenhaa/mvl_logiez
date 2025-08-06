@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\DB; // Added DB facade
 
 class EtiquetaController extends Controller
 {
@@ -39,8 +40,46 @@ class EtiquetaController extends Controller
         try {
             // Validar o código de rastreamento
             $request->validate([
-                'codigo' => 'required|string'
+                'codigo' => 'required'
             ]);
+
+            // Converter o código para string se necessário
+            $codigo = (string) $request->codigo;
+
+            // Buscar dados do shipment e tabelas relacionadas
+            $shipment = DB::table('shipments')
+                ->where('tracking_number', $codigo)
+                ->first();
+
+            if (!$shipment) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Shipment não encontrado com este tracking number'
+                ], 404);
+            }
+
+            // Buscar dados do recipient_addresses
+            $recipientAddress = DB::table('recipient_addresses')
+                ->where('shipment_id', $shipment->id)
+                ->first();
+
+            // Buscar dados do sender_addresses
+            $senderAddress = DB::table('sender_addresses')
+                ->where('shipment_id', $shipment->id)
+                ->first();
+
+            // Buscar dados do shipment_items
+            $shipmentItems = DB::table('shipment_items')
+                ->where('shipment_id', $shipment->id)
+                ->get();
+
+            // Montar o JSON com todos os dados
+            $dados = [
+                'shipment' => $shipment,
+                'recipient_address' => $recipientAddress,
+                'sender_address' => $senderAddress,
+                'shipment_items' => $shipmentItems
+            ];
 
             // 1. Autenticar na FedEx
             $auth = Http::asForm()->post(config('services.fedex.api_url') . '/oauth/token', [
@@ -57,58 +96,49 @@ class EtiquetaController extends Controller
                 ], 500);
             }
 
-            // 2. Montar o JSON conforme exemplo do usuário (ajuste conforme necessário)
+            // 2. Montar o JSON com dados dinâmicos do banco
             $body = [
                 "labelResponseOptions" => "URL_ONLY",
-                "accountNumber" => ["value" => "740561073"],
+                "accountNumber" => ["value" => env('FEDEX_PROD_SHIPPER_ACCOUNT', '207227690')],
                 "requestedShipment" => [
-                    "shipDatestamp" => date('Y-m-d'),
-                    "serviceType" => "INTERNATIONAL_PRIORITY",
+                    "shipDatestamp" => $shipment->ship_date,
+                    "serviceType" => $shipment->service_code,
                     "packagingType" => "YOUR_PACKAGING",
                     "pickupType" => "USE_SCHEDULED_PICKUP",
                     "blockInsightVisibility" => false,
                     "shipper" => [
-                        "tins" => [[
-                            "number" => "GB123456789",
-                            "tinType" => "BUSINESS_UNION",
-                            "usage" => "usage",
-                            "effectiveDate" => "2000-01-23T04:56:07.000+00:00",
-                            "expirationDate" => "2024-01-23T04:56:07.000+00:00"
-                        ]],
                         "contact" => [
-                            "personName" => "SHIPPER NAME",
-                            "phoneNumber" => 1234567890,
-                            "companyName" => "Shipper Company Name"
+                            "personName" => $senderAddress->name,
+                            "phoneNumber" => preg_replace('/\D/', '', $senderAddress->phone),
+                            "companyName" => "LS COMERCIO LTDA"
                         ],
                         "address" => [
                             "streetLines" => [
-                                "SHIPPER STREET LINE 1",
-                                "SHIPPER STREET LINE 2",
-                                "SHIPPER STREET LINE 3"
+                                $senderAddress->address,
+                                $senderAddress->address_complement
                             ],
-                            "city" => "MIAMI",
-                            "stateOrProvinceCode" => "FL",
-                            "postalCode" => "33126",
-                            "countryCode" => "US"
+                            "city" => $senderAddress->city,
+                            "stateOrProvinceCode" => $senderAddress->state,
+                            "postalCode" => $senderAddress->postal_code,
+                            "countryCode" => $senderAddress->country
                         ]
                     ],
                     "recipients" => [[
                         "contact" => [
-                            "personName" => "RECIPIENT NAME",
-                            "phoneNumber" => 1234567890,
-                            "companyName" => "Recipient Company Name"
+                            "personName" => $recipientAddress->name,
+                            "phoneNumber" => preg_replace('/\D/', '', $recipientAddress->phone),
+                            "companyName" => substr($recipientAddress->name, 0, 30)
                         ],
                         "address" => [
                             "streetLines" => [
-                                "RECIPIENT STREET LINE 1",
-                                "RECIPIENT STREET LINE 2",
-                                "RECIPIENT STREET LINE 3"
+                                $recipientAddress->address,
+                                $recipientAddress->address_complement
                             ],
-                            "city" => "SAO PAULO",
-                            "stateOrProvinceCode" => "SP",
-                            "postalCode" => "01138000",
-                            "countryCode" => "BR",
-                            "residential" => true
+                            "city" => $recipientAddress->city,
+                            "stateOrProvinceCode" => $recipientAddress->state,
+                            "postalCode" => $recipientAddress->postal_code,
+                            "countryCode" => $recipientAddress->country,
+                            "residential" => (bool) $recipientAddress->is_residential
                         ]
                     ]],
                     "shippingChargesPayment" => [
@@ -119,33 +149,29 @@ class EtiquetaController extends Controller
                         "labelStockType" => "STOCK_4X6"
                     ],
                     "customsClearanceDetail" => [
-                        "commercialInvoice" => [
-                            "originatorName" => "originator Name",
-                            "customerReferences" => [[
-                                "customerReferenceType" => "INVOICE_NUMBER",
-                                "value" => "3686"
-                            ]],
-                            "packingCosts" => ["amount" => 12.45, "currency" => "USD"],
-                            "handlingCosts" => ["amount" => 12.45, "currency" => "USD"],
-                            "freightCharge" => ["amount" => 12.45, "currency" => "USD"],
-                            "insuranceCharge" => ["amount" => 12.45, "currency" => "USD"],
-                            "declarationStatement" => "declarationStatement",
-                            "termsOfSale" => "FCA",
-                            "specialInstructions" => "specialInstructions",
-                            "shipmentPurpose" => "SOLD"
-                        ],
                         "dutiesPayment" => ["paymentType" => "RECIPIENT"],
                         "isDocumentOnly" => false,
-                        "commodities" => [[
-                            "description" => "MUSICAL INSTRUMENTS",
-                            "countryOfManufacture" => "CN",
-                            "harmonizedCode" => "90189084",
-                            "quantity" => 1,
-                            "quantityUnits" => "PCS",
-                            "unitPrice" => ["amount" => 1000, "currency" => "USD"],
-                            "customsValue" => ["amount" => 1000, "currency" => "USD"],
-                            "weight" => ["units" => "KG", "value" => 0.01]
-                        ]]
+                        "commodities" => $shipmentItems->map(function($item) {
+                            return [
+                                "description" => $item->description,
+                                "countryOfManufacture" => $item->country_of_origin ?? "BR",
+                                "harmonizedCode" => $item->harmonized_code,
+                                "quantity" => $item->quantity,
+                                "quantityUnits" => "PCS",
+                                "unitPrice" => [
+                                    "amount" => (float) $item->unit_price,
+                                    "currency" => $item->currency
+                                ],
+                                "customsValue" => [
+                                    "amount" => (float) $item->total_price,
+                                    "currency" => $item->currency
+                                ],
+                                "weight" => [
+                                    "units" => "KG",
+                                    "value" => (float) $item->weight
+                                ]
+                            ];
+                        })->toArray()
                     ],
                     "shippingDocumentSpecification" => [
                         "shippingDocumentTypes" => ["COMMERCIAL_INVOICE"],
@@ -153,19 +179,15 @@ class EtiquetaController extends Controller
                             "documentFormat" => [
                                 "stockType" => "PAPER_LETTER",
                                 "docType" => "PDF"
-                            ],
-                            "dispositions" => [["dispositionType" => "RETURNED"]]
+                            ]
                         ]
                     ],
-                    "edtRequestType" => "ALL",
                     "requestedPackageLineItems" => [[
-                        "customerReferences" => [[
-                            "customerReferenceType" => "CUSTOMER_REFERENCE",
-                            "value" => $request->codigo
-                        ]],
-                        "weight" => ["units" => "KG", "value" => 0.01]
-                    ]],
-                    "rateRequestType" => ["LIST", "PREFERRED"]
+                        "weight" => [
+                            "units" => "KG",
+                            "value" => (float) $shipment->package_weight
+                        ]
+                    ]]
                 ]
             ];
 
@@ -174,10 +196,12 @@ class EtiquetaController extends Controller
                 ->post(config('services.fedex.api_url') . config('services.fedex.ship_endpoint', '/ship/v1/shipments'), $body);
 
             if ($response->failed()) {
+                $responseData = $response->json();
+                
                 return response()->json([
                     'success' => false, 
                     'message' => 'Erro ao gerar etiqueta', 
-                    'fedex' => $response->json()
+                    'fedex' => $responseData
                 ], 500);
             }
 
@@ -212,7 +236,7 @@ class EtiquetaController extends Controller
                     'city' => $recipientCity,
                     'country' => $recipientCountry
                 ],
-                'dados' => $shipmentData
+                'dados' => $dados
             ]);
 
         } catch (\Exception $e) {

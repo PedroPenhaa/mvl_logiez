@@ -111,11 +111,6 @@ Route::prefix('api')->name('api.')->group(function () {
     // Rota para processar o envio
   //  Route::post('/envio/processar', [EnvioController::class, 'processar'])->name('envio.processar');
 
-    // Rota para etiqueta FedEx
-    Route::post('/fedex/etiqueta', [EtiquetaController::class, 'fedex'])
-        ->name('fedex.etiqueta')
-        ->middleware(['web', 'auth']);
-
     // Rota para listar etiquetas do usuário logado
     Route::get('/sections/etiquetas-usuario', [SectionController::class, 'apiListarEtiquetasUsuario'])
         ->name('sections.etiquetas_usuario')
@@ -130,6 +125,11 @@ Route::prefix('api')->name('api.')->group(function () {
     Route::get('/sections/invoice/{shipment_id}/pdf', [SectionController::class, 'apiInvoicePdfByShipment'])
         ->name('sections.invoice_pdf_by_shipment')
         ->middleware(['web', 'auth']);
+
+    // Rota para consulta de etiqueta FedEx
+    Route::post('/fedex/etiqueta', [EtiquetaController::class, 'fedex'])
+        ->name('fedex.etiqueta')
+        ->withoutMiddleware(['web']);
 });
 
 // Esta rota deve estar definida em algum lugar do seu código
@@ -1094,9 +1094,3 @@ Route::get('/pagamento-sucesso', [App\Http\Controllers\PaymentController::class,
 
 // Rota para verificar status do pagamento
 Route::get('/verificar-pagamento/{id}', [App\Http\Controllers\PaymentController::class, 'verificarStatus'])->name('verificar.pagamento');
-
-// Rotas da FedEx
-Route::group(['prefix' => 'api/fedex', 'middleware' => ['auth']], function () {
-    Route::post('/auth', [App\Http\Controllers\FedexController::class, 'auth'])->name('api.fedex.auth');
-    Route::post('/etiqueta', [App\Http\Controllers\FedexController::class, 'getEtiqueta'])->name('api.fedex.etiqueta');
-});

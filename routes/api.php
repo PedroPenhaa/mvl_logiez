@@ -30,3 +30,6 @@ Route::post('/envio/processar', [EnvioController::class, 'processar'])->name('ap
 Route::post('/envio/processar-confirmados', [EnvioController::class, 'processarConfirmados'])
     ->middleware('auth:api')
     ->name('api.envio.processar-confirmados'); 
+
+// Rota para consulta de etiqueta FedEx
+Route::post('/fedex/etiqueta', [EtiquetaController::class, 'fedex'])->name('api.fedex.etiqueta'); 
