@@ -109,7 +109,7 @@ Route::prefix('api')->name('api.')->group(function () {
     Route::post('/perfil/atualizar', [SectionController::class, 'atualizarPerfil'])->name('perfil.atualizar');
 
     // Rota para processar o envio
-    Route::post('/envio/processar', [EnvioController::class, 'processar'])->name('envio.processar');
+  //  Route::post('/envio/processar', [EnvioController::class, 'processar'])->name('envio.processar');
 
     // Rota para etiqueta FedEx
     Route::post('/fedex/etiqueta', [EtiquetaController::class, 'fedex'])

@@ -265,9 +265,54 @@ $(document).ready(function() {
             formData.append('installments', $('#installments').val());
         }
         
+        // Adicionar dados do formulário de envio que podem não estar no formData
+        // Dados de origem
+        formData.append('origem_nome', $('#origem_nome').val());
+        formData.append('origem_endereco', $('#origem_endereco').val());
+        formData.append('origem_complemento', $('#origem_complemento').val() || '');
+        formData.append('origem_cidade', $('#origem_cidade').val());
+        formData.append('origem_estado', $('#origem_estado').val());
+        formData.append('origem_cep', $('#origem_cep').val());
+        formData.append('origem_pais', $('#origem_pais').val());
+        formData.append('origem_telefone', $('#origem_telefone').val());
+        formData.append('origem_email', $('#origem_email').val());
+        
+        // Dados de destino
+        formData.append('destino_nome', $('#destino_nome').val());
+        formData.append('destino_endereco', $('#destino_endereco').val());
+        formData.append('destino_complemento', $('#destino_complemento').val() || '');
+        formData.append('destino_cidade', $('#destino_cidade').val());
+        formData.append('destino_estado', $('#destino_estado').val());
+        formData.append('destino_cep', $('#destino_cep').val());
+        formData.append('destino_pais', $('#destino_pais').val());
+        formData.append('destino_telefone', $('#destino_telefone').val());
+        formData.append('destino_email', $('#destino_email').val());
+        
+        // Dados da caixa
+        if (window.caixas && window.caixas.length > 0) {
+            const caixa = window.caixas[0];
+            formData.append('altura', caixa.altura);
+            formData.append('largura', caixa.largura);
+            formData.append('comprimento', caixa.comprimento);
+            formData.append('peso_caixa', caixa.peso);
+        }
+        
+        // Dados dos produtos
+        if (window.produtos && window.produtos.length > 0) {
+            formData.append('produtos_json', JSON.stringify(window.produtos));
+            formData.append('valor_total', window.valorTotal || 0);
+            formData.append('peso_total', window.pesoTotal || 0);
+        }
+        
+        // Dados adicionais
+        formData.append('tipo_envio', $('#tipo_envio').val());
+        formData.append('tipo_pessoa', $('#tipo_pessoa').val());
+        formData.append('cpf', $('#cpf').val() || '');
+        formData.append('cnpj', $('#cnpj').val() || '');
+        
         // Enviar para processamento
         $.ajax({
-            url: '/processar-pagamento',
+            url: '/api/envio/processar',
             type: 'POST',
             data: formData,
             processData: false,
@@ -275,27 +320,58 @@ $(document).ready(function() {
             success: function(response) {
                 
                 if (response.success) {
-                    // Redirecionar para página de sucesso ou mostrar QR Code do PIX
-                    if (paymentMethod === 'pix') {
-                        // Mostrar QR Code do PIX
-                        $('#pagamento-section').html(`
-                            <div class="card-body text-center">
-                                <h5 class="mb-4">Pagamento PIX Gerado</h5>
-                                <div class="qr-code-container mb-4">
-                                    <img src="${response.qr_code_url}" alt="QR Code PIX" class="img-fluid">
+                    // Verificar se o envio também foi processado com sucesso
+                    if (response.envio_success) {
+                        showAlert('Pagamento e envio processados com sucesso!', 'success');
+                        
+                        // Redirecionar para página de sucesso ou mostrar QR Code do PIX
+                        if (paymentMethod === 'pix') {
+                            // Mostrar QR Code do PIX
+                            $('#pagamento-section').html(`
+                                <div class="card-body text-center">
+                                    <h5 class="mb-4">Pagamento PIX Gerado</h5>
+                                    <div class="qr-code-container mb-4">
+                                        <img src="${response.qr_code_url}" alt="QR Code PIX" class="img-fluid">
+                                    </div>
+                                    <p class="mb-2">Valor: <strong>R$ ${response.valor}</strong></p>
+                                    <p class="text-muted mb-4">Escaneie o QR Code acima com seu aplicativo de pagamento PIX</p>
+                                    <div class="d-grid gap-2">
+                                        <button class="btn btn-outline-primary" onclick="window.location.reload()">
+                                            <i class="fas fa-redo me-2"></i>Gerar Novo PIX
+                                        </button>
+                                    </div>
                                 </div>
-                                <p class="mb-2">Valor: <strong>R$ ${response.valor}</strong></p>
-                                <p class="text-muted mb-4">Escaneie o QR Code acima com seu aplicativo de pagamento PIX</p>
-                                <div class="d-grid gap-2">
-                                    <button class="btn btn-outline-primary" onclick="window.location.reload()">
-                                        <i class="fas fa-redo me-2"></i>Gerar Novo PIX
-                                    </button>
-                                </div>
-                            </div>
-                        `);
+                            `);
+                        } else {
+                            // Redirecionar para página de sucesso
+                            window.location.href = '/pagamento-sucesso?id=' + response.payment_id;
+                        }
                     } else {
-                        // Redirecionar para página de sucesso
-                        window.location.href = '/pagamento-sucesso?id=' + response.payment_id;
+                        // Pagamento foi bem-sucedido mas envio falhou
+                        showAlert('Pagamento processado com sucesso! ' + (response.envio_message || 'Erro ao processar envio.'), 'warning');
+                        
+                        // Redirecionar para página de sucesso mesmo assim
+                        if (paymentMethod === 'pix') {
+                            // Mostrar QR Code do PIX
+                            $('#pagamento-section').html(`
+                                <div class="card-body text-center">
+                                    <h5 class="mb-4">Pagamento PIX Gerado</h5>
+                                    <div class="qr-code-container mb-4">
+                                        <img src="${response.qr_code_url}" alt="QR Code PIX" class="img-fluid">
+                                    </div>
+                                    <p class="mb-2">Valor: <strong>R$ ${response.valor}</strong></p>
+                                    <p class="text-muted mb-4">Escaneie o QR Code acima com seu aplicativo de pagamento PIX</p>
+                                    <div class="d-grid gap-2">
+                                        <button class="btn btn-outline-primary" onclick="window.location.reload()">
+                                            <i class="fas fa-redo me-2"></i>Gerar Novo PIX
+                                        </button>
+                                    </div>
+                                </div>
+                            `);
+                        } else {
+                            // Redirecionar para página de sucesso
+                            window.location.href = '/pagamento-sucesso?id=' + response.payment_id;
+                        }
                     }
                 } else {
                     showAlert(response.message || 'Erro ao processar pagamento. Tente novamente.', 'danger');

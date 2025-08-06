@@ -58,11 +58,24 @@ class PaymentController extends Controller
     public function processar(Request $request)
     {
         try {
+
+            // Obter informações do serviço selecionado
+            $servicoInfo = session('servico_selecionado');
+              if (!$servicoInfo) {
+                  return response()->json([
+                      'success' => false,
+                      'message' => 'Informações do serviço não encontradas.'
+                  ], 400);
+            }
+
+            $dadosEnvio = $this->prepararDadosEnvio($request, $servicoInfo);
+            /*
             // Validar dados básicos
             $request->validate([
                 'payment_method' => 'required|in:credit_card,pix',
                 'servico_entrega' => 'required|string',
             ]);
+            
 
             // Obter informações do serviço selecionado
             $servicoInfo = session('servico_selecionado');
@@ -76,17 +89,49 @@ class PaymentController extends Controller
             $valor = $servicoInfo['valorTotalBRL'] ?? 0;
             $paymentMethod = $request->payment_method;
 
+            /*
             // Criar ou obter cliente
             $customerId = $this->criarOuObterCliente($request);
 
+            $pagamentoResponse = null;
+            
             if ($paymentMethod === 'credit_card') {
-                return $this->processarPagamentoCartao($request, $customerId, $valor, $servicoInfo);
+                $pagamentoResponse = $this->processarPagamentoCartao($request, $customerId, $valor, $servicoInfo);
             } else {
-                return $this->processarPagamentoPix($request, $customerId, $valor, $servicoInfo);
+                $pagamentoResponse = $this->processarPagamentoPix($request, $customerId, $valor, $servicoInfo);
             }
 
-        } catch (\Exception $e) {
+            
+            // Se o pagamento foi processado com sucesso, processar o envio
+           // if ($pagamentoResponse && $pagamentoResponse->getData()->success) {
+                // Preparar dados para processamento de envio
+                $dadosEnvio = $this->prepararDadosEnvio($request, $servicoInfo);
+                
+                // Fazer requisição interna para processar o envio
+                $envioResponse = $this->processarEnvioInterno($dadosEnvio);
+                
+                // Se o envio foi processado com sucesso, retornar resposta combinada
+                if ($envioResponse['success']) {
+                  //  $responseData = $pagamentoResponse->getData();
+                    $responseData->envio_success = true;
+                    $responseData->envio_message = $envioResponse['message'];
+                    $responseData->shipment_id = $envioResponse['shipmentId'] ?? null;
+                    $responseData->tracking_number = $envioResponse['trackingNumber'] ?? null;
+                    
+                    return response()->json($responseData);
+                } else {
+                    // Se o envio falhou, ainda retornar sucesso do pagamento mas com aviso
+                    $responseData = $pagamentoResponse->getData();
+                    $responseData->envio_success = false;
+                    $responseData->envio_message = $envioResponse['message'];
+                    
+                    return response()->json($responseData);
+                }
+           // }
+*/
+            return $dadosEnvio    ;
 
+        } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
                 'message' => 'Erro ao processar pagamento: ' . $e->getMessage()
@@ -293,6 +338,113 @@ class PaymentController extends Controller
                 'success' => false,
                 'message' => 'Erro ao verificar status: ' . $e->getMessage()
             ], 500);
+        }
+    }
+
+    /**
+     * Prepara os dados do formulário de envio para processamento
+     */
+    private function prepararDadosEnvio(Request $request, $servicoInfo)
+    {
+        // Obter dados da sessão se disponíveis
+        $dadosEnvio = [
+            // Dados do serviço
+            'servico_entrega' => $servicoInfo['servicoTipo'],
+            
+            // Dados de origem (do formulário de envio)
+            'origem_nome' => $request->input('origem_nome'),
+            'origem_endereco' => $request->input('origem_endereco'),
+            'origem_complemento' => $request->input('origem_complemento'),
+            'origem_cidade' => $request->input('origem_cidade'),
+            'origem_estado' => $request->input('origem_estado'),
+            'origem_cep' => $request->input('origem_cep'),
+            'origem_pais' => $request->input('origem_pais'),
+            'origem_telefone' => $request->input('origem_telefone'),
+            'origem_email' => $request->input('origem_email'),
+            
+            // Dados de destino (do formulário de envio)
+            'destino_nome' => $request->input('destino_nome'),
+            'destino_endereco' => $request->input('destino_endereco'),
+            'destino_complemento' => $request->input('destino_complemento'),
+            'destino_cidade' => $request->input('destino_cidade'),
+            'destino_estado' => $request->input('destino_estado'),
+            'destino_cep' => $request->input('destino_cep'),
+            'destino_pais' => $request->input('destino_pais'),
+            'destino_telefone' => $request->input('destino_telefone'),
+            'destino_email' => $request->input('destino_email'),
+            
+            // Dados da caixa
+            'altura' => $request->input('altura'),
+            'largura' => $request->input('largura'),
+            'comprimento' => $request->input('comprimento'),
+            'peso_caixa' => $request->input('peso_caixa'),
+            
+            // Dados dos produtos
+            'produtos_json' => $request->input('produtos_json'),
+            'valor_total' => $request->input('valor_total'),
+            'peso_total' => $request->input('peso_total'),
+            
+            // Dados adicionais
+            'tipo_envio' => $request->input('tipo_envio'),
+            'tipo_pessoa' => $request->input('tipo_pessoa'),
+            'cpf' => $request->input('cpf'),
+            'cnpj' => $request->input('cnpj'),
+            
+            // Token CSRF
+            '_token' => $request->input('_token'),
+        ];
+
+        // Log para debug
+        Log::info('Dados de envio preparados:', $dadosEnvio);
+
+        return $dadosEnvio;
+    }
+
+    /**
+     * Faz requisição interna para processar o envio
+     */
+    private function processarEnvioInterno($dadosEnvio)
+    {
+        try {
+            // Log para debug
+            Log::info('Iniciando processamento interno de envio');
+            
+            // Criar uma nova requisição para o processamento de envio
+            $envioRequest = new \Illuminate\Http\Request();
+            $envioRequest->merge($dadosEnvio);
+            
+            // Instanciar o SectionController usando o container do Laravel
+            $sectionController = app(\App\Http\Controllers\SectionController::class);
+            
+            $response = $sectionController->processarEnvio($envioRequest);
+            
+            // Log para debug
+            Log::info('Resposta do processamento de envio:', ['response' => $response]);
+            
+            // Se a resposta for um JSON response, extrair os dados
+            if ($response instanceof \Illuminate\Http\JsonResponse) {
+                $responseData = $response->getData(true);
+                Log::info('Dados extraídos da resposta:', $responseData);
+                return $responseData;
+            }
+            
+            return [
+                'success' => true,
+                'message' => 'Envio processado com sucesso'
+            ];
+            
+        } catch (\Exception $e) {
+            Log::error('Erro ao processar envio interno:', [
+                'message' => $e->getMessage(),
+                'file' => $e->getFile(),
+                'line' => $e->getLine(),
+                'trace' => $e->getTraceAsString()
+            ]);
+            
+            return [
+                'success' => false,
+                'message' => 'Erro ao processar envio: ' . $e->getMessage()
+            ];
         }
     }
 } 
