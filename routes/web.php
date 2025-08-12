@@ -1051,7 +1051,7 @@ Route::get('/pagamento', [App\Http\Controllers\SectionController::class, 'pagame
 Route::get('/etiqueta', [App\Http\Controllers\SectionController::class, 'etiqueta'])->name('etiqueta');
 Route::get('/perfil', [App\Http\Controllers\SectionController::class, 'perfil'])->name('perfil');
 
-// Rota para consultar Gemini via comando Artisan
+// Rotas para consultar Gemini via comando Artisan
 Route::post('/gemini-consulta', function(Request $request) {
     $produto = $request->input('produto');
     
@@ -1082,6 +1082,30 @@ Route::post('/gemini-consulta', function(Request $request) {
     
     return response()->json($data);
 })->name('gemini.consulta');
+
+// Rotas administrativas - protegidas por autenticação e middleware admin
+Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(function () {
+    Route::get('/', [App\Http\Controllers\AdminController::class, 'index'])->name('dashboard');
+    Route::get('/users', [App\Http\Controllers\AdminController::class, 'users'])->name('users');
+    Route::get('/shipments', [App\Http\Controllers\AdminController::class, 'shipments'])->name('shipments');
+    Route::get('/payments', [App\Http\Controllers\AdminController::class, 'payments'])->name('payments');
+    Route::get('/quotes', [App\Http\Controllers\AdminController::class, 'quotes'])->name('quotes');
+    Route::get('/addresses', [App\Http\Controllers\AdminController::class, 'addresses'])->name('addresses');
+    Route::get('/items', [App\Http\Controllers\AdminController::class, 'items'])->name('items');
+    Route::get('/tracking', [App\Http\Controllers\AdminController::class, 'tracking'])->name('tracking');
+    Route::get('/proof-of-delivery', [App\Http\Controllers\AdminController::class, 'proofOfDelivery'])->name('proof-of-delivery');
+    Route::get('/notifications', [App\Http\Controllers\AdminController::class, 'notifications'])->name('notifications');
+    Route::get('/activity-logs', [App\Http\Controllers\AdminController::class, 'activityLogs'])->name('activity-logs');
+    Route::get('/api-logs', [App\Http\Controllers\AdminController::class, 'apiLogs'])->name('api-logs');
+    Route::get('/shipping-rates', [App\Http\Controllers\AdminController::class, 'shippingRates'])->name('shipping-rates');
+    Route::get('/fedex-labels', [App\Http\Controllers\AdminController::class, 'fedexLabels'])->name('fedex-labels');
+    Route::get('/cache', [App\Http\Controllers\AdminController::class, 'cache'])->name('cache');
+    
+    // Rotas de detalhes
+    Route::get('/users/{id}', [App\Http\Controllers\AdminController::class, 'userDetails'])->name('user.details');
+    Route::get('/shipments/{id}', [App\Http\Controllers\AdminController::class, 'shipmentDetails'])->name('shipment.details');
+    Route::get('/payments/{id}', [App\Http\Controllers\AdminController::class, 'paymentDetails'])->name('payment.details');
+});
 
 // Rota para processar pagamento
 Route::post('/processar-pagamento', [App\Http\Controllers\PaymentController::class, 'processar'])->name('processar.pagamento');

@@ -43,6 +43,7 @@ class Kernel extends HttpKernel
     protected $middlewareAliases = [
         // ... existing code ...
         'cors' => \App\Http\Middleware\Cors::class,
+        'admin' => \App\Http\Middleware\AdminMiddleware::class,
     ];
 
     /**

@@ -315,6 +315,18 @@
                     <span class="menu-text">Meu Perfil</span>
                 </div>
             </a>
+            
+            <!-- Menu Admin - apenas para usuários admin -->
+            @if(auth()->check() && auth()->user()->admin)
+            <div style="border-top: 1px solid rgba(255,255,255,0.2); margin: 10px 0;"></div>
+            <a href="{{ route('admin.dashboard') }}" class="text-decoration-none">
+                <div class="menu-item">
+                    <i class="fas fa-cogs"></i>
+                    <span class="menu-text">Admin</span>
+                </div>
+            </a>
+            @endif
+            
             <form action="{{ route('logout') }}" method="POST" style="margin:0;padding:0;">
                 @csrf
                 <button type="submit" class="menu-item" style="background:none;border:none;width:100%;text-align:left;color:inherit;">
