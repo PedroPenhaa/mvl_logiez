@@ -25,6 +25,15 @@
         * {
             font-family: 'Rubik', sans-serif !important;
         }
+        
+        /* Estilo global para page-header-wrapper */
+        .page-header-wrapper {
+            background: var(--primary-gradient) !important;
+            border-radius: 15px;
+            padding: 1rem 1.5rem;
+            margin-bottom: 1.5rem;
+            margin-top: 20px;
+        }
 
         /* Exceção para ícones Font Awesome */
         .fas, .far, .fab, .fa {
