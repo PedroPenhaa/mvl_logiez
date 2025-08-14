@@ -9,12 +9,12 @@
     </div>
     @endif
 
-    <div class="d-flex justify-content-between align-items-center ">
-        <div>
+    <div class="d-flex justify-content-between align-items-center header-container">
+        <div class="header-text order-2 order-md-1">
             <h1 style="font-size: 30px; margin-bottom: 0; color: #430776;">Olá {{ auth()->user()->name }}! 👋</h1>
             <p class="text-muted" style="font-size: 14px; font-weight: 300; color: #6B7280; text-align: left; margin: 0;">Simplificamos envios internacionais, sem burocracia e com redução de custos</p>
         </div>
-        <div>
+        <div class="header-logo order-1 order-md-2">
             <img src="{{ asset('img/logo_dashboard.png') }}" alt="Logo Header" class="img-fluid" style="min-height: 130px; min-width: 104%; margin-top: -17px;">
         </div>
     </div>
@@ -26,12 +26,12 @@
             </h2>
             
             <div class="row g-4">
-                <div class="col-md-6">
+                <div class="col-md-6 order-2 order-md-1">
                     <div class="position-relative feature-image-container">
                         <img src="{{ asset('img/login3.png') }}" alt="Boxes" class="feature-image">
                     </div>
                 </div>
-                <div class="col-md-6">
+                <div class="col-md-6 order-1 order-md-2">
                   <!--
                   <p class="lead mb-4" style="font-size: 1rem;">Somos uma plataforma inovadora que simplifica o processo de envios internacionais, eliminando a burocracia e reduzindo custos.</p>
                   -->
@@ -306,11 +306,52 @@ body, h1, h2, h3, h4, h5, h6, p, span, div, a, button {
         text-align: center;
     }
     
-    .d-flex.justify-content-between.align-items-center img {
-        margin-top: 10px !important;
+    /* Reorganização do header para mobile */
+    .header-container {
+        flex-direction: column;
+        text-align: center;
+        margin-bottom: 20px;
+    }
+    
+    .header-logo {
+        order: 1;
+        margin-bottom: 15px;
+    }
+    
+    .header-text {
+        order: 2;
+        text-align: center;
+    }
+    
+    .header-text h1 {
+        text-align: center !important;
+        margin-bottom: 8px !important;
+    }
+    
+    .header-text p {
+        text-align: center !important;
+        margin: 0 !important;
+    }
+    
+    /* Melhorias para o logo no header em mobile */
+    .header-logo img {
+        margin-top: 0 !important;
         min-width: auto !important;
         width: 100%;
-        max-width: 300px;
+        max-width: 250px;
+        height: auto;
+        object-fit: contain;
+    }
+    
+    /* Melhorias para a imagem principal em mobile */
+    .feature-image-container {
+        margin-bottom: 20px;
+        border-radius: 12px;
+    }
+    
+    .feature-image {
+        padding: 15px;
+        object-fit: contain;
     }
 }
 
@@ -376,17 +417,62 @@ body, h1, h2, h3, h4, h5, h6, p, span, div, a, button {
     .feature-icon {
         margin-top: 2px;
     }
+    
+    /* Melhorias específicas para smartphones */
+    .header-logo img {
+        max-width: 400px !important;
+        margin-top: 0 !important;
+        min-height: 94px;
+    }
+    
+    .feature-image-container {
+        min-height: 160px;
+        margin-bottom: 15px;
+    }
+    
+    .feature-image {
+        padding: 10px;
+    }
+    
+    .display-6 {
+        font-size: 1.2rem !important;
+        padding-left: 10px !important;
+    }
+    
+    /* Melhor espaçamento entre elementos em mobile */
+    .header-container {
+        margin-bottom: 25px !important;
+    }
+    
+    .feature-card {
+        margin-bottom: 20px !important;
+    }
+    
+    .feature-card .card-body {
+        padding: 1.5rem !important;
+    }
+    
+    .row.g-4 {
+        margin: 0 !important;
+        padding: 0 !important;
+    }
+    
+    .col-md-6 {
+        margin-bottom: 15px;
+    }
 }
 
 /* Regras de Responsividade para a Imagem */
 @media (max-width: 480px) {
     .feature-image-container {
         aspect-ratio: 4/3;
-        min-height: 180px;
+        min-height: 160px;
+        border-radius: 10px;
     }
     
     .feature-image {
-       /* padding: 10px;*/
+        padding: 10px;
+        object-fit: contain;
     }
 }
 

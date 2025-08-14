@@ -132,31 +132,41 @@
             margin: 0;
         }
         
+        /* Barra header roxa para mobile */
+        .mobile-header {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 40px;
+            background: #6f42c1;
+            z-index: 998;
+            display: none;
+            align-items: center;
+            justify-content: flex-end;
+            padding: 0 15px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        
         /* Botão de toggle para o menu em telas pequenas */
         .toggle-sidebar {
-            position: fixed;
-            top: 15px;
-            right: 15px;
-            z-index: 999;
-            background: #3498db;
+            position: relative;
+            background: transparent;
             color: white;
             border: none;
-            width: 45px;
-            height: 45px;
-            border-radius: 50%;
-            display: none;
+            width: 35px;
+            height: 35px;
+            display: flex;
             align-items: center;
             justify-content: center;
             cursor: pointer;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
             transition: all 0.3s ease;
             font-size: 18px;
         }
         
         .toggle-sidebar:hover {
-            background: #2980b9;
-            transform: scale(1.1);
-            box-shadow: 0 6px 16px rgba(0,0,0,0.4);
+            background: rgba(255, 255, 255, 0.1);
+            transform: scale(1.05);
         }
         
         .toggle-sidebar:active {
@@ -225,7 +235,7 @@
                 width: calc(100% - 60px);
             }
             
-            .toggle-sidebar {
+            .mobile-header {
                 display: flex;
             }
         }
@@ -262,13 +272,14 @@
                 margin-left: 0;
                 width: 100%;
                 padding: 15px;
+                padding-top: 32px;
             }
             
             .content-header {
                 padding: 10px 15px;
             }
             
-            .toggle-sidebar {
+            .mobile-header {
                 display: flex;
             }
         }
@@ -290,10 +301,12 @@
     </style>
 </head>
 <body>
-    <!-- Botão toggle para menu lateral em telas pequenas -->
-    <button class="toggle-sidebar" id="toggle-sidebar">
-        <i class="fas fa-bars"></i>
-    </button>
+    <!-- Barra header roxa para mobile -->
+    <div class="mobile-header">
+        <button class="toggle-sidebar" id="toggle-sidebar">
+            <i class="fas fa-bars"></i>
+        </button>
+    </div>
 
     <!-- Overlay para o menu mobile -->
     <div class="sidebar-overlay" id="sidebar-overlay"></div>
