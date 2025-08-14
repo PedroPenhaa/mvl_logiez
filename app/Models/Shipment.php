@@ -41,7 +41,12 @@ class Shipment extends Model
         'was_delivered',
         'has_issues',
         'tipo_envio',
-        'tipo_pessoa'
+        'tipo_pessoa',
+        'freight_usd',
+        'volumes',
+        'net_weight_lbs',
+        'gross_weight_lbs',
+        'container'
     ];
 
     /**
@@ -63,6 +68,11 @@ class Shipment extends Model
         'is_simulation' => 'boolean',
         'was_delivered' => 'boolean',
         'has_issues' => 'boolean',
+        'freight_usd' => 'float',
+        'volumes' => 'integer',
+        'net_weight_lbs' => 'float',
+        'gross_weight_lbs' => 'float',
+        'container' => 'integer',
     ];
 
     /**

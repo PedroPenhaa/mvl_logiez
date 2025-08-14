@@ -1521,27 +1521,36 @@ class SectionController extends Controller
      */
     public function apiInvoiceByShipment($shipment_id)
     {
-        $shipment = \App\Models\Shipment::find($shipment_id);
+        $shipment = \App\Models\Shipment::with(['recipientAddress', 'senderAddress', 'items'])->find($shipment_id);
         if (!$shipment) {
             return response()->json(['success' => false, 'message' => 'Envio não encontrado.'], 404);
         }
+        
         $recipient = $shipment->recipientAddress;
+        $sender = $shipment->senderAddress;
         $items = $shipment->items;
+        
         $cartoons = [];
         $total_qty = 0;
         $total_amount = 0;
+        
         foreach ($items as $item) {
             $cartoons[] = [
-                'goods' => $item->description ?? $item->name ?? 'Produto',
-                'ncm' => $item->ncm ?? '',
+                'goods' => $item->description ?? 'Produto',
+                'ncm' => $item->ncm ?? $item->harmonized_code ?? '',
                 'qty_utd' => $item->quantity ?? 0,
                 'qty_unidade' => $item->unit_type ?? 'PAR',
-                'unit_price_usd' => $item->unit_price_usd ?? 0,
-                'amount_usd' => $item->total_price_usd ?? 0,
+                'unit_price_usd' => $item->unit_price_usd ?? $item->unit_price ?? 0,
+                'amount_usd' => $item->total_price_usd ?? $item->total_price ?? 0,
             ];
             $total_qty += $item->quantity ?? 0;
-            $total_amount += $item->total_price_usd ?? 0;
+            $total_amount += $item->total_price_usd ?? $item->total_price ?? 0;
         }
+        
+        // Calcular peso em libras se não estiver definido
+        $net_weight_lbs = $shipment->net_weight_lbs ?? ($shipment->package_weight * 2.20462);
+        $gross_weight_lbs = $shipment->gross_weight_lbs ?? ($shipment->package_weight * 2.20462);
+        
         $invoice = [
             'invoice_number' => $shipment->id ? sprintf('#%05d', $shipment->id) : '#00000',
             'date' => $shipment->ship_date ? $shipment->ship_date->format('d/m/y') : now()->format('d/m/y'),
@@ -1557,14 +1566,14 @@ class SectionController extends Controller
             'total_qty' => $total_qty,
             'total_amount' => $total_amount,
             'freight' => $shipment->freight_usd ?? 98,
-            'volumes' => $shipment->volumes ?? 4,
-            'net_weight' => $shipment->net_weight_lbs ?? 37.0392,
-            'gross_weight' => $shipment->gross_weight_lbs ?? 35.19,
+            'volumes' => $shipment->volumes ?? 1,
+            'net_weight' => number_format($net_weight_lbs, 2),
+            'gross_weight' => number_format($gross_weight_lbs, 2),
             'container' => $shipment->container ?? 0,
             'sender' => [
-                'name' => 'LS COMÉRCIO ATACADISTA E VAREJISTA LTDA',
-                'address' => 'Rua 4, Pq Res. Dona Chiquinha, Cosmópolis - SP - Brazil',
-                'contact' => '+55(19) 98116-6445 / envios@logiez.com.br',
+                'name' => $sender->name ?? 'LS COMÉRCIO ATACADISTA E VAREJISTA LTDA',
+                'address' => $sender->address ?? 'Rua 4, Pq Res. Dona Chiquinha, Cosmópolis - SP - Brazil',
+                'contact' => $sender->phone ?? '+55(19) 98116-6445 / envios@logiez.com.br',
                 'cnpj' => '48.103.206/0001-73',
             ],
             'recipient' => [
@@ -1575,6 +1584,7 @@ class SectionController extends Controller
                 'country' => $recipient->country ?? '',
             ],
         ];
+        
         return response()->json(['success' => true, 'invoice' => $invoice]);
     }
 
@@ -1584,27 +1594,36 @@ class SectionController extends Controller
     public function apiInvoicePdfByShipment($shipment_id)
     {
         ini_set('memory_limit', '512M');
-        $shipment = \App\Models\Shipment::find($shipment_id);
+        $shipment = \App\Models\Shipment::with(['recipientAddress', 'senderAddress', 'items'])->find($shipment_id);
         if (!$shipment) {
             abort(404, 'Envio não encontrado.');
         }
+        
         $recipient = $shipment->recipientAddress;
+        $sender = $shipment->senderAddress;
         $items = $shipment->items;
+        
         $cartoons = [];
         $total_qty = 0;
         $total_amount = 0;
+        
         foreach ($items as $item) {
             $cartoons[] = [
-                'goods' => $item->description ?? $item->name ?? 'Produto',
-                'ncm' => $item->ncm ?? '',
+                'goods' => $item->description ?? 'Produto',
+                'ncm' => $item->ncm ?? $item->harmonized_code ?? '',
                 'qty_utd' => $item->quantity ?? 0,
                 'qty_unidade' => $item->unit_type ?? 'PAR',
-                'unit_price_usd' => $item->unit_price_usd ?? 0,
-                'amount_usd' => $item->total_price_usd ?? 0,
+                'unit_price_usd' => $item->unit_price_usd ?? $item->unit_price ?? 0,
+                'amount_usd' => $item->total_price_usd ?? $item->total_price ?? 0,
             ];
             $total_qty += $item->quantity ?? 0;
-            $total_amount += $item->total_price_usd ?? 0;
+            $total_amount += $item->total_price_usd ?? $item->total_price ?? 0;
         }
+        
+        // Calcular peso em libras se não estiver definido
+        $net_weight_lbs = $shipment->net_weight_lbs ?? ($shipment->package_weight * 2.20462);
+        $gross_weight_lbs = $shipment->gross_weight_lbs ?? ($shipment->package_weight * 2.20462);
+        
         $invoice = [
             'invoice_number' => $shipment->id ? sprintf('#%05d', $shipment->id) : '#00000',
             'date' => $shipment->ship_date ? $shipment->ship_date->format('d/m/y') : now()->format('d/m/y'),
@@ -1620,14 +1639,14 @@ class SectionController extends Controller
             'total_qty' => $total_qty,
             'total_amount' => $total_amount,
             'freight' => $shipment->freight_usd ?? 98,
-            'volumes' => $shipment->volumes ?? 4,
-            'net_weight' => $shipment->net_weight_lbs ?? 37.0392,
-            'gross_weight' => $shipment->gross_weight_lbs ?? 35.19,
+            'volumes' => $shipment->volumes ?? 1,
+            'net_weight' => number_format($net_weight_lbs, 2),
+            'gross_weight' => number_format($gross_weight_lbs, 2),
             'container' => $shipment->container ?? 0,
             'sender' => [
-                'name' => 'LS COMÉRCIO ATACADISTA E VAREJISTA LTDA',
-                'address' => 'Rua 4, Pq Res. Dona Chiquinha, Cosmópolis - SP - Brazil',
-                'contact' => '+55(19) 98116-6445 / envios@logiez.com.br',
+                'name' => $sender->name ?? 'LS COMÉRCIO ATACADISTA E VAREJISTA LTDA',
+                'address' => $sender->address ?? 'Rua 4, Pq Res. Dona Chiquinha, Cosmópolis - SP - Brazil',
+                'contact' => $sender->phone ?? '+55(19) 98116-6445 / envios@logiez.com.br',
                 'cnpj' => '48.103.206/0001-73',
             ],
             'recipient' => [
@@ -1638,6 +1657,7 @@ class SectionController extends Controller
                 'country' => $recipient->country ?? '',
             ],
         ];
+        
         // PERFORMANCE: opções DomPDF
         $pdf = Pdf::loadView('pdf.invoice', ['invoice' => $invoice]);
         $pdf->setOptions([

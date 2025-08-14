@@ -24,6 +24,10 @@ class ShipmentItem extends Model
         'currency',
         'country_of_origin',
         'harmonized_code',
+        'unit_price_usd',
+        'total_price_usd',
+        'unit_type',
+        'ncm',
     ];
 
     /**
@@ -36,6 +40,8 @@ class ShipmentItem extends Model
         'quantity' => 'integer',
         'unit_price' => 'float',
         'total_price' => 'float',
+        'unit_price_usd' => 'float',
+        'total_price_usd' => 'float',
     ];
 
     /**
