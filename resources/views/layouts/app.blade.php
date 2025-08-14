@@ -136,19 +136,31 @@
         .toggle-sidebar {
             position: fixed;
             top: 15px;
-            left: 15px;
+            right: 15px;
             z-index: 999;
             background: #3498db;
             color: white;
             border: none;
-            width: 40px;
-            height: 40px;
+            width: 45px;
+            height: 45px;
             border-radius: 50%;
             display: none;
             align-items: center;
             justify-content: center;
             cursor: pointer;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+            transition: all 0.3s ease;
+            font-size: 18px;
+        }
+        
+        .toggle-sidebar:hover {
+            background: #2980b9;
+            transform: scale(1.1);
+            box-shadow: 0 6px 16px rgba(0,0,0,0.4);
+        }
+        
+        .toggle-sidebar:active {
+            transform: scale(0.95);
         }
         
         /* Loader de conteúdo */
@@ -222,10 +234,28 @@
             .sidebar {
                 width: 0;
                 overflow-x: hidden;
+                z-index: 1000;
             }
             
             .sidebar.expanded {
                 width: 250px;
+                z-index: 1001;
+            }
+            
+            /* Overlay para quando o menu estiver aberto */
+            .sidebar-overlay {
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                background: rgba(0, 0, 0, 0.5);
+                z-index: 999;
+                display: none;
+            }
+            
+            .sidebar-overlay.active {
+                display: block;
             }
             
             .main-content {
@@ -264,6 +294,9 @@
     <button class="toggle-sidebar" id="toggle-sidebar">
         <i class="fas fa-bars"></i>
     </button>
+
+    <!-- Overlay para o menu mobile -->
+    <div class="sidebar-overlay" id="sidebar-overlay"></div>
 
     <!-- Sidebar / Menu Lateral -->
     <div class="sidebar" id="sidebar">
@@ -365,6 +398,54 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://code.jquery.com/jquery-3.6.4.min.js"></script>
     <script src="{{ asset('js/envio-pagamento.js') }}"></script>
+    
+    <!-- Script para o menu mobile -->
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const toggleButton = document.getElementById('toggle-sidebar');
+            const sidebar = document.getElementById('sidebar');
+            const overlay = document.getElementById('sidebar-overlay');
+            
+            if (toggleButton && sidebar) {
+                toggleButton.addEventListener('click', function(e) {
+                    e.stopPropagation();
+                    sidebar.classList.toggle('expanded');
+                    
+                    // Gerenciar overlay
+                    if (window.innerWidth <= 576) {
+                        if (sidebar.classList.contains('expanded')) {
+                            overlay.classList.add('active');
+                        } else {
+                            overlay.classList.remove('active');
+                        }
+                    }
+                });
+                
+                // Fechar o menu quando clicar no overlay
+                if (overlay) {
+                    overlay.addEventListener('click', function() {
+                        sidebar.classList.remove('expanded');
+                        overlay.classList.remove('active');
+                    });
+                }
+                
+                // Fechar o menu quando clicar fora dele em dispositivos móveis
+                document.addEventListener('click', function(event) {
+                    if (window.innerWidth <= 576) {
+                        const isClickInsideSidebar = sidebar.contains(event.target);
+                        const isClickOnToggleButton = toggleButton.contains(event.target);
+                        const isClickOnOverlay = overlay && overlay.contains(event.target);
+                        
+                        if (!isClickInsideSidebar && !isClickOnToggleButton && !isClickOnOverlay && sidebar.classList.contains('expanded')) {
+                            sidebar.classList.remove('expanded');
+                            overlay.classList.remove('active');
+                        }
+                    }
+                });
+            }
+        });
+    </script>
+    
     @yield('scripts')
 </body>
 </html> 
