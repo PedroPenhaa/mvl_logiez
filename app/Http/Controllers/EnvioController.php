@@ -113,6 +113,7 @@ class EnvioController extends Controller
             $shipment->is_simulation = false;
             $shipment->tipo_envio = $request->tipo_envio;
             $shipment->tipo_pessoa = $request->tipo_pessoa;
+            $shipment->tipo_operacao = $request->tipo_operacao;
             $shipment->save();
             
             // 2. Salvar endereço do remetente

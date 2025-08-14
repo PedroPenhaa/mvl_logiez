@@ -42,6 +42,7 @@ class Shipment extends Model
         'has_issues',
         'tipo_envio',
         'tipo_pessoa',
+        'tipo_operacao',
         'freight_usd',
         'volumes',
         'net_weight_lbs',

@@ -387,6 +387,7 @@ class PaymentController extends Controller
             // Dados adicionais
             'tipo_envio' => $request->input('tipo_envio'),
             'tipo_pessoa' => $request->input('tipo_pessoa'),
+            'tipo_operacao' => $request->input('tipo_operacao'),
             'cpf' => $request->input('cpf'),
             'cnpj' => $request->input('cnpj'),
             

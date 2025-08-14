@@ -542,6 +542,7 @@ class SectionController extends Controller
                 'produtos_json' => 'required|string',
                 'valor_total' => 'required|numeric',
                 'peso_total' => 'required|numeric',
+                'tipo_operacao' => 'required|string|in:enviar,receber',
                 
                 'origem_nome' => 'required|string',
                 'origem_endereco' => 'required|string',

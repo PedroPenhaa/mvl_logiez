@@ -509,13 +509,21 @@
                                                 <option value="pj">Pessoa Jurídica</option>
                                             </select>
                                         </div>
+                                        <div class="col-md-6 mb-3">
+                                            <label for="tipo_operacao" class="form-label required"><i class="fas fa-exchange-alt me-1"></i> Você vai:</label>
+                                            <select class="form-select" id="tipo_operacao" name="tipo_operacao" required style="color: #B0B0B0 !important;">
+                                                <option value="">Selecione a operação</option>
+                                                <option value="enviar">Enviar</option>
+                                                <option value="receber">Receber</option>
+                                            </select>
+                                        </div>
                                         <!-- Campo CPF (aparece quando seleciona Pessoa Física) -->
-                                        <div class="col-md-12 mb-3" id="cpf-field" style="display: none;">
+                                        <div class="col-md-6 mb-3" id="cpf-field" style="display: none;">
                                             <label for="cpf" class="form-label required"><i class="fas fa-id-card me-1"></i> CPF</label>
                                             <input type="text" class="form-control" id="cpf" name="cpf" placeholder="000.000.000-00" maxlength="14">
                                         </div>
                                         <!-- Campo CNPJ (aparece quando seleciona Pessoa Jurídica) -->
-                                        <div class="col-md-12 mb-3" id="cnpj-field" style="display: none;">
+                                        <div class="col-md-6 mb-3" id="cnpj-field" style="display: none;">
                                             <label for="cnpj" class="form-label required"><i class="fas fa-building me-1"></i> CNPJ</label>
                                             <input type="text" class="form-control" id="cnpj" name="cnpj" placeholder="00.000.000/0000-00" maxlength="18">
                                         </div>
@@ -3623,6 +3631,10 @@
             }
             if (!$('#tipo_pessoa').val()) {
                 showAlert('Por favor, selecione o tipo de pessoa.', 'warning');
+                return;
+            }
+            if (!$('#tipo_operacao').val()) {
+                showAlert('Por favor, selecione se você vai enviar ou receber.', 'warning');
                 return;
             }
             
