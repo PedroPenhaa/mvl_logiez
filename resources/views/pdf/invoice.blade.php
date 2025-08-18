@@ -41,15 +41,15 @@
             <td colspan="6" class="text-center" style="border-bottom: none;">
                 <span class="header-title">{{ $invoice['recipient']['name'] }}</span><br>
                 <span class="header-sub">
-                    Endereço: {{ $invoice['recipient']['address'] }}<br>
-                    <b>Contato: {{ $invoice['recipient']['contact'] }}</b>
+                    Address: {{ $invoice['recipient']['address'] }}<br>
+                    <b>Contact: {{ $invoice['recipient']['contact'] }}</b>
                 </span>
             </td>
             <td colspan="2" class="commercial-invoice" style="border-left: none; border-bottom: none;">COMMERCIAL<br>INVOICE</td>
         </tr>
         <tr>
             <td><b>INVOICE#</b><br>{{ $invoice['invoice_number'] }}</td>
-            <td><b>Costumer<br>(Cliente)</b></td>
+            <td><b>Customer<br>(Customer)</b></td>
             <td colspan="4" class="text-center align-middle">
                 <b>
                 {{ $invoice['recipient']['name'] }}<br>
@@ -60,33 +60,31 @@
             <td colspan="2"></td>
         </tr>
         <tr>
-            <td><b>Date<br>(Fecha)</b><br>{{ $invoice['date'] }}</td>
-            <td><b>Purchase Order<br>(Su pedido)</b><br>{{ $invoice['purchase_order'] }}</td>
+            <td><b>Date<br>(Date)</b><br>{{ $invoice['date'] }}</td>
+            <td><b>Purchase Order<br>(Your Order)</b><br>{{ $invoice['purchase_order'] }}</td>
             <td colspan="6"></td>
         </tr>
         <tr>
-            <td><b>Terms of Payment:<br>(Condiciones pago)</b><br>{{ $invoice['terms_of_payment'] }}</td>
+            <td><b>Terms of Payment:<br>(Payment Conditions)</b><br>{{ $invoice['terms_of_payment'] }}</td>
             <td colspan="2"></td>
-            <td><b>Shipment<br>(Embarque)</b><br>{{ $invoice['shipment'] }}</td>
-            <td><b>Marks (Marcas):</b><br>{{ $invoice['marks'] }}</td>
-            <td><b>HAVAIANAS</b></td>
-            <td colspan="2"></td>
+            <td><b>Shipment<br>(Embarkation)</b><br>{{ $invoice['shipment'] }}</td>
+            <td colspan="4"></td>
         </tr>
         <tr>
-            <td><b>Loading Airport<br>(Aeropuerto Embarque)</b><br>{{ $invoice['loading_airport'] }}</td>
+            <td><b>Loading Airport<br>(Embarkation Airport)</b><br>{{ $invoice['loading_airport'] }}</td>
             <td><b>RE:</b></td>
             <td colspan="2"></td>
-            <td><b>Airport of Discharge<br>(Aeropuerto Destino)</b><br>{{ $invoice['airport_of_discharge'] }}</td>
+            <td><b>Airport of Discharge<br>(Destination Airport)</b><br>{{ $invoice['airport_of_discharge'] }}</td>
             <td><b>Notify:</b><br>THE SAME</td>
-            <td><b>Pages<br>(Hojas)</b><br>{{ $invoice['pages'] }}</td>
+            <td><b>Pages<br>(Pages)</b><br>{{ $invoice['pages'] }}</td>
         </tr>
         <tr>
             <th>Cartoons<br>(Boxes)</th>
-            <th>Goods (Mercadoria)</th>
+            <th>Goods (Goods)</th>
             <th>NCM</th>
-            <th>Qty. (Utd.)</th>
-            <th>Qty. (Unidade)</th>
-            <th>Unit Price US$<br>(Preço Unitário)</th>
+            <th>Qty. (Qty.)</th>
+            <th>Qty. (Unit)</th>
+            <th>Unit Price US$<br>(Unit Price)</th>
             <th>Amount US$<br>(Total US$)</th>
             <th></th>
         </tr>
@@ -117,10 +115,26 @@
         </tr>
         <tr>
             <td colspan="2"><b>Volumes:</b> {{ $invoice['volumes'] }}</td>
-            <td colspan="2"><b>Net Weight(Neto):</b> {{ $invoice['net_weight'] }} LBS</td>
-            <td colspan="2"><b>Gross Weight (Bruto):</b> {{ $invoice['gross_weight'] }} LBS</td>
-            <td class="total-usd" rowspan="2" style="vertical-align: middle;">TOTAL DAS USD<br>{{ number_format($invoice['total_amount'] + $invoice['freight'], 2, ',', '.') }}</td>
+            <td colspan="2"><b>Net Weight(Net):</b> {{ $invoice['net_weight'] }} LBS</td>
+            <td colspan="2"><b>Gross Weight (Gross):</b> {{ $invoice['gross_weight'] }} LBS</td>
+            <td class="total-usd" rowspan="2" style="vertical-align: middle;">TOTAL IN USD<br>{{ number_format($invoice['total_amount'] + $invoice['freight'], 2, ',', '.') }}</td>
         </tr>
     </table>
+    
+    <!-- Signature Section -->
+    <div style="margin-top: 30px; border-top: 1px solid #ccc; padding-top: 20px;">
+        <table style="width: 100%; border-collapse: collapse;">
+            <tr>
+                <td style="width: 70%; vertical-align: top; padding-right: 20px;">
+                    <div style="border-bottom: 1px solid #000; height: 40px; margin-bottom: 5px;"></div>
+                    <div style="text-align: center; font-size: 10px; font-weight: bold;">SIGNATURE</div>
+                </td>
+                <td style="width: 30%; vertical-align: top;">
+                    <div style="border-bottom: 1px solid #000; height: 40px; margin-bottom: 5px;"></div>
+                    <div style="text-align: center; font-size: 10px; font-weight: bold;">DATE</div>
+                </td>
+            </tr>
+        </table>
+    </div>
 </body>
 </html>
