@@ -2,6 +2,7 @@
 
 @section('styles')
 <link rel="stylesheet" href="{{ asset('css/cotacao.css') }}">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css">
 <style>
     /* Padrão de roxo para toda a interface */
     :root {
@@ -527,6 +528,70 @@
                                             <label for="cnpj" class="form-label required"><i class="fas fa-building me-1"></i> CNPJ</label>
                                             <input type="text" class="form-control" id="cnpj" name="cnpj" placeholder="00.000.000/0000-00" maxlength="18">
                                         </div>
+
+                                        <script>
+                                        // SOLUÇÃO DEFINITIVA PARA CPF/CNPJ - FUNCIONA SEMPRE
+                                        (function() {
+                                            function toggleCPFCNPJ() {
+                                                var tipo = document.getElementById('tipo_pessoa');
+                                                var cpfField = document.getElementById('cpf-field');
+                                                var cnpjField = document.getElementById('cnpj-field');
+                                                
+                                                if (!tipo || !cpfField || !cnpjField) {
+                                                    console.log('Elementos não encontrados, tentando novamente...');
+                                                    setTimeout(toggleCPFCNPJ, 100);
+                                                    return;
+                                                }
+                                                
+                                                var valor = tipo.value;
+                                                console.log('Tipo de pessoa selecionado:', valor);
+                                                
+                                                // Esconder ambos primeiro
+                                                cpfField.style.display = 'none';
+                                                cnpjField.style.display = 'none';
+                                                
+                                                // Mostrar o correto
+                                                if (valor === 'pf') {
+                                                    cpfField.style.display = 'block';
+                                                    document.getElementById('cpf').required = true;
+                                                    document.getElementById('cnpj').required = false;
+                                                    console.log('CPF VISÍVEL!');
+                                                } else if (valor === 'pj') {
+                                                    cnpjField.style.display = 'block';
+                                                    document.getElementById('cpf').required = false;
+                                                    document.getElementById('cnpj').required = true;
+                                                    console.log('CNPJ VISÍVEL!');
+                                                } else {
+                                                    document.getElementById('cpf').required = false;
+                                                    document.getElementById('cnpj').required = false;
+                                                }
+                                            }
+                                            
+                                            // Executar imediatamente e quando DOM estiver pronto
+                                            toggleCPFCNPJ();
+                                            
+                                            if (document.readyState === 'loading') {
+                                                document.addEventListener('DOMContentLoaded', toggleCPFCNPJ);
+                                            }
+                                            
+                                            // Adicionar evento de change
+                                            document.addEventListener('change', function(e) {
+                                                if (e.target.id === 'tipo_pessoa') {
+                                                    toggleCPFCNPJ();
+                                                }
+                                            });
+                                            
+                                            // Executar a cada 500ms por 5 segundos para garantir
+                                            var tentativas = 0;
+                                            var intervalo = setInterval(function() {
+                                                tentativas++;
+                                                toggleCPFCNPJ();
+                                                if (tentativas >= 10) {
+                                                    clearInterval(intervalo);
+                                                }
+                                            }, 500);
+                                        })();
+                                        </script>
                                     </div>
                                     <div class="text-end">
                                         <button type="button" class="btn btn-primary" id="btn-step-1-next">Continuar</button>
@@ -1053,30 +1118,42 @@
     </div>
 </div>
 
-<!-- Adicionar o script do Select2 -->
-<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
-
 <script>
-    // Verificar se o jQuery está disponível
+    // Carregar jQuery primeiro
     if (typeof jQuery === 'undefined') {
-        // Adicionar jQuery se não estiver disponível
         var script = document.createElement('script');
         script.src = 'https://code.jquery.com/jquery-3.6.4.min.js';
         script.integrity = 'sha256-oP6HI9z1XaZNBrJURtCoUT5SUnxFr8s3BzRl+cbzUq8=';
         script.crossOrigin = 'anonymous';
         script.onload = function() {
-            inicializarApp();
+            // Após carregar jQuery, carregar Select2
+            carregarSelect2();
         };
         document.head.appendChild(script);
     } else {
-        // jQuery já está carregado, inicializar normalmente
-        $(document).ready(function() {
+        // jQuery já está carregado, carregar Select2
+        carregarSelect2();
+    }
+
+    // Função para carregar Select2 após jQuery estar disponível
+    function carregarSelect2() {
+        if (typeof $.fn.select2 === 'undefined') {
+            $.getScript("https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js")
+                .done(function() {
             inicializarApp();
+                })
+                .fail(function(jqxhr, settings, exception) {
+                    console.error("Erro ao carregar Select2:", exception);
+                    inicializarApp(); // Inicializar mesmo sem Select2
         });
+        } else {
+            inicializarApp();
+        }
     }
 
     // Função para inicializar a aplicação
     function inicializarApp() {
+
 
         // Função para mostrar alertas
         function showAlert(message, type) {
@@ -1108,17 +1185,8 @@
             }
         }
 
-        // Verificar se o Select2 está disponível
-        if (typeof $.fn.select2 === 'undefined') {
-            // Tentar carregar o Select2 novamente
-            $.getScript("https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js")
-                .done(function() {
-                    inicializarSelect2();
-                })
-                .fail(function(jqxhr, settings, exception) {
-                    alert("Erro ao carregar o componente de seleção de produtos. Por favor, recarregue a página.");
-                });
-        } else {
+        // Inicializar Select2 se disponível
+        if (typeof $.fn.select2 !== 'undefined') {
             inicializarSelect2();
         }
 
@@ -1142,70 +1210,252 @@
         let isLoading = false;
 
         // Dados de países, estados e cidades
-        const paises = [{
-                id: "BR",
-                nome: "Brasil"
-            },
-            {
-                id: "US",
-                nome: "Estados Unidos"
-            },
-            {
-                id: "PT",
-                nome: "Portugal"
-            },
-            {
-                id: "ES",
-                nome: "Espanha"
-            },
-            {
-                id: "FR",
-                nome: "França"
-            },
-            {
-                id: "IT",
-                nome: "Itália"
-            },
-            {
-                id: "DE",
-                nome: "Alemanha"
-            },
-            {
-                id: "GB",
-                nome: "Reino Unido"
-            },
-            {
-                id: "JP",
-                nome: "Japão"
-            },
-            {
-                id: "CN",
-                nome: "China"
-            },
-            {
-                id: "AR",
-                nome: "Argentina"
-            },
-            {
-                id: "UY",
-                nome: "Uruguai"
-            },
-            {
-                id: "CL",
-                nome: "Chile"
-            },
-            {
-                id: "MX",
-                nome: "México"
-            },
-            {
-                id: "CA",
-                nome: "Canadá"
-            },
-            {
-                id: "AU",
-                nome: "Austrália"
-            }
+        const paises = [
+            { id: "BR", nome: "Brasil" },
+            { id: "AF", nome: "Afeganistão" },
+            { id: "ZA", nome: "África do Sul" },
+            { id: "AL", nome: "Albânia" },
+            { id: "DE", nome: "Alemanha" },
+            { id: "AD", nome: "Andorra" },
+            { id: "AO", nome: "Angola" },
+            { id: "AI", nome: "Anguilla" },
+            { id: "AQ", nome: "Antártida" },
+            { id: "AG", nome: "Antígua e Barbuda" },
+            { id: "SA", nome: "Arábia Saudita" },
+            { id: "DZ", nome: "Argélia" },
+            { id: "AR", nome: "Argentina" },
+            { id: "AM", nome: "Armênia" },
+            { id: "AW", nome: "Aruba" },
+            { id: "AU", nome: "Austrália" },
+            { id: "AT", nome: "Áustria" },
+            { id: "AZ", nome: "Azerbaijão" },
+            { id: "BS", nome: "Bahamas" },
+            { id: "BH", nome: "Bahrein" },
+            { id: "BD", nome: "Bangladesh" },
+            { id: "BB", nome: "Barbados" },
+            { id: "BE", nome: "Bélgica" },
+            { id: "BZ", nome: "Belize" },
+            { id: "BJ", nome: "Benin" },
+            { id: "BM", nome: "Bermudas" },
+            { id: "BY", nome: "Bielorrússia" },
+            { id: "BO", nome: "Bolívia" },
+            { id: "BA", nome: "Bósnia e Herzegovina" },
+            { id: "BW", nome: "Botswana" },
+            { id: "BN", nome: "Brunei" },
+            { id: "BG", nome: "Bulgária" },
+            { id: "BF", nome: "Burkina Faso" },
+            { id: "BI", nome: "Burundi" },
+            { id: "BT", nome: "Butão" },
+            { id: "CV", nome: "Cabo Verde" },
+            { id: "KH", nome: "Camboja" },
+            { id: "CM", nome: "Camarões" },
+            { id: "CA", nome: "Canadá" },
+            { id: "QA", nome: "Catar" },
+            { id: "KZ", nome: "Cazaquistão" },
+            { id: "TD", nome: "Chade" },
+            { id: "CL", nome: "Chile" },
+            { id: "CN", nome: "China" },
+            { id: "CY", nome: "Chipre" },
+            { id: "SG", nome: "Cingapura" },
+            { id: "CO", nome: "Colômbia" },
+            { id: "KM", nome: "Comores" },
+            { id: "CG", nome: "Congo" },
+            { id: "CD", nome: "Congo, República Democrática do" },
+            { id: "KR", nome: "Coreia do Sul" },
+            { id: "KP", nome: "Coreia do Norte" },
+            { id: "CI", nome: "Costa do Marfim" },
+            { id: "CR", nome: "Costa Rica" },
+            { id: "HR", nome: "Croácia" },
+            { id: "CU", nome: "Cuba" },
+            { id: "CW", nome: "Curaçao" },
+            { id: "DK", nome: "Dinamarca" },
+            { id: "DJ", nome: "Djibouti" },
+            { id: "DM", nome: "Dominica" },
+            { id: "EG", nome: "Egito" },
+            { id: "SV", nome: "El Salvador" },
+            { id: "AE", nome: "Emirados Árabes Unidos" },
+            { id: "EC", nome: "Equador" },
+            { id: "ER", nome: "Eritreia" },
+            { id: "SK", nome: "Eslováquia" },
+            { id: "SI", nome: "Eslovênia" },
+            { id: "ES", nome: "Espanha" },
+            { id: "US", nome: "Estados Unidos" },
+            { id: "EE", nome: "Estônia" },
+            { id: "ET", nome: "Etiópia" },
+            { id: "FJ", nome: "Fiji" },
+            { id: "PH", nome: "Filipinas" },
+            { id: "FI", nome: "Finlândia" },
+            { id: "FR", nome: "França" },
+            { id: "GA", nome: "Gabão" },
+            { id: "GM", nome: "Gâmbia" },
+            { id: "GH", nome: "Gana" },
+            { id: "GE", nome: "Geórgia" },
+            { id: "GI", nome: "Gibraltar" },
+            { id: "GD", nome: "Granada" },
+            { id: "GR", nome: "Grécia" },
+            { id: "GL", nome: "Groenlândia" },
+            { id: "GP", nome: "Guadalupe" },
+            { id: "GU", nome: "Guam" },
+            { id: "GT", nome: "Guatemala" },
+            { id: "GG", nome: "Guernsey" },
+            { id: "GY", nome: "Guiana" },
+            { id: "GF", nome: "Guiana Francesa" },
+            { id: "GN", nome: "Guiné" },
+            { id: "GQ", nome: "Guiné Equatorial" },
+            { id: "GW", nome: "Guiné-Bissau" },
+            { id: "HT", nome: "Haiti" },
+            { id: "NL", nome: "Holanda" },
+            { id: "HN", nome: "Honduras" },
+            { id: "HK", nome: "Hong Kong" },
+            { id: "HU", nome: "Hungria" },
+            { id: "YE", nome: "Iêmen" },
+            { id: "BV", nome: "Ilha Bouvet" },
+            { id: "IM", nome: "Ilha de Man" },
+            { id: "CX", nome: "Ilha do Natal" },
+            { id: "NF", nome: "Ilha Norfolk" },
+            { id: "AX", nome: "Ilhas Aland" },
+            { id: "KY", nome: "Ilhas Cayman" },
+            { id: "CC", nome: "Ilhas Cocos" },
+            { id: "CK", nome: "Ilhas Cook" },
+            { id: "FO", nome: "Ilhas Faroe" },
+            { id: "GS", nome: "Ilhas Geórgia do Sul e Sandwich do Sul" },
+            { id: "HM", nome: "Ilhas Heard e McDonald" },
+            { id: "FK", nome: "Ilhas Malvinas" },
+            { id: "MP", nome: "Ilhas Marianas do Norte" },
+            { id: "MH", nome: "Ilhas Marshall" },
+            { id: "UM", nome: "Ilhas Menores dos Estados Unidos" },
+            { id: "PN", nome: "Ilhas Pitcairn" },
+            { id: "SB", nome: "Ilhas Salomão" },
+            { id: "TC", nome: "Ilhas Turks e Caicos" },
+            { id: "VI", nome: "Ilhas Virgens Americanas" },
+            { id: "VG", nome: "Ilhas Virgens Britânicas" },
+            { id: "IN", nome: "Índia" },
+            { id: "ID", nome: "Indonésia" },
+            { id: "IR", nome: "Irã" },
+            { id: "IQ", nome: "Iraque" },
+            { id: "IE", nome: "Irlanda" },
+            { id: "IS", nome: "Islândia" },
+            { id: "IL", nome: "Israel" },
+            { id: "IT", nome: "Itália" },
+            { id: "JM", nome: "Jamaica" },
+            { id: "JP", nome: "Japão" },
+            { id: "JE", nome: "Jersey" },
+            { id: "JO", nome: "Jordânia" },
+            { id: "KW", nome: "Kuwait" },
+            { id: "LA", nome: "Laos" },
+            { id: "LS", nome: "Lesoto" },
+            { id: "LV", nome: "Letônia" },
+            { id: "LB", nome: "Líbano" },
+            { id: "LR", nome: "Libéria" },
+            { id: "LY", nome: "Líbia" },
+            { id: "LI", nome: "Liechtenstein" },
+            { id: "LT", nome: "Lituânia" },
+            { id: "LU", nome: "Luxemburgo" },
+            { id: "MO", nome: "Macau" },
+            { id: "MK", nome: "Macedônia do Norte" },
+            { id: "MG", nome: "Madagascar" },
+            { id: "MY", nome: "Malásia" },
+            { id: "MW", nome: "Malawi" },
+            { id: "MV", nome: "Maldivas" },
+            { id: "ML", nome: "Mali" },
+            { id: "MT", nome: "Malta" },
+            { id: "MA", nome: "Marrocos" },
+            { id: "MQ", nome: "Martinica" },
+            { id: "MU", nome: "Maurício" },
+            { id: "MR", nome: "Mauritânia" },
+            { id: "YT", nome: "Mayotte" },
+            { id: "MX", nome: "México" },
+            { id: "FM", nome: "Micronésia" },
+            { id: "MZ", nome: "Moçambique" },
+            { id: "MD", nome: "Moldávia" },
+            { id: "MC", nome: "Mônaco" },
+            { id: "MN", nome: "Mongólia" },
+            { id: "ME", nome: "Montenegro" },
+            { id: "MS", nome: "Montserrat" },
+            { id: "MM", nome: "Myanmar" },
+            { id: "NA", nome: "Namíbia" },
+            { id: "NR", nome: "Nauru" },
+            { id: "NP", nome: "Nepal" },
+            { id: "NI", nome: "Nicarágua" },
+            { id: "NE", nome: "Níger" },
+            { id: "NG", nome: "Nigéria" },
+            { id: "NU", nome: "Niue" },
+            { id: "NO", nome: "Noruega" },
+            { id: "NC", nome: "Nova Caledônia" },
+            { id: "NZ", nome: "Nova Zelândia" },
+            { id: "OM", nome: "Omã" },
+            { id: "BQ", nome: "Países Baixos Caribenhos" },
+            { id: "PW", nome: "Palau" },
+            { id: "PA", nome: "Panamá" },
+            { id: "PG", nome: "Papua-Nova Guiné" },
+            { id: "PK", nome: "Paquistão" },
+            { id: "PY", nome: "Paraguai" },
+            { id: "PE", nome: "Peru" },
+            { id: "PF", nome: "Polinésia Francesa" },
+            { id: "PL", nome: "Polônia" },
+            { id: "PR", nome: "Porto Rico" },
+            { id: "PT", nome: "Portugal" },
+            { id: "KE", nome: "Quênia" },
+            { id: "KG", nome: "Quirguistão" },
+            { id: "KI", nome: "Quiribati" },
+            { id: "RE", nome: "Reunião" },
+            { id: "RO", nome: "Romênia" },
+            { id: "RW", nome: "Ruanda" },
+            { id: "RU", nome: "Rússia" },
+            { id: "EH", nome: "Saara Ocidental" },
+            { id: "PM", nome: "Saint Pierre e Miquelon" },
+            { id: "WS", nome: "Samoa" },
+            { id: "AS", nome: "Samoa Americana" },
+            { id: "SM", nome: "San Marino" },
+            { id: "SH", nome: "Santa Helena" },
+            { id: "LC", nome: "Santa Lúcia" },
+            { id: "BL", nome: "São Bartolomeu" },
+            { id: "KN", nome: "São Cristóvão e Nevis" },
+            { id: "MF", nome: "São Martinho" },
+            { id: "ST", nome: "São Tomé e Príncipe" },
+            { id: "VC", nome: "São Vicente e Granadinas" },
+            { id: "SC", nome: "Seicheles" },
+            { id: "SN", nome: "Senegal" },
+            { id: "SL", nome: "Serra Leoa" },
+            { id: "RS", nome: "Sérvia" },
+            { id: "SX", nome: "Sint Maarten" },
+            { id: "SY", nome: "Síria" },
+            { id: "SO", nome: "Somália" },
+            { id: "LK", nome: "Sri Lanka" },
+            { id: "SZ", nome: "Suazilândia" },
+            { id: "SD", nome: "Sudão" },
+            { id: "SS", nome: "Sudão do Sul" },
+            { id: "SE", nome: "Suécia" },
+            { id: "CH", nome: "Suíça" },
+            { id: "SR", nome: "Suriname" },
+            { id: "TH", nome: "Tailândia" },
+            { id: "TW", nome: "Taiwan" },
+            { id: "TJ", nome: "Tajiquistão" },
+            { id: "TZ", nome: "Tanzânia" },
+            { id: "TF", nome: "Terras Austrais Francesas" },
+            { id: "IO", nome: "Território Britânico do Oceano Índico" },
+            { id: "PS", nome: "Território Palestino" },
+            { id: "TL", nome: "Timor-Leste" },
+            { id: "TG", nome: "Togo" },
+            { id: "TK", nome: "Tokelau" },
+            { id: "TO", nome: "Tonga" },
+            { id: "TT", nome: "Trinidad e Tobago" },
+            { id: "TN", nome: "Tunísia" },
+            { id: "TM", nome: "Turcomenistão" },
+            { id: "TR", nome: "Turquia" },
+            { id: "TV", nome: "Tuvalu" },
+            { id: "UA", nome: "Ucrânia" },
+            { id: "UG", nome: "Uganda" },
+            { id: "UY", nome: "Uruguai" },
+            { id: "UZ", nome: "Uzbequistão" },
+            { id: "VU", nome: "Vanuatu" },
+            { id: "VA", nome: "Vaticano" },
+            { id: "VE", nome: "Venezuela" },
+            { id: "VN", nome: "Vietnã" },
+            { id: "WF", nome: "Wallis e Futuna" },
+            { id: "ZM", nome: "Zâmbia" },
+            { id: "ZW", nome: "Zimbábue" },
+            { id: "GB", nome: "Reino Unido" }
         ];
 
         const estados = {
@@ -1795,17 +2045,16 @@
             // Outras cidades podem ser adicionadas conforme necessário
         };
 
-        // Variável para controlar se o Select2 está sendo inicializado
-        let inicializandoSelect2 = false;
+
 
         // Função para inicializar o Select2
         function inicializarSelect2() {
             // Evitar inicialização múltipla
-            if (inicializandoSelect2) {
+            if (window.inicializandoSelect2) {
                 return;
             }
 
-            inicializandoSelect2 = true;
+            window.inicializandoSelect2 = true;
 
             // Fechar qualquer dropdown aberto
             $('.select2-container').remove();
@@ -1904,7 +2153,7 @@
                 }
             });
 
-            inicializandoSelect2 = false;
+            window.inicializandoSelect2 = false;
 
             // Não realizamos a busca automática aqui - a busca será feita por quem chamou a função
         }
@@ -2951,18 +3200,31 @@
             atualizarResumo();
         });
 
-        // Função para preencher o select de países
+        // Função para preencher o select de países (simples e compatível)
         function carregarPaises() {
             $('.pais-select').each(function() {
                 const select = $(this);
+
+                // Limpar opções existentes (mantendo o placeholder)
                 select.find('option:not(:first)').remove();
 
+                // Preencher com a lista completa de países
                 paises.forEach(function(pais) {
                     select.append($('<option>', {
                         value: pais.id,
                         text: pais.nome
                     }));
                 });
+
+                // Garantir que o placeholder apareça
+                if (!select.val()) {
+                    select.find('option:first').prop('selected', true);
+                }
+
+                // Remover qualquer instância prévia do Select2 para evitar caixas invisíveis
+                if (typeof $.fn.select2 !== 'undefined' && select.hasClass('select2-hidden-accessible')) {
+                    try { select.select2('destroy'); } catch (e) {}
+                }
             });
         }
 
@@ -3594,9 +3856,44 @@
         // Inicializar wizard
         mostrarEtapa(etapaAtual);
 
+        // Controle robusto de exibição de CPF/CNPJ
+        function atualizarCamposDocumento() {
+            const tipoPessoaAtual = $('#tipo_pessoa').val();
+            const ehPF = tipoPessoaAtual === 'pf';
+            const ehPJ = tipoPessoaAtual === 'pj';
+
+            // Esconde ambos antes
+            $('#cpf-field').hide();
+            $('#cnpj-field').hide();
+
+            // Limpa required
+            $('#cpf').prop('required', false);
+            $('#cnpj').prop('required', false);
+
+            if (ehPF) {
+                $('#cpf-field').show();
+                $('#cpf').prop('required', true);
+            } else if (ehPJ) {
+                $('#cnpj-field').show();
+                $('#cnpj').prop('required', true);
+            }
+        }
+
+        // Delegação garante funcionamento mesmo com render dinâmico
+        $(document).on('change', '#tipo_pessoa', atualizarCamposDocumento);
+        // Ajusta estado inicial de acordo com o valor selecionado
+        atualizarCamposDocumento();
+
+        console.log('Evento de tipo de pessoa registrado');
+        
+        // Verificar se o elemento existe
+        if ($('#tipo_pessoa').length > 0) {
+            console.log('Elemento tipo_pessoa encontrado');
+
         // Evento para controlar exibição dos campos CPF/CNPJ baseado no tipo de pessoa
         $('#tipo_pessoa').on('change', function() {
             const tipoPessoa = $(this).val();
+                console.log('Tipo de pessoa selecionado:', tipoPessoa);
             
             // Ocultar ambos os campos primeiro
             $('#cpf-field').hide();
@@ -3608,19 +3905,27 @@
             
             // Mostrar o campo apropriado baseado na seleção
             if (tipoPessoa === 'pf') {
-                $('#cpf-field').show();
+                    console.log('Mostrando campo CPF');
+                    $('#cpf-field').show().css('display', 'block');
                 $('#cpf').prop('required', true);
                 $('#cnpj').prop('required', false);
+                    console.log('Campo CPF visível:', $('#cpf-field').is(':visible'));
             } else if (tipoPessoa === 'pj') {
-                $('#cnpj-field').show();
+                    console.log('Mostrando campo CNPJ');
+                    $('#cnpj-field').show().css('display', 'block');
                 $('#cnpj').prop('required', true);
                 $('#cpf').prop('required', false);
+                    console.log('Campo CNPJ visível:', $('#cnpj-field').is(':visible'));
             } else {
+                    console.log('Nenhum tipo selecionado');
                 // Nenhum tipo selecionado, remover required de ambos
                 $('#cpf').prop('required', false);
                 $('#cnpj').prop('required', false);
             }
         });
+        } else {
+            console.log('Elemento tipo_pessoa não encontrado');
+        }
 
         // Eventos dos botões do wizard
         $('#btn-step-1-next').on('click', function() {
