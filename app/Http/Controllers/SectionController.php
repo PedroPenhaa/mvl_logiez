@@ -543,6 +543,8 @@ class SectionController extends Controller
                 'valor_total' => 'required|numeric',
                 'peso_total' => 'required|numeric',
                 'tipo_operacao' => 'required|string|in:enviar,receber',
+                'tipo_pessoa' => 'required|string|in:pf,pj',
+                'tipo_envio' => 'required|string',
                 
                 'origem_nome' => 'required|string',
                 'origem_endereco' => 'required|string',
@@ -637,7 +639,7 @@ class SectionController extends Controller
             }
             
             // Criar o envio usando a API da FedEx
-            $resultado = $this->criarEnvioFedEx($dadosRemetente, $dadosDestinatario, $dadosPacote, $dadosProdutos, $request->servico_entrega);
+            $resultado = $this->criarEnvioFedEx($dadosRemetente, $dadosDestinatario, $dadosPacote, $dadosProdutos, $request->servico_entrega, $request->tipo_operacao, $request->tipo_pessoa, $request->tipo_envio);
             
             // Armazenar resultado na sessão para uso posterior
             session(['dados_envio' => [
@@ -688,7 +690,7 @@ class SectionController extends Controller
     /**
      * Cria o envio usando a API da FedEx
      */
-    private function criarEnvioFedEx($dadosRemetente, $dadosDestinatario, $dadosPacote, $dadosProdutos, $servicoEntrega)
+    private function criarEnvioFedEx($dadosRemetente, $dadosDestinatario, $dadosPacote, $dadosProdutos, $servicoEntrega, $tipoOperacao, $tipoPessoa, $tipoEnvio)
     {
         // Usar as credenciais de produção configuradas no sistema
         $apiUrl = config('services.fedex.api_url');
@@ -1000,8 +1002,9 @@ class SectionController extends Controller
                 'is_simulation' => false,
                 'was_delivered' => false,
                 'has_issues' => false,
-                'tipo_envio' => 'venda',
-                'tipo_pessoa' => 'pf'
+                'tipo_envio' => $tipoEnvio,
+                'tipo_pessoa' => $tipoPessoa,
+                'tipo_operacao' => $tipoOperacao
             ]);
             
             // Criar endereço do remetente

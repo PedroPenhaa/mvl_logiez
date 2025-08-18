@@ -100,7 +100,7 @@ class PaymentController extends Controller
             } else {
                 $pagamentoResponse = $this->processarPagamentoPix($request, $customerId, $valor, $servicoInfo);
             }
-
+*/
             
             // Se o pagamento foi processado com sucesso, processar o envio
            // if ($pagamentoResponse && $pagamentoResponse->getData()->success) {
@@ -112,23 +112,28 @@ class PaymentController extends Controller
                 
                 // Se o envio foi processado com sucesso, retornar resposta combinada
                 if ($envioResponse['success']) {
-                  //  $responseData = $pagamentoResponse->getData();
-                    $responseData->envio_success = true;
-                    $responseData->envio_message = $envioResponse['message'];
-                    $responseData->shipment_id = $envioResponse['shipmentId'] ?? null;
-                    $responseData->tracking_number = $envioResponse['trackingNumber'] ?? null;
-                    
-                    return response()->json($responseData);
+                    // Retornar sucesso do pagamento com dados do envio
+                    return response()->json([
+                        'success' => true,
+                        'message' => 'Pagamento realizado com sucesso! Envio processado e salvo no banco de dados.',
+                        'payment_success' => true,
+                        'envio_success' => true,
+                        'tracking_number' => $envioResponse['trackingNumber'] ?? null,
+                        'shipment_id' => $envioResponse['shipmentId'] ?? null,
+                        'label_url' => $envioResponse['labelUrl'] ?? null,
+                        'servico_contratado' => $envioResponse['servicoContratado'] ?? null,
+                        'data_criacao' => $envioResponse['dataCriacao'] ?? null
+                    ]);
                 } else {
-                    // Se o envio falhou, ainda retornar sucesso do pagamento mas com aviso
-                    $responseData = $pagamentoResponse->getData();
-                    $responseData->envio_success = false;
-                    $responseData->envio_message = $envioResponse['message'];
-                    
-                    return response()->json($responseData);
+                    // Se o envio falhou, retornar erro
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'Erro ao processar envio: ' . ($envioResponse['message'] ?? 'Erro desconhecido'),
+                        'payment_success' => false,
+                        'envio_success' => false
+                    ]);
                 }
            // }
-*/
             return $dadosEnvio    ;
 
         } catch (\Exception $e) {

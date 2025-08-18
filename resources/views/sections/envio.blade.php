@@ -4771,7 +4771,7 @@
             contentType: false,
             success: function(response) {
                 if (response.success) {
-                    // Redirecionar para página de sucesso ou mostrar QR Code do PIX
+                    // Verificar se é pagamento PIX ou cartão de crédito
                     if (paymentMethod === 'pix') {
                         // Mostrar QR Code do PIX
                         $('#pagamento-section').html(`
@@ -4790,8 +4790,60 @@
                             </div>
                         `);
                     } else {
-                        // Redirecionar para página de sucesso
-                        window.location.href = '/pagamento-sucesso?id=' + response.payment_id;
+                        // Mostrar sucesso do pagamento com tracking ID
+                        $('#pagamento-section').html(`
+                            <div class="card-body text-center">
+                                <div class="alert alert-success mb-4">
+                                    <i class="fas fa-check-circle fa-3x text-success mb-3"></i>
+                                    <h4 class="alert-heading">Pagamento Realizado com Sucesso!</h4>
+                                    <p class="mb-0">${response.message}</p>
+                                </div>
+                                
+                                <div class="card border-success mb-4">
+                                    <div class="card-header bg-success text-white">
+                                        <h5 class="mb-0"><i class="fas fa-shipping-fast me-2"></i>Informações do Envio</h5>
+                                    </div>
+                                    <div class="card-body">
+                                        <div class="row">
+                                            <div class="col-md-6">
+                                                <p><strong>Tracking Number:</strong></p>
+                                                <h4 class="text-primary">${response.tracking_number || 'N/A'}</h4>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <p><strong>Shipment ID:</strong></p>
+                                                <p class="text-muted">${response.shipment_id || 'N/A'}</p>
+                                            </div>
+                                        </div>
+                                        <div class="row mt-3">
+                                            <div class="col-md-6">
+                                                <p><strong>Serviço:</strong></p>
+                                                <p class="text-muted">${response.servico_contratado || 'N/A'}</p>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <p><strong>Data de Criação:</strong></p>
+                                                <p class="text-muted">${response.data_criacao || 'N/A'}</p>
+                                            </div>
+                                        </div>
+                                        ${response.label_url ? `
+                                        <div class="mt-3">
+                                            <a href="${response.label_url}" target="_blank" class="btn btn-outline-primary">
+                                                <i class="fas fa-download me-2"></i>Baixar Etiqueta
+                                            </a>
+                                        </div>
+                                        ` : ''}
+                                    </div>
+                                </div>
+                                
+                                <div class="d-grid gap-2">
+                                    <button class="btn btn-primary" onclick="window.location.href='/dashboard'">
+                                        <i class="fas fa-home me-2"></i>Ir para Dashboard
+                                    </button>
+                                    <button class="btn btn-outline-secondary" onclick="window.location.reload()">
+                                        <i class="fas fa-redo me-2"></i>Novo Envio
+                                    </button>
+                                </div>
+                            </div>
+                        `);
                     }
                 } else {
                     showAlert(response.message || 'Erro ao processar pagamento. Tente novamente.', 'danger');
