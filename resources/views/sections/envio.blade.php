@@ -700,7 +700,7 @@
                                                 <i class="fas fa-arrows-alt-v me-1 text-secondary"></i>Altura
                                             </label>
                                             <div class="input-group">
-                                                <input type="number" class="form-control" id="altura" min="1" value="10">
+                                                <input type="number" class="form-control" id="altura" min="0" value="0">
                                                 <span class="input-group-text bg-light">cm</span>
                                             </div>
                                         </div>
@@ -709,7 +709,7 @@
                                                 <i class="fas fa-arrows-alt-h me-1 text-secondary"></i>Largura
                                             </label>
                                             <div class="input-group">
-                                                <input type="number" class="form-control" id="largura" min="1" value="20">
+                                                <input type="number" class="form-control" id="largura" min="0" value="0">
                                                 <span class="input-group-text bg-light">cm</span>
                                             </div>
                                         </div>
@@ -718,7 +718,7 @@
                                                 <i class="fas fa-arrows-alt-h me-1 text-secondary"></i>Comprimento
                                             </label>
                                             <div class="input-group">
-                                                <input type="number" class="form-control" id="comprimento" min="1" value="30">
+                                                <input type="number" class="form-control" id="comprimento" min="0" value="0">
                                                 <span class="input-group-text bg-light">cm</span>
                                             </div>
                                         </div>
@@ -727,7 +727,7 @@
                                                 <i class="fas fa-weight-hanging me-1 text-secondary"></i>Peso
                                             </label>
                                             <div class="input-group">
-                                                <input type="number" class="form-control" id="peso_caixa" min="0.01" step="0.01" value="0.5">
+                                                <input type="number" class="form-control" id="peso_caixa" min="0" step="0.01" value="0.0">
                                                 <span class="input-group-text bg-light">kg</span>
                                             </div>
                                         </div>
@@ -1950,7 +1950,7 @@
 
                 // Chama o endpoint para consultar o Gemini
                 $.ajax({
-                    url: 'http://localhost:8080/gemini-consulta.php',
+                    url: '/gemini-consulta',
                     method: 'POST',
                     data: JSON.stringify({
                         produto: buscaDescricao

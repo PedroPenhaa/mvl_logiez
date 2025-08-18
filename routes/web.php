@@ -17,6 +17,7 @@ use Illuminate\Support\Facades\Log;
 use App\Http\Controllers\PaymentController;
 use App\Http\Controllers\EtiquetaController;
 use Illuminate\Support\Facades\Artisan;
+use Illuminate\Support\Facades\Http;
 
 /*
 |--------------------------------------------------------------------------
@@ -1062,26 +1063,120 @@ Route::post('/gemini-consulta', function(Request $request) {
         ]);
     }
     
-    // Executar o comando Artisan
-    $result = Artisan::call('consulta:gemini', [
-        'produto' => $produto
-    ]);
-    
-    $output = Artisan::output();
-    
-    // Decodificar a resposta JSON
-    $data = json_decode($output, true);
-    
-    if (!$data || !isset($data['success'])) {
+    try {
+        // Obter chave da API do Gemini
+        $apiKey = config('services.gemini.api_key');
+        
+        if (empty($apiKey)) {
+            return response()->json([
+                'success' => false,
+                'error' => 'Chave da API do Gemini não configurada'
+            ]);
+        }
+        
+        // Configurar a chamada para a API do Gemini
+        $model = config('services.gemini.model', 'gemini-2.0-flash');
+        $endpoint = "https://generativelanguage.googleapis.com/v1beta/models/{$model}:generateContent";
+        
+        // Prompt otimizado para extrair NCM, descrição e unidade
+        $prompt = "Para o produto '{$produto}', retorne APENAS o NCM (código de 8 dígitos no formato XXXX.XX.XX), a descrição completa do produto e a unidade de medida (UN, KG, L, M, etc). Formato da resposta: NCM: XXXX.XX.XX | Descrição: [descrição completa] | Unidade: [unidade]";
+        
+        $data = [
+            'contents' => [
+                [
+                    'parts' => [
+                        ['text' => $prompt]
+                    ]
+                ]
+            ]
+        ];
+        
+        // Fazer a requisição para a API do Gemini
+        $response = Http::withHeaders([
+            'Content-Type' => 'application/json',
+        ])->post($endpoint . '?key=' . $apiKey, $data);
+        
+        if (!$response->successful()) {
+            return response()->json([
+                'success' => false,
+                'error' => 'Erro na API do Gemini: HTTP ' . $response->status(),
+                'response' => $response->body()
+            ]);
+        }
+        
+        $responseData = $response->json();
+        
+        if (!isset($responseData['candidates'][0]['content']['parts'][0]['text'])) {
+            return response()->json([
+                'success' => false,
+                'error' => 'Resposta inválida da API do Gemini',
+                'response' => $responseData
+            ]);
+        }
+        
+        $geminiResponse = $responseData['candidates'][0]['content']['parts'][0]['text'];
+        
+        // Extrair NCM, descrição e unidade da resposta
+        $ncm = null;
+        $descricao = null;
+        $unidade = null;
+        
+        // Padrão para extrair NCM
+        if (preg_match('/NCM:\s*(\d{4}\.\d{2}\.\d{2})/i', $geminiResponse, $ncmMatches)) {
+            $ncm = $ncmMatches[1];
+        } elseif (preg_match('/(\d{4}\.\d{2}\.\d{2})/', $geminiResponse, $ncmMatches)) {
+            $ncm = $ncmMatches[1];
+        }
+        
+        // Padrão para extrair descrição
+        if (preg_match('/Descrição:\s*(.+?)(?:\s*\||\s*Unidade:|$)/i', $geminiResponse, $descMatches)) {
+            $descricao = trim($descMatches[1]);
+        } elseif (preg_match('/-\s*(.+?)(?:\s*\||\s*Unidade:|$)/i', $geminiResponse, $descMatches)) {
+            $descricao = trim($descMatches[1]);
+        } else {
+            $descricao = $produto; // Fallback
+        }
+        
+        // Padrão para extrair unidade
+        if (preg_match('/Unidade:\s*([A-Z]{2,3})/i', $geminiResponse, $unidadeMatches)) {
+            $unidade = strtoupper($unidadeMatches[1]);
+        } else {
+            // Determinar unidade baseada no tipo de produto
+            $produtoLower = strtolower($produto);
+            if (strpos($produtoLower, 'calçado') !== false || strpos($produtoLower, 'sapato') !== false || strpos($produtoLower, 'tenis') !== false) {
+                $unidade = 'PAR'; // Par de calçados
+            } elseif (strpos($produtoLower, 'roupa') !== false || strpos($produtoLower, 'camisa') !== false || strpos($produtoLower, 'calça') !== false) {
+                $unidade = 'UN'; // Unidade
+            } elseif (strpos($produtoLower, 'notebook') !== false || strpos($produtoLower, 'computador') !== false || strpos($produtoLower, 'calçado') !== false) {
+                $unidade = 'UN'; // Unidade
+            } else {
+                $unidade = 'UN'; // Unidade padrão
+            }
+        }
+        
+        if ($ncm) {
+            return response()->json([
+                'success' => true,
+                'ncm' => $ncm,
+                'descricao' => $descricao,
+                'unidade' => $unidade,
+                'raw_response' => $geminiResponse
+            ]);
+        } else {
+            return response()->json([
+                'success' => false,
+                'error' => 'NCM não encontrado na resposta do Gemini',
+                'raw_response' => $geminiResponse
+            ]);
+        }
+        
+    } catch (Exception $e) {
         return response()->json([
             'success' => false,
-            'error' => 'Erro na execução do comando',
-            'output' => $output
+            'error' => 'Erro interno: ' . $e->getMessage()
         ]);
     }
-    
-    return response()->json($data);
-})->name('gemini.consulta');
+})->name('gemini.consulta')->withoutMiddleware(['web']);
 
 // Rotas administrativas - protegidas por autenticação e middleware admin
 Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(function () {
