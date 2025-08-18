@@ -4,8 +4,12 @@
     <meta charset="UTF-8">
     <title>Invoice</title>
     <style>
+        @page {
+            size: landscape;
+            margin: 10mm;
+        }
         body { font-family: Arial, sans-serif; font-size: 11px; color: #222; margin: 0; padding: 0; }
-        .logo-logiez { width: 120px; margin: 10px auto 0 auto; display: block; }
+        .logo-logiez { width: 100px; margin: 8px auto 0 auto; display: block; }
         .invoice-table {
             width: 100%;
             border-collapse: collapse;
@@ -115,22 +119,22 @@
         </tr>
         <tr>
             <td colspan="2"><b>Volumes:</b> {{ $invoice['volumes'] }}</td>
-            <td colspan="2"><b>Net Weight(Net):</b> {{ $invoice['net_weight'] }} LBS</td>
+            <td colspan="2"><b>Net Weight(Liquid):</b> {{ $invoice['net_weight'] }} LBS</td>
             <td colspan="2"><b>Gross Weight (Gross):</b> {{ $invoice['gross_weight'] }} LBS</td>
             <td class="total-usd" rowspan="2" style="vertical-align: middle;">TOTAL IN USD<br>{{ number_format($invoice['total_amount'] + $invoice['freight'], 2, ',', '.') }}</td>
         </tr>
     </table>
     
     <!-- Signature Section -->
-    <div style="margin-top: 30px; border-top: 1px solid #ccc; padding-top: 20px;">
+    <div style="margin-top: 20px; border-top: 1px solid #ccc; padding-top: 15px;">
         <table style="width: 100%; border-collapse: collapse;">
             <tr>
                 <td style="width: 70%; vertical-align: top; padding-right: 20px;">
-                    <div style="border-bottom: 1px solid #000; height: 40px; margin-bottom: 5px;"></div>
+                    <div style="border-bottom: 1px solid #000; height: 30px; margin-bottom: 5px;"></div>
                     <div style="text-align: center; font-size: 10px; font-weight: bold;">SIGNATURE</div>
                 </td>
                 <td style="width: 30%; vertical-align: top;">
-                    <div style="border-bottom: 1px solid #000; height: 40px; margin-bottom: 5px;"></div>
+                    <div style="border-bottom: 1px solid #000; height: 30px; margin-bottom: 5px;"></div>
                     <div style="text-align: center; font-size: 10px; font-weight: bold;">DATE</div>
                 </td>
             </tr>

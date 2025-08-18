@@ -642,7 +642,8 @@ class SectionController extends Controller
                     'quantidade' => (int) $produto['quantidade'],
                     'valor_unitario' => (float) ($produto['valor_unitario'] ?? $produto['valor'] ?? 0),
                     'pais_origem' => $produto['pais_origem'] ?? 'BR',
-                    'ncm' => $produto['ncm'] ?? $produto['codigo'] ?? '000000'
+                    'ncm' => $produto['ncm'] ?? $produto['codigo'] ?? '000000',
+                    'unidade' => $produto['unidade'] ?? 'UNI' // Incluir unidade do produto
                 ];
             }
             
@@ -1013,6 +1014,10 @@ class SectionController extends Controller
                 'user_id' => $userId
             ]);
             
+            // Calcular pesos líquido e bruto
+            $netWeightLbs = $dadosPacote['peso']; // Peso líquido é o peso do produto
+            $grossWeightLbs = $dadosPacote['peso']; // Peso bruto é o mesmo para envios simples
+            
             // Criar o registro principal do shipment
             $shipment = \App\Models\Shipment::create([
                 'user_id' => $userId,
@@ -1030,6 +1035,9 @@ class SectionController extends Controller
                 'package_width' => $dadosPacote['largura'],
                 'package_length' => $dadosPacote['comprimento'],
                 'package_weight' => $dadosPacote['peso'],
+                'net_weight_lbs' => $netWeightLbs,
+                'gross_weight_lbs' => $grossWeightLbs,
+                'volumes' => 1, // Número de volumes/embalagens
                 'total_price' => 0, // Será calculado se necessário
                 'currency' => 'USD',
                 'total_price_brl' => 0, // Será calculado se necessário
@@ -1084,7 +1092,8 @@ class SectionController extends Controller
                     'total_price' => $produto['valor_unitario'] * $produto['quantidade'],
                     'currency' => 'USD',
                     'country_of_origin' => $produto['pais_origem'],
-                    'harmonized_code' => $produto['ncm']
+                    'harmonized_code' => $produto['ncm'],
+                    'unit_type' => $produto['unidade'] ?? 'UNI' // Unidade do produto (UNI, PAR, etc.)
                 ]);
             }
             
