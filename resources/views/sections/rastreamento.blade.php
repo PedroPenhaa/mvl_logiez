@@ -132,9 +132,14 @@
                         </div>
                     </div>
                     
-                    <h5 class="mb-3"><i class="fas fa-history me-2"></i>Histórico de Rastreamento</h5>
+                    <div class="d-flex justify-content-between align-items-center mb-3 mt-5">
+                        <h5 class="mb-0"><i class="fas fa-history me-2"></i>Histórico de Rastreamento</h5>
+                        <button id="toggle-timeline" class="btn btn-outline-primary btn-sm" type="button">
+                            <i class="fas fa-chevron-down me-1"></i>Mostrar Trackings
+                        </button>
+                    </div>
                     
-                    <div class="timeline-container">
+                    <div class="timeline-container" id="timeline-container" style="display: none;">
                         <ul class="timeline" id="rastreamento-timeline">
                             <!-- Eventos de rastreamento serão inseridos aqui dinamicamente -->
                         </ul>
@@ -1375,6 +1380,40 @@
         #status-atual {
             font-size: 1.3rem;
         }
+    }
+    
+    /* Estilos para o botão de toggle da timeline */
+    #toggle-timeline {
+        border-radius: 25px;
+        transition: all 0.3s ease;
+        font-weight: 600;
+        padding: 8px 16px;
+        font-size: 0.9rem;
+        border: 2px solid #007bff;
+        background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
+        color: #007bff;
+        box-shadow: 0 3px 10px rgba(0, 123, 255, 0.1);
+    }
+    
+    #toggle-timeline:hover {
+        background: linear-gradient(135deg, #007bff 0%, #0056b3 100%);
+        color: #ffffff;
+        transform: translateY(-2px);
+        box-shadow: 0 5px 15px rgba(0, 123, 255, 0.3);
+        border-color: #007bff;
+    }
+    
+    #toggle-timeline:active {
+        transform: translateY(0);
+        box-shadow: 0 2px 8px rgba(0, 123, 255, 0.2);
+    }
+    
+    #toggle-timeline i {
+        transition: transform 0.3s ease;
+    }
+    
+    #toggle-timeline:hover i {
+        transform: scale(1.1);
     }
     
     /* Efeitos de acessibilidade */
@@ -2655,6 +2694,28 @@ function initializeRastreamentoScript() {
             $(this).css({
                 'background': 'linear-gradient(135deg, #343a40, #212529) !important'
             });
+        });
+        
+        // Controle do toggle da timeline
+        $('#toggle-timeline').on('click', function() {
+            const timelineContainer = $('#timeline-container');
+            const button = $(this);
+            const icon = button.find('i');
+            const text = button.find('span');
+            
+            if (timelineContainer.is(':visible')) {
+                // Recolher timeline
+                timelineContainer.slideUp(400, function() {
+                    icon.removeClass('fa-chevron-up').addClass('fa-chevron-down');
+                    button.html('<i class="fas fa-chevron-down me-1"></i>Mostrar Trackings');
+                });
+            } else {
+                // Expandir timeline
+                timelineContainer.slideDown(400, function() {
+                    icon.removeClass('fa-chevron-down').addClass('fa-chevron-up');
+                    button.html('<i class="fas fa-chevron-up me-1"></i>Ocultar Trackings');
+                });
+            }
         });
     });
 }
