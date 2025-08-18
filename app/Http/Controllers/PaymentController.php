@@ -351,10 +351,17 @@ class PaymentController extends Controller
      */
     private function prepararDadosEnvio(Request $request, $servicoInfo)
     {
+        // Log para debug
+        Log::info('Dados do serviço na sessão:', [
+            'servicoInfo' => $servicoInfo,
+            'valorTotalBRL' => $servicoInfo['valorTotalBRL'] ?? 'não encontrado'
+        ]);
+        
         // Obter dados da sessão se disponíveis
         $dadosEnvio = [
             // Dados do serviço
             'servico_entrega' => $servicoInfo['servicoTipo'],
+            'freight_value' => $servicoInfo['valorTotalBRL'],
             
             // Dados de origem (do formulário de envio)
             'origem_nome' => $request->input('origem_nome'),

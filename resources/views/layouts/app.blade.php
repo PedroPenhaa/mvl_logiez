@@ -343,7 +343,7 @@
             <a href="/envio" class="text-decoration-none">
                 <div class="menu-item">
                     <i class="fas fa-shipping-fast"></i>
-                    <span class="menu-text">Envio</span>
+                                            <span class="menu-text">Envio</span>
                 </div>
             </a>
             <a href="/pagamento" class="text-decoration-none">
@@ -355,13 +355,13 @@
             <a href="/etiqueta" class="text-decoration-none">
                 <div class="menu-item">
                     <i class="fas fa-tag"></i>
-                    <span class="menu-text">Etiqueta</span>
+                                            <span class="menu-text">Etiqueta</span>
                 </div>
             </a>
             <a href="/rastreamento" class="text-decoration-none">
                 <div class="menu-item">
                     <i class="fas fa-map-marker-alt"></i>
-                    <span class="menu-text">Rastreamento</span>
+                                            <span class="menu-text">Rastreamento</span>
                 </div>
             </a>
             <a href="/perfil" class="text-decoration-none">

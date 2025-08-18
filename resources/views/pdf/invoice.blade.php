@@ -39,11 +39,10 @@
     <table class="invoice-table" style="margin-bottom:0;">
         <tr>
             <td colspan="6" class="text-center" style="border-bottom: none;">
-                <span class="header-title">LS COMÉRCIO ATACADISTA E VAREJISTA LTDA</span><br>
+                <span class="header-title">{{ $invoice['recipient']['name'] }}</span><br>
                 <span class="header-sub">
-                    Endereço: Rua 4, Pq Res. Dona Chiquinha, Cosmópolis - SP - Brazil<br>
-                    <b>Contato: +55(19) 98116-6445 / envios@logiez.com.br</b><br>
-                    CNPJ: 48.103.206/0001-73
+                    Endereço: {{ $invoice['recipient']['address'] }}<br>
+                    <b>Contato: {{ $invoice['recipient']['contact'] }}</b>
                 </span>
             </td>
             <td colspan="2" class="commercial-invoice" style="border-left: none; border-bottom: none;">COMMERCIAL<br>INVOICE</td>
@@ -78,7 +77,6 @@
             <td><b>RE:</b></td>
             <td colspan="2"></td>
             <td><b>Airport of Discharge<br>(Aeropuerto Destino)</b><br>{{ $invoice['airport_of_discharge'] }}</td>
-            <td><b>Selling Conditions</b><br>{{ $invoice['selling_conditions'] }}</td>
             <td><b>Notify:</b><br>THE SAME</td>
             <td><b>Pages<br>(Hojas)</b><br>{{ $invoice['pages'] }}</td>
         </tr>
@@ -120,8 +118,7 @@
         <tr>
             <td colspan="2"><b>Volumes:</b> {{ $invoice['volumes'] }}</td>
             <td colspan="2"><b>Net Weight(Neto):</b> {{ $invoice['net_weight'] }} LBS</td>
-            <td colspan="2"><b>Container:</b> {{ $invoice['container'] }}</td>
-            <td><b>Gross Weight (Bruto):</b> {{ $invoice['gross_weight'] }} LBS</td>
+            <td colspan="2"><b>Gross Weight (Bruto):</b> {{ $invoice['gross_weight'] }} LBS</td>
             <td class="total-usd" rowspan="2" style="vertical-align: middle;">TOTAL DAS USD<br>{{ number_format($invoice['total_amount'] + $invoice['freight'], 2, ',', '.') }}</td>
         </tr>
     </table>

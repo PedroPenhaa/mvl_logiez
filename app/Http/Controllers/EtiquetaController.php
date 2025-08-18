@@ -110,7 +110,7 @@ class EtiquetaController extends Controller
                         "contact" => [
                             "personName" => $senderAddress->name,
                             "phoneNumber" => preg_replace('/\D/', '', $senderAddress->phone),
-                            "companyName" => "LS COMERCIO LTDA"
+                           
                         ],
                         "address" => [
                             "streetLines" => [

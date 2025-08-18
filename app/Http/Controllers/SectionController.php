@@ -536,6 +536,13 @@ class SectionController extends Controller
      */
     public function processarEnvio(Request $request)
     {
+        // Log para debug - verificar todos os dados recebidos
+        Log::info('Dados recebidos em processarEnvio:', [
+            'all_data' => $request->all(),
+            'freight_value' => $request->freight_value,
+            'servico_entrega' => $request->servico_entrega
+        ]);
+        
         // Validar os dados de entrada
         try {
             $request->validate([
@@ -547,9 +554,9 @@ class SectionController extends Controller
                 'tipo_envio' => 'required|string',
                 
                 'origem_nome' => 'required|string',
-                'origem_endereco' => 'required|string',
-                'origem_cidade' => 'required|string',
-                'origem_estado' => 'required|string',
+                'origem_endereco' => 'nullable|string',
+                'origem_cidade' => 'nullable|string',
+                'origem_estado' => 'nullable|string',
                 'origem_cep' => 'required|string',
                 'origem_pais' => 'required|string',
                 'origem_telefone' => 'required|string',
@@ -569,6 +576,7 @@ class SectionController extends Controller
                 'comprimento' => 'required|numeric',
                 'peso_caixa' => 'required|numeric',
                 'servico_entrega' => 'required|string',
+                'freight_value' => 'nullable|numeric',
             ]);
         } catch (\Illuminate\Validation\ValidationException $e) {
             return response()->json([
@@ -638,8 +646,22 @@ class SectionController extends Controller
                 ];
             }
             
+            // Obter o valor do frete da requisição ou da sessão
+            $freightValue = $request->freight_value ?? 0;
+            if (!$freightValue) {
+                $servicoInfo = session('servico_selecionado');
+                $freightValue = $servicoInfo['valorTotalBRL'] ?? 0;
+            }
+            
+            // Log para debug
+            Log::info('Valor do frete obtido:', [
+                'freight_value_request' => $request->freight_value,
+                'freight_value_session' => $servicoInfo['valorTotalBRL'] ?? 'não encontrado',
+                'freight_value_final' => $freightValue
+            ]);
+            
             // Criar o envio usando a API da FedEx
-            $resultado = $this->criarEnvioFedEx($dadosRemetente, $dadosDestinatario, $dadosPacote, $dadosProdutos, $request->servico_entrega, $request->tipo_operacao, $request->tipo_pessoa, $request->tipo_envio);
+            $resultado = $this->criarEnvioFedEx($dadosRemetente, $dadosDestinatario, $dadosPacote, $dadosProdutos, $request->servico_entrega, $request->tipo_operacao, $request->tipo_pessoa, $request->tipo_envio, $freightValue);
             
             // Armazenar resultado na sessão para uso posterior
             session(['dados_envio' => [
@@ -690,8 +712,13 @@ class SectionController extends Controller
     /**
      * Cria o envio usando a API da FedEx
      */
-    private function criarEnvioFedEx($dadosRemetente, $dadosDestinatario, $dadosPacote, $dadosProdutos, $servicoEntrega, $tipoOperacao, $tipoPessoa, $tipoEnvio)
+    private function criarEnvioFedEx($dadosRemetente, $dadosDestinatario, $dadosPacote, $dadosProdutos, $servicoEntrega, $tipoOperacao, $tipoPessoa, $tipoEnvio, $freightValue = 0)
     {
+        // Log para debug - verificar se o valor está chegando
+        Log::info('Valor do frete recebido em criarEnvioFedEx:', [
+            'freightValue' => $freightValue,
+            'freightValue_type' => gettype($freightValue)
+        ]);
         // Usar as credenciais de produção configuradas no sistema
         $apiUrl = config('services.fedex.api_url');
         $clientId = config('services.fedex.client_id');
@@ -978,6 +1005,14 @@ class SectionController extends Controller
         try {
             $userId = \Illuminate\Support\Facades\Auth::check() ? \Illuminate\Support\Facades\Auth::id() : null;
             
+            // Log para debug antes de criar o shipment
+            Log::info('Criando shipment com freight_value:', [
+                'freight_value' => $freightValue,
+                'tracking_value_type' => gettype($freightValue),
+                'tracking_number' => $trackingNumber,
+                'user_id' => $userId
+            ]);
+            
             // Criar o registro principal do shipment
             $shipment = \App\Models\Shipment::create([
                 'user_id' => $userId,
@@ -998,6 +1033,7 @@ class SectionController extends Controller
                 'total_price' => 0, // Será calculado se necessário
                 'currency' => 'USD',
                 'total_price_brl' => 0, // Será calculado se necessário
+                'freight_value' => $freightValue, // Valor do frete escolhido pelo usuário
                 'ship_date' => $shipDate,
                 'is_simulation' => false,
                 'was_delivered' => false,
@@ -1525,7 +1561,7 @@ class SectionController extends Controller
      */
     public function apiInvoiceByShipment($shipment_id)
     {
-        $shipment = \App\Models\Shipment::with(['recipientAddress', 'senderAddress', 'items'])->find($shipment_id);
+        $shipment = \App\Models\Shipment::with(['recipientAddress', 'senderAddress', 'items', 'user.userProfile'])->find($shipment_id);
         if (!$shipment) {
             return response()->json(['success' => false, 'message' => 'Envio não encontrado.'], 404);
         }
@@ -1533,6 +1569,7 @@ class SectionController extends Controller
         $recipient = $shipment->recipientAddress;
         $sender = $shipment->senderAddress;
         $items = $shipment->items;
+        $userProfile = $shipment->user->userProfile ?? null;
         
         $cartoons = [];
         $total_qty = 0;
@@ -1555,6 +1592,26 @@ class SectionController extends Controller
         $net_weight_lbs = $shipment->net_weight_lbs ?? ($shipment->package_weight * 2.20462);
         $gross_weight_lbs = $shipment->gross_weight_lbs ?? ($shipment->package_weight * 2.20462);
         
+        // Montar endereço completo do remetente
+        $senderAddress = '';
+        if ($sender) {
+            $senderAddress = $sender->address;
+            if ($sender->address_complement) {
+                $senderAddress .= ', ' . $sender->address_complement;
+            }
+            $senderAddress .= ', ' . $sender->city . ' - ' . $sender->state . ' - ' . $sender->country;
+        }
+        
+        // Montar endereço completo do destinatário
+        $recipientAddress = '';
+        if ($recipient) {
+            $recipientAddress = $recipient->address;
+            if ($recipient->address_complement) {
+                $recipientAddress .= ', ' . $recipient->address_complement;
+            }
+            $recipientAddress .= ', ' . $recipient->city . ' - ' . $recipient->state . ' - ' . $recipient->country;
+        }
+        
         $invoice = [
             'invoice_number' => $shipment->id ? sprintf('#%05d', $shipment->id) : '#00000',
             'date' => $shipment->ship_date ? $shipment->ship_date->format('d/m/y') : now()->format('d/m/y'),
@@ -1564,28 +1621,26 @@ class SectionController extends Controller
             'marks' => 'N/A',
             'loading_airport' => 'VIRACOPOS (VCP)',
             'airport_of_discharge' => 'MIAMI AIRPORT (MIA)',
-            'selling_conditions' => 'DAB',
             'pages' => 1,
             'cartoons' => $cartoons,
             'total_qty' => $total_qty,
             'total_amount' => $total_amount,
-            'freight' => $shipment->freight_usd ?? 98,
+            'freight' => $shipment->freight_value ?? 98,
             'volumes' => $shipment->volumes ?? 1,
             'net_weight' => number_format($net_weight_lbs, 2),
             'gross_weight' => number_format($gross_weight_lbs, 2),
-            'container' => $shipment->container ?? 0,
             'sender' => [
-                'name' => $sender->name ?? 'LS COMÉRCIO ATACADISTA E VAREJISTA LTDA',
-                'address' => $sender->address ?? 'Rua 4, Pq Res. Dona Chiquinha, Cosmópolis - SP - Brazil',
-                'contact' => $sender->phone ?? '+55(19) 98116-6445 / envios@logiez.com.br',
-                'cnpj' => '48.103.206/0001-73',
+                'name' => $sender->name ?? ($userProfile->company_name ?? 'Remetente'),
+                'address' => $senderAddress,
+                'contact' => $sender->phone ?? ($userProfile->default_sender_phone ?? ''),
             ],
             'recipient' => [
                 'name' => $recipient->name ?? 'Destinatário',
-                'address' => $recipient->address ?? '',
+                'address' => $recipientAddress,
                 'city' => $recipient->city ?? '',
                 'state' => $recipient->state ?? '',
                 'country' => $recipient->country ?? '',
+                'contact' => $recipient->phone ?? '',
             ],
         ];
         
@@ -1598,7 +1653,7 @@ class SectionController extends Controller
     public function apiInvoicePdfByShipment($shipment_id)
     {
         ini_set('memory_limit', '512M');
-        $shipment = \App\Models\Shipment::with(['recipientAddress', 'senderAddress', 'items'])->find($shipment_id);
+        $shipment = \App\Models\Shipment::with(['recipientAddress', 'senderAddress', 'items', 'user.userProfile'])->find($shipment_id);
         if (!$shipment) {
             abort(404, 'Envio não encontrado.');
         }
@@ -1606,6 +1661,7 @@ class SectionController extends Controller
         $recipient = $shipment->recipientAddress;
         $sender = $shipment->senderAddress;
         $items = $shipment->items;
+        $userProfile = $shipment->user->userProfile ?? null;
         
         $cartoons = [];
         $total_qty = 0;
@@ -1628,6 +1684,26 @@ class SectionController extends Controller
         $net_weight_lbs = $shipment->net_weight_lbs ?? ($shipment->package_weight * 2.20462);
         $gross_weight_lbs = $shipment->gross_weight_lbs ?? ($shipment->package_weight * 2.20462);
         
+        // Montar endereço completo do remetente
+        $senderAddress = '';
+        if ($sender) {
+            $senderAddress = $sender->address;
+            if ($sender->address_complement) {
+                $senderAddress .= ', ' . $sender->address_complement;
+            }
+            $senderAddress .= ', ' . $sender->city . ' - ' . $sender->state . ' - ' . $sender->country;
+        }
+        
+        // Montar endereço completo do destinatário
+        $recipientAddress = '';
+        if ($recipient) {
+            $recipientAddress = $recipient->address;
+            if ($recipient->address_complement) {
+                $recipientAddress .= ', ' . $recipient->address_complement;
+            }
+            $recipientAddress .= ', ' . $recipient->city . ' - ' . $recipient->state . ' - ' . $recipient->country;
+        }
+        
         $invoice = [
             'invoice_number' => $shipment->id ? sprintf('#%05d', $shipment->id) : '#00000',
             'date' => $shipment->ship_date ? $shipment->ship_date->format('d/m/y') : now()->format('d/m/y'),
@@ -1637,28 +1713,26 @@ class SectionController extends Controller
             'marks' => 'N/A',
             'loading_airport' => 'VIRACOPOS (VCP)',
             'airport_of_discharge' => 'MIAMI AIRPORT (MIA)',
-            'selling_conditions' => 'DAB',
             'pages' => 1,
             'cartoons' => $cartoons,
             'total_qty' => $total_qty,
             'total_amount' => $total_amount,
-            'freight' => $shipment->freight_usd ?? 98,
+            'freight' => $shipment->freight_value ?? 98,
             'volumes' => $shipment->volumes ?? 1,
             'net_weight' => number_format($net_weight_lbs, 2),
             'gross_weight' => number_format($gross_weight_lbs, 2),
-            'container' => $shipment->container ?? 0,
             'sender' => [
-                'name' => $sender->name ?? 'LS COMÉRCIO ATACADISTA E VAREJISTA LTDA',
-                'address' => $sender->address ?? 'Rua 4, Pq Res. Dona Chiquinha, Cosmópolis - SP - Brazil',
-                'contact' => $sender->phone ?? '+55(19) 98116-6445 / envios@logiez.com.br',
-                'cnpj' => '48.103.206/0001-73',
+                'name' => $sender->name ?? ($userProfile->company_name ?? 'Remetente'),
+                'address' => $senderAddress,
+                'contact' => $sender->phone ?? ($userProfile->default_sender_phone ?? ''),
             ],
             'recipient' => [
                 'name' => $recipient->name ?? 'Destinatário',
-                'address' => $recipient->address ?? '',
+                'address' => $recipientAddress,
                 'city' => $recipient->city ?? '',
                 'state' => $recipient->state ?? '',
                 'country' => $recipient->country ?? '',
+                'contact' => $recipient->phone ?? '',
             ],
         ];
         

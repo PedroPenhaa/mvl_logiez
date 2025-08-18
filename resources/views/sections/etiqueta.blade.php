@@ -836,10 +836,9 @@
         <div class="border p-3 bg-white">
             <div class="row mb-2">
                 <div class="col-9 text-center">
-                    <strong>LS COMÉRCIO ATACADISTA E VAREJISTA LTDA</strong><br>
-                    Endereço: Rua 4, Pq Res. Dona Chiquinha, Cosmópolis - SP - Brazil<br>
-                    Contato: +55(19) 98116-6445 / envios@logiez.com.br<br>
-                    CNPJ: 48.103.206/0001-73
+                    <strong>${invoice.recipient.name}</strong><br>
+                    Endereço: ${invoice.recipient.address}<br>
+                    Contato: ${invoice.recipient.contact}
                 </div>
                 <div class="col-3 text-end">
                     <h5>COMMERCIAL INVOICE</h5>
@@ -864,8 +863,8 @@
                 <tr>
                     <td><b>Loading Airport<br>(Aeropuerto Embarque)</b><br>${invoice.loading_airport}</td>
                     <td><b>Airport of Discharge<br>(Aeropuerto Destino)</b><br>${invoice.airport_of_discharge}</td>
-                    <td><b>Selling Conditions</b><br>${invoice.selling_conditions}</td>
                     <td><b>Notify</b><br>THE SAME</td>
+                    <td></td>
                 </tr>
             </table>
             <table class="table table-bordered align-middle small">
@@ -906,10 +905,9 @@
                 </tbody>
             </table>
             <div class="row">
-                <div class="col-3"><b>Volumes:</b> ${invoice.volumes}</div>
-                <div class="col-3"><b>Net Weight(Neto):</b> ${invoice.net_weight} LBS</div>
-                <div class="col-3"><b>Container:</b> ${invoice.container}</div>
-                <div class="col-3"><b>Gross Weight (Bruto):</b> ${invoice.gross_weight} LBS</div>
+                <div class="col-4"><b>Volumes:</b> ${invoice.volumes}</div>
+                <div class="col-4"><b>Net Weight(Neto):</b> ${invoice.net_weight} LBS</div>
+                <div class="col-4"><b>Gross Weight (Bruto):</b> ${invoice.gross_weight} LBS</div>
             </div>
         </div>`;
         $('#invoice-content').html(html);
