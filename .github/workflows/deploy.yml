@@ -21,7 +21,7 @@ jobs:
           password: ${{ secrets.SERVER_PASS }}
           port: 22
           script: |
-            cd /home/logiezlogi/app
+            cd /web
             git pull origin main
             docker compose down
             docker compose up -d --build

@@ -33,7 +33,7 @@ Este projeto está configurado para deploy automático via GitHub Actions.
 1. **Push na branch main** → Dispara o workflow
 2. **GitHub Actions** → Conecta no servidor via SSH
 3. **Executa comandos**:
-   - `cd /home/logiezlogi/app`
+   - `cd /web`
    - `git pull origin main`
    - `docker compose down`
    - `docker compose up -d --build`
@@ -58,7 +58,7 @@ Se precisar fazer deploy manualmente no servidor:
 
 ```bash
 # No servidor
-cd /home/logiezlogi/app
+cd /web
 ./deploy.sh
 ```
 
@@ -77,7 +77,7 @@ cd /home/logiezlogi/app
 
 ### Erro no Docker
 - Verifique se o Docker está rodando no servidor
-- Confirme se o caminho `/home/logiezlogi/app` existe
+- Confirme se o caminho `/web` existe
 - Verifique os logs: `docker compose logs`
 
 ### Erro nas migrações

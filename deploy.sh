@@ -47,5 +47,6 @@ docker compose exec -T app php artisan view:cache
 echo "✅ Verificando status dos containers..."
 docker compose ps
 
+
 echo "🎉 Deploy concluído com sucesso!"
 echo "🌐 Aplicação disponível em: http://localhost"
