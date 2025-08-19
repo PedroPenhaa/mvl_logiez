@@ -13,19 +13,10 @@ use App\Models\UnidadeTributaria;
 class ProdutosController extends Controller
 {
     /**
-     * Retorna a lista de produtos do arquivo JSON com paginação e filtro
+     * Retorna a lista de produtos baseada na consulta do Gemini
      */
     public function getProdutos(Request $request)
     {
-        $jsonFilePath = storage_path('app/produtos_receita.json');
-        
-        if (!File::exists($jsonFilePath)) {
-            return response()->json([
-                'error' => 'Arquivo de produtos não encontrado',
-                'path' => $jsonFilePath
-            ], 404);
-        }
-        
         try {
             // Parâmetros da requisição
             $page = $request->input('page', 1);
@@ -39,100 +30,39 @@ class ProdutosController extends Controller
                 }
             }
             
-            $conteudo = File::get($jsonFilePath);
-            $todosProdutos = json_decode($conteudo, true);
+            // Extrair informações da busca
+            $buscaPorDescricao = is_array($search) && isset($search['descricao']) ? $search['descricao'] : '';
+            $buscaPorCodigo = is_array($search) && isset($search['codigo']) ? $search['codigo'] : '';
             
-            if (!is_array($todosProdutos)) {
-                
+            // Se não houver busca específica, retornar lista vazia
+            if (empty($buscaPorDescricao) && empty($buscaPorCodigo)) {
                 return response()->json([
-                    'error' => 'Erro ao decodificar JSON',
-                    'message' => 'O arquivo não contém JSON válido: ' . json_last_error_msg()
-                ], 500);
+                    'produtos' => [],
+                    'total' => 0,
+                    'page' => (int)$page,
+                    'limit' => (int)$limit,
+                    'totalPages' => 0
+                ]);
             }
             
-            // Aplicar filtro de busca se fornecido
-            if (!empty($search)) {
-                // Verificar se a busca é um objeto com descrição e código ou uma string simples
-                $buscaPorDescricao = is_array($search) && isset($search['descricao']) ? $search['descricao'] : '';
-                $buscaPorCodigo = is_array($search) && isset($search['codigo']) ? $search['codigo'] : '';
-                
-                // Caso especial para o NCM de Havaianas
-                if ($buscaPorCodigo === '6402.20.00') {
-                    
-                    $todosProdutos = array_filter($todosProdutos, function($produto) {
-                        // Verificar exatamente o NCM 6402.20.00
-                        return $produto['codigo'] === '6402.20.00';
-                    });
-                    
-                    // Reindexar array após filtro
-                    $todosProdutos = array_values($todosProdutos);
-                } 
-                // Filtro normal para outros casos
-                else {
-                    // Se a busca for uma string simples, buscar em ambos os campos
-                    if (!is_array($search)) {
-                        $buscaPorDescricao = $buscaPorCodigo = $search;
-                    }
-                    
-                    $todosProdutos = array_filter($todosProdutos, function($produto) use ($buscaPorDescricao, $buscaPorCodigo) {
-                        // Verificar correspondência por descrição
-                        $matchDescricao = empty($buscaPorDescricao) || stripos($produto['descricao'], $buscaPorDescricao) !== false;
-                        
-                        // Verificar correspondência por código NCM - com tratamento especial
-                        if (!empty($buscaPorCodigo)) {
-                            // Normalizar o código NCM para comparação (remover pontos)
-                            $codigoProdutoNormalizado = str_replace('.', '', $produto['codigo']);
-                            $buscaPorCodigoNormalizado = str_replace('.', '', $buscaPorCodigo);
-                            
-                            // Para NCMs completos (8 dígitos como 6402.20.00), verificar correspondência exata
-                            if (strlen($buscaPorCodigoNormalizado) >= 8) {
-                                // Comparação exata do início do código (ignora subcategorias)
-                                $matchCodigo = (substr($codigoProdutoNormalizado, 0, strlen($buscaPorCodigoNormalizado)) === $buscaPorCodigoNormalizado);
-                                
-                                // Case específico para Havaianas (6402.20.00)
-                                if ($buscaPorCodigo === '6402.20.00' && $produto['codigo'] === '6402.20.00') {
-                                    $matchCodigo = true;
-                                }
-                            }
-                            // Para NCMs parciais, verificar se o início corresponde
-                            else {
-                                $matchCodigo = (strpos($codigoProdutoNormalizado, $buscaPorCodigoNormalizado) === 0);
-                            }
-                        } else {
-                            $matchCodigo = true; // Se não houver código para busca, não filtrar por código
-                        }
-                        
-                        // Log para debug de cada comparação
-                        if (!empty($buscaPorCodigo) && $matchCodigo) {
-                        }
-                        
-                        // Retornar true se ambos os filtros aplicáveis encontrarem correspondência
-                        return $matchDescricao && $matchCodigo;
-                    });
-                    
-                    // Reindexar array após filtro
-                    $todosProdutos = array_values($todosProdutos);
-                }
-            }
-            
-            // Calcular total de produtos após aplicar filtro
-            $total = count($todosProdutos);
-            
-            // Aplicar paginação
-            $offset = ($page - 1) * $limit;
-            $produtos = array_slice($todosProdutos, $offset, $limit);
+            // Criar um produto baseado na busca
+            $produto = [
+                'codigo' => $buscaPorCodigo ?: '0000.00.00',
+                'descricao' => $buscaPorDescricao ?: 'Produto não especificado',
+                'valor' => 10.00 // Valor padrão
+            ];
             
             return response()->json([
-                'produtos' => $produtos,
-                'total' => $total,
+                'produtos' => [$produto],
+                'total' => 1,
                 'page' => (int)$page,
                 'limit' => (int)$limit,
-                'totalPages' => ceil($total / $limit)
+                'totalPages' => 1
             ]);
-        } catch (\Exception $e) {
             
+        } catch (\Exception $e) {
             return response()->json([
-                'error' => 'Erro ao ler o arquivo de produtos',
+                'error' => 'Erro ao processar busca de produtos',
                 'message' => $e->getMessage()
             ], 500);
         }

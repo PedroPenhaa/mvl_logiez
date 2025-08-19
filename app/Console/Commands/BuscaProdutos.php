@@ -155,10 +155,8 @@ class BuscaProdutos extends Command
             $this->info('Total de produtos após remoção de duplicidades: ' . count($produtosUnicos));
 
             //quero que salve todos os produtos no retorno.
-            $this->info('Salvando produtos em arquivo json...');
-            $jsonFilePath = storage_path('app/produtos_receita.json');
-            File::put($jsonFilePath, json_encode($produtosUnicos, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE));
-            $this->info("Arquivo json criado com sucesso em: {$jsonFilePath}");
+            $this->info('Produtos processados com sucesso!');
+            $this->info('Total de produtos únicos: ' . count($produtosUnicos));
 
             // Opcional: salvar o resultado filtrado
             //Storage::disk('local')->put('produtos_filtrados.json', json_encode($produtos, JSON_PRETTY_PRINT));

@@ -25,6 +25,9 @@ Route::post('consulta/gemini-cep', [GeminiCEPController::class, 'consultar'])->n
 // Rota para consultar unidade tributária pelo NCM
 Route::get('/unidade-tributaria', [ProdutosController::class, 'consultarUnidadeTributaria'])->name('api.unidade-tributaria');
 
+// Rota para buscar produtos (sem dependência do arquivo JSON)
+Route::get('/produtos', [ProdutosController::class, 'getProdutos'])->name('api.produtos.get');
+
 // Rotas para processamento de envio e pagamento
 Route::post('/envio/processar', [EnvioController::class, 'processar'])->name('api.envio.processar');
 Route::post('/envio/processar-confirmados', [EnvioController::class, 'processarConfirmados'])
