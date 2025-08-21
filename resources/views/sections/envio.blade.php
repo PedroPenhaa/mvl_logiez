@@ -199,6 +199,110 @@
         box-shadow: 0 8px 25px rgba(120, 90, 180, 0.10) !important;
     }
     
+    /* Estilos personalizados para o modal de aviso */
+    #modalAviso .modal-content {
+        animation: modalSlideIn 0.3s ease-out;
+    }
+    
+    /* Responsividade para o modal de aviso */
+    @media (max-width: 768px) {
+        #modalAviso .modal-dialog {
+            margin: 1rem;
+        }
+        
+        #modalAviso .col-md-3 {
+            margin-bottom: 1rem;
+        }
+        
+        #modalAviso .col-md-9 {
+            text-align: center;
+        }
+    }
+    
+    /* Estilos personalizados para o modal de confirmação */
+    #confirmarProdutoModal .modal-content {
+        animation: modalSlideIn 0.3s ease-out;
+    }
+    
+    #confirmarProdutoModal .modal-header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+    }
+    
+    #confirmarProdutoModal .card {
+        transition: all 0.3s ease;
+        border-radius: 12px;
+    }
+    
+    #confirmarProdutoModal .card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 25px rgba(120, 90, 180, 0.1);
+    }
+    
+    #confirmarProdutoModal .btn {
+        transition: all 0.3s ease;
+    }
+    
+    #confirmarProdutoModal .btn:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+    }
+    
+    #confirmarProdutoModal .badge {
+        font-size: 0.875rem;
+        padding: 0.5rem 0.75rem;
+    }
+    
+    /* Responsividade para o modal de confirmação */
+    @media (max-width: 768px) {
+        #confirmarProdutoModal .modal-dialog {
+            margin: 1rem;
+        }
+        
+        #confirmarProdutoModal .col-md-6 {
+            margin-bottom: 1rem;
+        }
+        
+        #confirmarProdutoModal .d-flex.gap-3 {
+            flex-direction: column;
+            gap: 0.5rem !important;
+        }
+        
+        #confirmarProdutoModal .btn {
+            width: 100%;
+        }
+    }
+    
+    @keyframes modalSlideIn {
+        from {
+            opacity: 0;
+            transform: translateY(-50px) scale(0.9);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0) scale(1);
+        }
+    }
+    
+    #modalAviso .modal-header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+    }
+    
+    #modalAviso .btn-primary {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+        border: none !important;
+        transition: all 0.3s ease;
+    }
+    
+    #modalAviso .btn-primary:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 15px rgba(118, 75, 162, 0.3);
+    }
+    
+    /* Transição suave para bordas */
+    .form-control {
+        transition: border-color 0.3s ease, box-shadow 0.3s ease;
+    }
+    
     /* Estilos para o card informativo colapsável */
     #info-card {
         transition: all 0.3s ease;
@@ -693,6 +797,15 @@
                                             </div>
                                         </div>
                                         <div class="col-lg-2 col-md-3 col-sm-6">
+                                            <label for="produto-peso" class="form-label fw-semibold">
+                                                <i class="fas fa-weight-hanging me-1 text-primary"></i>Peso Unitário *
+                                            </label>
+                                            <div class="input-group">
+                                                <input type="number" class="form-control" id="produto-peso" min="0" step="0.01" placeholder="0.00" required>
+                                                <span class="input-group-text bg-light">kg</span>
+                                            </div>
+                                        </div>
+                                        <div class="col-lg-2 col-md-3 col-sm-6">
                                             <label for="produto-unidade" class="form-label fw-semibold">
                                                 <i class="fas fa-balance-scale me-1 text-primary"></i>Unidade
                                             </label>
@@ -702,7 +815,7 @@
                                                 <option value="KG">KG - Quilograma</option>
                                             </select>
                                         </div>
-                                        <div class="col-lg-3 col-md-2 col-sm-6 d-flex align-items-end">
+                                        <div class="col-lg-2 col-md-2 col-sm-6 d-flex align-items-end">
                                             <button type="button" class="btn btn-success w-100" id="adicionar-produto">
                                                 <i class="fas fa-plus-circle me-2"></i>Adicionar Produto
                                             </button>
@@ -729,13 +842,17 @@
                                             <div class="d-flex gap-3">
                                                 <span class="badge bg-success fs-6">
                                                     <i class="fas fa-dollar-sign me-1"></i>
-                                                    Total: R$ <span id="valor-total">0.00</span>
+                                                    Valor Total: R$ <span id="valor-total">0.00</span>
                                                 </span>
-                                                <span class="badge bg-info fs-6">
+                                                <span class="badge bg-warning fs-6">
                                                     <i class="fas fa-weight-hanging me-1"></i>
-                                                    Peso: <span id="peso-total">0.00</span> kg
+                                                    Peso Líquido: <span id="peso-total">0.00</span> kg
                                                 </span>
                                             </div>
+                                        </div>
+                                        <div class="alert alert-info border-0 bg-light mb-3">
+                                            <i class="fas fa-info-circle me-2 text-primary"></i>
+                                            <strong>Peso Líquido:</strong> Soma total do peso de todos os produtos adicionados (sem incluir o peso das caixas/embalagens).
                                         </div>
                                         <div class="row g-3" id="produtos-cards"></div>
                                     </div>
@@ -2505,7 +2622,7 @@
                             // Armazenar dados adicionais para uso posterior
                             $(option).data('codigo', produto.codigo);
                             $(option).data('descricao', produto.descricao);
-                            $(option).data('peso', 0.5); // Valor padrão
+                            $(option).data('peso', 0.00); // Valor padrão
                             $(option).data('valor', 10); // Valor padrão
 
                             $('#produto-select').append(option);
@@ -2637,7 +2754,7 @@
                                 // Armazenar dados adicionais para uso posterior
                                 $(option).data('codigo', searchParams.codigo);
                                 $(option).data('descricao', descricaoLimpa);
-                                $(option).data('peso', 0.5); // Valor padrão
+                                $(option).data('peso', 0.00); // Valor padrão
                                 $(option).data('valor', 10); // Valor padrão
 
                                 $('#produto-select').append(option);
@@ -2773,6 +2890,7 @@
         function atualizarResumo() {
             valorTotal = 0;
             pesoTotal = 0;
+            pesoLiquido = 0;
 
             // Garantir que cada produto tenha valor_unitario
             produtos.forEach(function(produto) {
@@ -2782,16 +2900,17 @@
                 }
 
                 valorTotal += produto.valor * produto.quantidade;
-                pesoTotal += produto.peso * produto.quantidade;
+                pesoLiquido += produto.peso * produto.quantidade; // Peso líquido (apenas produtos)
             });
 
-            // Adicionar o peso das caixas
+            // Peso total inclui produtos + caixas
+            pesoTotal = pesoLiquido;
             caixas.forEach(function(caixa) {
                 pesoTotal += parseFloat(caixa.peso);
             });
 
             $('#valor-total').text(valorTotal.toFixed(2));
-            $('#peso-total').text(pesoTotal.toFixed(2));
+            $('#peso-total').text(pesoLiquido.toFixed(2));
 
             // Atualizando os campos ocultos para envio
             $('#produtos-json').val(JSON.stringify(produtos));
@@ -2959,29 +3078,92 @@
                 }
             }
 
+            // Verificar se o peso foi informado
+            const pesoInformado = parseFloat($('#produto-peso').val()) || 0;
+            const valorInformado = parseFloat($('#produto-valor').val()) || 0;
+            
+            if (isNaN(pesoInformado) || pesoInformado <= 0) {
+                // Mostrar modal de aviso para peso
+                $('#modal-aviso-titulo').text('Peso Necessário');
+                $('#modal-aviso-mensagem').text('Para continuar, precisamos que você informe o peso do produto.');
+                $('#modal-aviso-detalhes').text('O peso é essencial para calcular o frete corretamente e evitar problemas na entrega. Sem essa informação, não podemos prosseguir com o envio.');
+                $('#modal-aviso-icon').removeClass().addClass('fas fa-weight-hanging text-warning');
+                $('#modal-aviso-icon-body').removeClass().addClass('fas fa-weight-hanging text-warning');
+                const modalAviso = new bootstrap.Modal(document.getElementById('modalAviso'));
+                modalAviso.show();
+                
+                // Focar no campo de peso quando o modal for fechado
+                $('#modalAviso').off('hidden.bs.modal').on('hidden.bs.modal', function () {
+                    $('#produto-peso').focus();
+                    // Adicionar destaque visual no campo
+                    $('#produto-peso').addClass('border-warning');
+                    setTimeout(function() {
+                        $('#produto-peso').removeClass('border-warning');
+                    }, 2000);
+                });
+                return;
+            }
+            
+            // Verificar se o valor foi informado
+            if (isNaN(valorInformado) || valorInformado <= 0) {
+                // Mostrar modal de aviso para valor
+                $('#modal-aviso-titulo').text('Valor Necessário');
+                $('#modal-aviso-mensagem').text('Para continuar, precisamos que você informe o valor do produto.');
+                $('#modal-aviso-detalhes').text('O valor unitário deve ser maior que zero para a declaração da mercadoria e cálculo de impostos. Sem essa informação, não podemos prosseguir com o envio.');
+                $('#modal-aviso-icon').removeClass().addClass('fas fa-dollar-sign text-warning');
+                $('#modal-aviso-icon-body').removeClass().addClass('fas fa-dollar-sign text-warning');
+                const modalAviso = new bootstrap.Modal(document.getElementById('modalAviso'));
+                modalAviso.show();
+                
+                // Focar no campo de valor quando o modal for fechado
+                $('#modalAviso').off('hidden.bs.modal').on('hidden.bs.modal', function () {
+                    $('#produto-valor').focus();
+                    // Adicionar destaque visual no campo
+                    $('#produto-valor').addClass('border-warning');
+                    setTimeout(function() {
+                        $('#produto-valor').removeClass('border-warning');
+                    }, 2000);
+                });
+                return;
+            }
+            
+            // Verificar se a unidade foi selecionada
+            const unidade = $('#produto-unidade').val();
+            if (!unidade || unidade === '') {
+                // Mostrar modal de aviso para unidade
+                $('#modal-aviso-titulo').text('Unidade Necessária');
+                $('#modal-aviso-mensagem').text('Para continuar, precisamos que você selecione a unidade do produto.');
+                $('#modal-aviso-detalhes').text('A unidade é essencial para identificar corretamente o tipo de produto (UN para unidade ou KG para quilograma).');
+                $('#modal-aviso-icon').removeClass().addClass('fas fa-balance-scale text-warning');
+                $('#modal-aviso-icon-body').removeClass().addClass('fas fa-balance-scale text-warning');
+                const modalAviso = new bootstrap.Modal(document.getElementById('modalAviso'));
+                modalAviso.show();
+                
+                // Focar no campo de unidade quando o modal for fechado
+                $('#modalAviso').off('hidden.bs.modal').on('hidden.bs.modal', function () {
+                    $('#produto-unidade').focus();
+                    // Adicionar destaque visual no campo
+                    $('#produto-unidade').addClass('border-warning');
+                    setTimeout(function() {
+                        $('#produto-unidade').removeClass('border-warning');
+                    }, 2000);
+                });
+                return;
+            }
+
             if (produtoSelecionado && produtoSelecionado.id) {
 
                 const id = produtoSelecionado.id;
                 const codigo = produtoSelecionado.codigo || id;
                 const nome = produtoSelecionado.text || produtoSelecionado.nome;
-                const peso = produtoSelecionado.peso || 0.5;
-                const valorInformado = parseFloat($('#produto-valor').val()) || 0;
-                const unidade = $('#produto-unidade').val();
                 const quantidade = parseInt($('#produto-quantidade').val());
-
-                // Validar valor
-                if (isNaN(valorInformado) || valorInformado < 0) {
-                    alert('Por favor, informe um valor válido para o produto.');
-                    $('#produto-valor').focus();
-                    return;
-                }
 
                 // Armazenar o produto em uma variável global para uso após a confirmação
                 produtoEmConfirmacao = {
                     id: id,
                     codigo: codigo,
                     nome: nome,
-                    peso: peso,
+                    peso: pesoInformado,
                     valor: valorInformado,
                     quantidade: quantidade,
                     unidade: unidade
@@ -2991,6 +3173,7 @@
                 $('#modal-produto-nome').text(nome.split(' (NCM:')[0]); // Remover a parte do NCM do nome
                 $('#modal-produto-ncm').text(codigo);
                 $('#modal-produto-valor').text('R$ ' + valorInformado.toFixed(2));
+                $('#modal-produto-peso').text(pesoInformado.toFixed(2) + ' kg');
                 $('#modal-produto-unidade').text(unidade || 'Não especificada');
                 $('#modal-produto-quantidade').text(quantidade);
                 $('#modal-produto-total').text('R$ ' + (valorInformado * quantidade).toFixed(2));
@@ -3058,9 +3241,10 @@
             $('#busca-descricao').val('');
             $('#busca-codigo').val(''); // Garantir que o NCM seja limpo
 
-            // Limpar campos de quantidade, valor e unidade
+            // Limpar campos de quantidade, valor, peso e unidade
             $('#produto-quantidade').val(1);
             $('#produto-valor').val(0.00);
+            $('#produto-peso').val('');
             $('#produto-unidade').val('');
 
             // Limpar descrição do Gemini
@@ -3193,7 +3377,7 @@
             $('#altura').val(10);
             $('#largura').val(20);
             $('#comprimento').val(30);
-            $('#peso_caixa').val(0.5);
+            $('#peso_caixa').val(0.0);
 
             // Renderizar as caixas e atualizar o resumo
             renderizarCaixas();
@@ -5033,56 +5217,144 @@
 
 <!-- Modal de Confirmação de Produto -->
 <div class="modal fade" id="confirmarProdutoModal" tabindex="-1" aria-labelledby="confirmarProdutoModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content">
-            <div class="modal-header bg-primary text-white">
-                <h5 class="modal-title" id="confirmarProdutoModalLabel"><i class="fas fa-check-circle me-2"></i>Confirmar Adição de Produto</h5>
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content border-0 shadow-lg" style="border-radius: 15px;">
+            <div class="modal-header border-0 bg-gradient-primary text-white" style="border-radius: 15px 15px 0 0;">
+                <div class="d-flex align-items-center w-100">
+                    <div class="flex-shrink-0 me-3">
+                        <i class="fas fa-check-circle fs-3"></i>
+                    </div>
+                    <div class="flex-grow-1">
+                        <h5 class="modal-title mb-0 fw-bold" id="confirmarProdutoModalLabel">
+                            Confirmar Adição de Produto
+                        </h5>
+                        <small class="opacity-75">Verifique as informações antes de confirmar</small>
+                    </div>
+                </div>
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Fechar"></button>
             </div>
-            <div class="modal-body">
-                <div class="alert alert-info mb-3">
-                    <i class="fas fa-info-circle me-2"></i> Verifique as informações abaixo antes de confirmar a adição do produto.
+            <div class="modal-body py-4">
+                <div class="alert alert-light border-start border-primary border-4 ps-3 mb-4">
+                    <div class="d-flex align-items-start">
+                        <i class="fas fa-info-circle text-primary me-2 mt-1"></i>
+                        <div>
+                            <strong class="text-dark">Confirmação de Produto</strong>
+                            <p class="mb-0 text-muted small">Verifique as informações abaixo antes de confirmar a adição do produto ao seu envio.</p>
+                        </div>
+                    </div>
                 </div>
-                <div class="table-responsive">
-                    <table class="table table-bordered table-hover">
-                        <tbody>
-                            <tr class="bg-light">
-                                <th width="30%" class="align-middle"><i class="fas fa-box me-2"></i>Produto:</th>
-                                <td id="modal-produto-nome" class="fw-bold"></td>
-                            </tr>
-                            <tr>
-                                <th class="align-middle"><i class="fas fa-barcode me-2"></i>NCM:</th>
-                                <td id="modal-produto-ncm"></td>
-                            </tr>
-                            <tr>
-                                <th class="align-middle"><i class="fas fa-dollar-sign me-2"></i>Valor:</th>
-                                <td id="modal-produto-valor" class="text-success fw-bold"></td>
-                            </tr>
-                            <tr>
-                                <th class="align-middle"><i class="fas fa-balance-scale me-2"></i>Unidade:</th>
-                                <td id="modal-produto-unidade"></td>
-                            </tr>
-                            <tr>
-                                <th class="align-middle"><i class="fas fa-sort-amount-up me-2"></i>Quantidade:</th>
-                                <td id="modal-produto-quantidade"></td>
-                            </tr>
-                            <tr class="bg-light">
-                                <th class="align-middle"><i class="fas fa-calculator me-2"></i>Total:</th>
-                                <td id="modal-produto-total" class="text-success fw-bold"></td>
-                            </tr>
-                        </tbody>
-                    </table>
+                <div class="row g-4">
+                    <div class="col-md-6">
+                        <div class="card border-0 bg-light h-100">
+                            <div class="card-body p-4">
+                                <h6 class="card-title text-primary fw-bold mb-3">
+                                    <i class="fas fa-box me-2"></i>Informações do Produto
+                                </h6>
+                                <div class="d-flex justify-content-between align-items-center mb-3">
+                                    <span class="text-muted fw-semibold">Nome:</span>
+                                    <span id="modal-produto-nome" class="fw-bold text-dark"></span>
+                                </div>
+                                <div class="d-flex justify-content-between align-items-center mb-3">
+                                    <span class="text-muted fw-semibold">NCM:</span>
+                                    <span id="modal-produto-ncm" class="badge bg-secondary"></span>
+                                </div>
+                                <div class="d-flex justify-content-between align-items-center mb-3">
+                                    <span class="text-muted fw-semibold">Unidade:</span>
+                                    <span id="modal-produto-unidade" class="fw-bold"></span>
+                                </div>
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <span class="text-muted fw-semibold">Quantidade:</span>
+                                    <span id="modal-produto-quantidade" class="badge bg-primary fs-6"></span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="card border-0 bg-light h-100">
+                            <div class="card-body p-4">
+                                <h6 class="card-title text-success fw-bold mb-3">
+                                    <i class="fas fa-calculator me-2"></i>Valores e Peso
+                                </h6>
+                                <div class="d-flex justify-content-between align-items-center mb-3">
+                                    <span class="text-muted fw-semibold">Valor Unitário:</span>
+                                    <span id="modal-produto-valor" class="text-success fw-bold fs-5"></span>
+                                </div>
+                                <div class="d-flex justify-content-between align-items-center mb-3">
+                                    <span class="text-muted fw-semibold">Peso Unitário:</span>
+                                    <span id="modal-produto-peso" class="text-info fw-bold fs-5"></span>
+                                </div>
+                                <hr class="my-3">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <span class="text-muted fw-semibold fs-6">Valor Total:</span>
+                                    <span id="modal-produto-total" class="text-success fw-bold fs-4"></span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal" id="cancelarProdutoBtn">
-                    <i class="fas fa-times me-2"></i>Cancelar
-                </button>
-                <button type="button" class="btn btn-outline-primary" id="editarProdutoBtn">
-                    <i class="fas fa-edit me-2"></i>Editar
-                </button>
-                <button type="button" class="btn btn-success" id="confirmarProdutoBtn">
-                    <i class="fas fa-check me-2"></i>Confirmar
+            <div class="modal-footer border-0 justify-content-center pb-4">
+                <div class="d-flex gap-3">
+                    <button type="button" class="btn btn-outline-secondary px-4 py-2 fw-bold" data-bs-dismiss="modal" id="cancelarProdutoBtn" style="border-radius: 25px; min-width: 120px;">
+                        <i class="fas fa-times me-2"></i>Cancelar
+                    </button>
+                    <button type="button" class="btn btn-outline-primary px-4 py-2 fw-bold" id="editarProdutoBtn" style="border-radius: 25px; min-width: 120px;">
+                        <i class="fas fa-edit me-2"></i>Editar
+                    </button>
+                    <button type="button" class="btn btn-success px-5 py-2 fw-bold" id="confirmarProdutoBtn" style="border-radius: 25px; min-width: 140px;">
+                        <i class="fas fa-check me-2"></i>Confirmar Produto
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal de Aviso Personalizado -->
+<div class="modal fade" id="modalAviso" tabindex="-1" aria-labelledby="modalAvisoLabel" aria-hidden="true" data-bs-backdrop="static">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content border-0 shadow-lg" style="border-radius: 15px;">
+            <div class="modal-header border-0 bg-gradient-primary text-white" style="border-radius: 15px 15px 0 0;">
+                <div class="d-flex align-items-center w-100">
+                    <div class="flex-shrink-0 me-3">
+                        <i id="modal-aviso-icon" class="fas fa-exclamation-triangle fs-3"></i>
+                    </div>
+                    <div class="flex-grow-1">
+                        <h5 class="modal-title mb-0 fw-bold" id="modalAvisoLabel">
+                            <span id="modal-aviso-titulo">Aviso</span>
+                        </h5>
+                    </div>
+                </div>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Fechar"></button>
+            </div>
+            <div class="modal-body py-4">
+                <div class="row align-items-center">
+                    <div class="col-md-3 text-center">
+                        <div class="bg-gradient-warning rounded-circle d-inline-flex align-items-center justify-content-center shadow-sm" style="width: 100px; height: 100px; background: linear-gradient(135deg, #ffc107 0%, #ff8c00 100%);">
+                            <i id="modal-aviso-icon-body" class="fas fa-weight-hanging text-white fs-1"></i>
+                        </div>
+                    </div>
+                    <div class="col-md-9">
+                        <h5 class="text-dark fw-bold mb-3" id="modal-aviso-mensagem">
+                            Mensagem de aviso
+                        </h5>
+                        <div class="alert alert-light border-start border-warning border-4 ps-3">
+                            <div class="d-flex align-items-start">
+                                <i class="fas fa-info-circle text-warning me-2 mt-1"></i>
+                                <div>
+                                    <strong class="text-dark">Por que isso é importante?</strong>
+                                    <p class="mb-0 text-muted small" id="modal-aviso-detalhes">
+                                        Informações detalhadas sobre a importância deste campo.
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer border-0 justify-content-center pb-4">
+                <button type="button" class="btn btn-primary px-5 py-3 fw-bold" data-bs-dismiss="modal" style="border-radius: 30px; min-width: 180px; font-size: 1.1rem;">
+                    <i class="fas fa-check me-2"></i>Entendi, vou informar
                 </button>
             </div>
         </div>
