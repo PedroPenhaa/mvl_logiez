@@ -107,7 +107,7 @@ Route::prefix('api')->name('api.')->group(function () {
     Route::post('/pagamento/processar', [SectionController::class, 'processarPagamento'])->name('pagamento.processar');
     Route::post('/rastreamento/buscar', [SectionController::class, 'buscarRastreamento'])->name('rastreamento.buscar');
     Route::post('/rastreamento/comprovante', [SectionController::class, 'solicitarComprovanteEntrega'])->name('rastreamento.comprovante');
-    Route::post('/perfil/atualizar', [SectionController::class, 'atualizarPerfil'])->name('perfil.atualizar');
+    Route::post('/perfil/atualizar', [SectionController::class, 'atualizarPerfil'])->name('perfil.atualizar')->middleware(['web', 'auth']);
 
     // Rota para processar o envio
   //  Route::post('/envio/processar', [EnvioController::class, 'processar'])->name('envio.processar');

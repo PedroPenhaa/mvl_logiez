@@ -165,51 +165,26 @@ class SectionController extends Controller
         // Tentar carregar o perfil do usuário se existir
         $userProfile = $user->profile ?? null;
         
-        // Extrair CPF do campo company_name temporariamente
-        $cpf = 'Não informado';
-        if ($userProfile && !empty($userProfile->company_name) && strpos($userProfile->company_name, 'CPF:') === 0) {
-            $cpf = substr($userProfile->company_name, 4); // Remover o prefixo 'CPF:'
-        }
+        // Obter CPF do campo document_number da tabela users
+        $cpf = $user->document_number ?? 'Não informado';
         
-        // Analisar o endereço se estiver em formato combinado
-        $rua = '';
-        $numero = '';
-        $complemento = '';
-        
-        if ($userProfile && !empty($userProfile->address)) {
-            // Tentar extrair número e complemento do endereço
-            $endereco = $userProfile->address;
-            $partes = explode(',', $endereco, 2);
-            
-            if (count($partes) > 1) {
-                $rua = trim($partes[0]);
-                $restante = trim($partes[1]);
-                
-                // Verificar se há complemento
-                $partes_complemento = explode('-', $restante, 2);
-                if (count($partes_complemento) > 1) {
-                    $numero = trim($partes_complemento[0]);
-                    $complemento = trim($partes_complemento[1]);
-                } else {
-                    $numero = $restante;
-                }
-            } else {
-                $rua = $endereco;
-            }
-        }
+        // Obter dados do endereço dos campos separados
+        $rua = $user->address ?? '';
+        $numero = $user->address_number ?? '';
+        $complemento = $user->address_complement ?? '';
         
         // Formatar os dados do usuário para exibição
         $userData = [
             'nome' => $user->name,
             'email' => $user->email,
             'cpf' => $cpf,
-            'telefone' => $userProfile->phone ?? 'Não informado',
+            'telefone' => $user->phone ?? 'Não informado',
             'rua' => $rua,
             'numero' => $numero,
             'complemento' => $complemento,
-            'cidade' => $userProfile->city ?? 'Não informado',
-            'estado' => $userProfile->state ?? 'Não informado',
-            'cep' => $userProfile->zip_code ?? 'Não informado',
+            'cidade' => $user->city ?? 'Não informado',
+            'estado' => $user->state ?? 'Não informado',
+            'cep' => $user->postal_code ?? 'Não informado',
             'data_cadastro' => $user->created_at ? $user->created_at->format('d/m/Y') : 'Não informado'
         ];
         
@@ -1422,13 +1397,42 @@ class SectionController extends Controller
         $user = \Illuminate\Support\Facades\Auth::user();
         
         try {
-            // Atualizar apenas os campos que existem na tabela users (name e email)
+            // 1. ATUALIZAR TABELA USERS
             if ($user instanceof \App\Models\User) {
                 $user->name = $request->nome;
                 $user->email = $request->email;
+                $user->document_number = $request->cpf; // CPF
+                $user->phone = $request->telefone; // Telefone
+                $user->address = $request->rua; // Rua
+                $user->address_number = $request->numero; // Número
+                $user->address_complement = $request->complemento; // Complemento
+                $user->city = $request->cidade; // Cidade
+                $user->state = $request->estado; // Estado
+                $user->postal_code = $request->cep; // CEP
+                $user->country = 'BR'; // País
+                
+                // Log para debug
+                \Illuminate\Support\Facades\Log::info('Salvando dados na tabela users:', [
+                    'user_id' => $user->id,
+                    'name' => $user->name,
+                    'email' => $user->email,
+                    'document_number' => $user->document_number,
+                    'phone' => $user->phone,
+                    'address' => $user->address,
+                    'address_number' => $user->address_number,
+                    'address_complement' => $user->address_complement,
+                    'city' => $user->city,
+                    'state' => $user->state,
+                    'postal_code' => $user->postal_code
+                ]);
+                
                 $user->save();
+                
+                // Log após salvar
+                \Illuminate\Support\Facades\Log::info('Dados salvos na tabela users com sucesso');
             }
             
+            // 2. ATUALIZAR TABELA USER_PROFILES
             // Verificar se o usuário tem um perfil, se não tiver, criar um
             $userProfile = $user->profile;
             if (!$userProfile) {
@@ -1436,7 +1440,7 @@ class SectionController extends Controller
                 $userProfile->user_id = $user->id;
             }
             
-            // Construir endereço completo
+            // Construir endereço completo para user_profiles
             $endereco = $request->rua;
             if ($request->numero) {
                 $endereco .= ', ' . $request->numero;
@@ -1445,19 +1449,30 @@ class SectionController extends Controller
                 $endereco .= ' - ' . $request->complemento;
             }
             
-            // Como não temos uma coluna específica para CPF,
-            // vamos armazenar temporariamente no campo company_name
-            // Nota: Esta é uma solução temporária até que a estrutura do banco seja atualizada
-            $userProfile->company_name = 'CPF:' . $request->cpf;
-            
-            // Atualizar o perfil com as informações usando os campos existentes na tabela
+            // Atualizar o perfil com as informações
             $userProfile->phone = $request->telefone;
             $userProfile->address = $endereco;
             $userProfile->city = $request->cidade;
             $userProfile->state = $request->estado;
             $userProfile->zip_code = $request->cep;
             $userProfile->country = 'BR';
+            $userProfile->company_name = 'CPF:' . $request->cpf; // Manter compatibilidade
+            
+            // Log para debug
+            \Illuminate\Support\Facades\Log::info('Salvando dados na tabela user_profiles:', [
+                'user_id' => $userProfile->user_id,
+                'phone' => $userProfile->phone,
+                'address' => $userProfile->address,
+                'city' => $userProfile->city,
+                'state' => $userProfile->state,
+                'zip_code' => $userProfile->zip_code,
+                'company_name' => $userProfile->company_name
+            ]);
+            
             $userProfile->save();
+            
+            // Log após salvar
+            \Illuminate\Support\Facades\Log::info('Dados salvos na tabela user_profiles com sucesso');
             
             // Formatar dados para retorno
             $userData = [
