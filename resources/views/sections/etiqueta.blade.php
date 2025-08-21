@@ -560,101 +560,7 @@
             return;
         }
 
-        // Função para exibir etiqueta no modal
-        function exibirEtiqueta(envio) {
-            
-            // Preencher os dados da etiqueta no modal
-            $('#etiqueta-codigo').text(envio.trackingNumber);
-            $('#etiqueta-tracking').text(envio.trackingNumber);
-            $('#link-rastreamento').attr('href', `/rastreamento?codigo=${envio.trackingNumber}`);
-            
-            // Exibir ou esconder aviso de simulação
-            $('#simulacao-aviso').toggle(envio.simulado === true);
-            
-            // Mostrar data de criação formatada
-            const dataCriacao = new Date(envio.dataCriacao);
-            $('#etiqueta-data').text(
-                dataCriacao.toLocaleDateString('pt-BR', {
-                    day: '2-digit',
-                    month: '2-digit',
-                    year: 'numeric'
-                })
-            );
-            
-            // Mostrar serviço contratado
-            const servicosNomes = {
-                'FEDEX_INTERNATIONAL_PRIORITY': 'FedEx International Priority',
-                'FEDEX_INTERNATIONAL_ECONOMY': 'FedEx International Economy',
-                'INTERNATIONAL_PRIORITY_EXPRESS': 'International Priority Express',
-                'INTERNATIONAL_PRIORITY': 'International Priority',
-                'INTERNATIONAL_ECONOMY': 'International Economy'
-            };
-            
-            $('#etiqueta-servico').text(servicosNomes[envio.servicoContratado] || envio.servicoContratado);
-            
-            // Verificar se temos dados completos do envio
-            if (envio.dados) {
-                const pesoTotal = envio.dados.pesoTotal || '0.00';
-                $('#etiqueta-peso').text(pesoTotal + ' kg');
-                
-                // Preencher dados do remetente, se disponíveis
-                if (envio.dados.remetente) {
-                    const remetente = envio.dados.remetente;
-                    $('#etiqueta-remetente').text(remetente.nome);
-                    $('#etiqueta-endereco-remetente').text(remetente.endereco + (remetente.complemento ? ', ' + remetente.complemento : ''));
-                    $('#etiqueta-cidade-remetente').text(remetente.cidade + ', ' + remetente.estado + ' - ' + remetente.cep);
-                    $('#etiqueta-pais-remetente').text(remetente.pais);
-                    $('#etiqueta-telefone-remetente').text('Tel: ' + remetente.telefone);
-                }
-                
-                // Preencher dados do destinatário, se disponíveis
-                if (envio.dados.destinatario) {
-                    const destinatario = envio.dados.destinatario;
-                    $('#etiqueta-destinatario').text(destinatario.nome);
-                    $('#etiqueta-endereco-destinatario').text(destinatario.endereco + (destinatario.complemento ? ', ' + destinatario.complemento : ''));
-                    $('#etiqueta-cidade-destinatario').text(destinatario.cidade + ', ' + destinatario.estado + ' - ' + destinatario.cep);
-                    $('#etiqueta-pais-destinatario').text(destinatario.pais);
-                    $('#etiqueta-telefone-destinatario').text('Tel: ' + destinatario.telefone);
-                }
-            }
-            
-            // Exibir a etiqueta (iframe ou QR code)
-            const iframeContainer = $('#etiqueta-iframe-container');
-            iframeContainer.empty();
-            
-            if (envio.labelUrl) {
-                if (envio.labelUrl.includes('api.qrserver.com')) {
-                    // É um QR code (simulação)
-                    iframeContainer.html(`
-                        <img src="${envio.labelUrl}" class="img-fluid" style="max-width: 300px;">
-                        <p class="mt-2 text-muted">QR Code para o número de rastreamento</p>
-                    `);
-                } else {
-                    // É uma etiqueta real
-                    iframeContainer.html(`
-                        <iframe src="${envio.labelUrl}" width="100%" height="500px" frameborder="0"></iframe>
-                    `);
-                }
-                
-                // Atualizar link de download
-                $('#download-etiqueta-btn').attr('href', envio.labelUrl);
-            } else {
-                // Sem URL de etiqueta, mostrar mensagem
-                iframeContainer.html(`
-                    <div class="alert alert-warning">
-                        <i class="fas fa-exclamation-triangle me-2"></i> 
-                        Etiqueta não disponível para visualização. Use o número de rastreamento para acompanhar seu envio.
-                    </div>
-                `);
-                
-                // Desabilitar botão de download
-                $('#download-etiqueta-btn').addClass('disabled').removeAttr('href');
-            }
-            
-            // Abrir o modal
-            const etiquetaModal = new bootstrap.Modal(document.getElementById('etiqueta-modal'));
-            etiquetaModal.show();
-        }
+
 
         // ========== HANDLERS DE EVENTOS ==========
         // Handler do botão de busca
@@ -693,7 +599,7 @@
                     // ABRIR ETIQUETA EM NOVA ABA
                     window.open(data.labelUrl, '_blank');
                     
-                    showAlert('success', 'Etiqueta encontrada!');
+                    showAlert('success', 'Etiqueta encontrada e aberta em nova aba!');
                     atualizarTabelaEtiqueta(data);
                     $('#sem-etiquetas').hide();
                     $('#etiquetas-disponiveis').show();
@@ -762,7 +668,7 @@
                             }
                         });
 
-                        exibirEtiqueta(response);
+                        showAlert('success', 'Etiqueta aberta em nova aba!');
                     } else {
                         showAlert('warning', 'Etiqueta não encontrada ou erro na FedEx.');
                     }
@@ -802,13 +708,7 @@
             });
         });
 
-        // Handler para imprimir etiqueta
-        $('#imprimir-modal-btn').on('click', function() {
-            const iframe = document.querySelector('#etiqueta-iframe-container iframe');
-            if (iframe) {
-                iframe.contentWindow.print();
-            }
-        });
+
 
         // Handler para mostrar todas as etiquetas
         $('#mostrar-todos-btn').on('click', function() {
