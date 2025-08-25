@@ -15,7 +15,7 @@
             <p class="text-muted" style="font-size: 14px; font-weight: 300; color: #6B7280; text-align: left; margin: 0;">Simplificamos envios internacionais, sem burocracia e com redução de custos</p>
         </div>
         <div class="header-logo order-1 order-md-2">
-            <img src="{{ asset('img/logo_dashboard.png') }}" alt="Logo Header" class="img-fluid" style="min-height: 130px; min-width: 104%; margin-top: -17px;">
+            <img src="{{ asset('img/logo_dashboard.avif') }}" alt="Logo Header" class="img-fluid" style="min-height: 130px; min-width: 104%; margin-top: -17px;">
         </div>
     </div>
 
