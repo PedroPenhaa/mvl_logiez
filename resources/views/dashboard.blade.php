@@ -28,7 +28,7 @@
             <div class="row g-4">
                 <div class="col-md-6 order-2 order-md-1">
                     <div class="position-relative feature-image-container">
-                        <img src="{{ asset('img/login3.png') }}" alt="Boxes" class="feature-image">
+                        <img src="{{ asset('img/login3.avif') }}" alt="Boxes" class="feature-image">
                     </div>
                 </div>
                 <div class="col-md-6 order-1 order-md-2">
