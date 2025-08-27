@@ -30,6 +30,7 @@ Route::get('/produtos', [ProdutosController::class, 'getProdutos'])->name('api.p
 
 // Rotas para processamento de envio e pagamento
 Route::post('/envio/processar', [EnvioController::class, 'processar'])->name('api.envio.processar');
+Route::post('/envio/processar-completo', [EnvioController::class, 'processarEnvioCompleto'])->name('api.envio.processar-completo');
 Route::post('/envio/processar-confirmados', [EnvioController::class, 'processarConfirmados'])
     ->middleware('auth:api')
     ->name('api.envio.processar-confirmados'); 

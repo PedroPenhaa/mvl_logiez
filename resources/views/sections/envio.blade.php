@@ -4948,11 +4948,14 @@
         
         // Enviar para processamento
         $.ajax({
-            url: '/processar-pagamento',
+            url: '/api/envio/processar-completo',
             type: 'POST',
             data: formData,
             processData: false,
             contentType: false,
+            headers: {
+                'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+            },
             success: function(response) {
                 if (response.success) {
                     // Verificar se é pagamento PIX ou cartão de crédito
@@ -4991,26 +4994,26 @@
                                         <div class="row">
                                             <div class="col-md-6">
                                                 <p><strong>Tracking Number:</strong></p>
-                                                <h4 class="text-primary">${response.tracking_number || 'N/A'}</h4>
+                                                <h4 class="text-primary">${response.shipment.tracking_number || 'N/A'}</h4>
                                             </div>
                                             <div class="col-md-6">
                                                 <p><strong>Shipment ID:</strong></p>
-                                                <p class="text-muted">${response.shipment_id || 'N/A'}</p>
+                                                <p class="text-muted">${response.shipment.id || 'N/A'}</p>
                                             </div>
                                         </div>
                                         <div class="row mt-3">
                                             <div class="col-md-6">
-                                                <p><strong>Serviço:</strong></p>
-                                                <p class="text-muted">${response.servico_contratado || 'N/A'}</p>
+                                                <p><strong>Status:</strong></p>
+                                                <p class="text-muted">${response.shipment.status || 'N/A'}</p>
                                             </div>
                                             <div class="col-md-6">
                                                 <p><strong>Data de Criação:</strong></p>
-                                                <p class="text-muted">${response.data_criacao || 'N/A'}</p>
+                                                <p class="text-muted">${response.shipment.created_at || 'N/A'}</p>
                                             </div>
                                         </div>
-                                        ${response.label_url ? `
+                                        ${response.shipment.label_url ? `
                                         <div class="mt-3">
-                                            <a href="${response.label_url}" target="_blank" class="btn btn-outline-primary">
+                                            <a href="${response.shipment.label_url}" target="_blank" class="btn btn-outline-primary">
                                                 <i class="fas fa-download me-2"></i>Baixar Etiqueta
                                             </a>
                                         </div>

@@ -28,6 +28,8 @@ use Exception;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 use GuzzleHttp\Client;
+use App\Models\SavedAddress;
+use App\Models\ActivityLog;
 
 class EnvioController extends Controller
 {
@@ -1016,4 +1018,351 @@ class EnvioController extends Controller
             ], 500);
         }
     }
+
+    /**
+     * Processa o envio completo na etapa 6 (após confirmação de pagamento)
+     * Este método garante que todas as informações sejam salvas corretamente no banco
+     * e que o envio seja processado na FedEx
+     */
+    public function processarEnvioCompleto(Request $request)
+    {
+        try {
+            // Log para debug
+            Log::info('Iniciando processamento completo de envio na etapa 6:', [
+                'request_data' => $request->all(),
+                'user_id' => Auth::id()
+            ]);
+
+            // Validar dados essenciais
+            $request->validate([
+                'produtos_json' => 'required|string',
+                'caixas_json' => 'required|string',
+                'valor_total' => 'required|numeric|min:0',
+                'peso_total' => 'required|numeric|min:0',
+                'tipo_envio' => 'required|string|in:venda,amostra,pessoal',
+                'tipo_pessoa' => 'required|string|in:pf,pj',
+                'tipo_operacao' => 'required|string|in:enviar,receber',
+                'servico_entrega' => 'required|string',
+                'freight_value' => 'required|numeric|min:0',
+                
+                // Dados de origem
+                'origem_nome' => 'required|string|max:255',
+                'origem_endereco' => 'required|string|max:255',
+                'origem_cidade' => 'required|string|max:100',
+                'origem_estado' => 'required|string|max:50',
+                'origem_cep' => 'required|string|max:20',
+                'origem_pais' => 'required|string|max:2',
+                'origem_telefone' => 'required|string|max:20',
+                'origem_email' => 'required|email|max:255',
+                
+                // Dados de destino
+                'destino_nome' => 'required|string|max:255',
+                'destino_endereco' => 'required|string|max:255',
+                'destino_cidade' => 'required|string|max:100',
+                'destino_estado' => 'required|string|max:50',
+                'destino_cep' => 'required|string|max:20',
+                'destino_pais' => 'required|string|max:2',
+                'destino_telefone' => 'required|string|max:20',
+                'destino_email' => 'required|email|max:255',
+                
+                // Dimensões da caixa
+                'altura' => 'required|numeric|min:0',
+                'largura' => 'required|numeric|min:0',
+                'comprimento' => 'required|numeric|min:0',
+                'peso_caixa' => 'required|numeric|min:0',
+                
+                // Dados de pagamento
+                'payment_method' => 'required|string|in:credit_card,pix,boleto',
+            ]);
+
+            // Decodificar JSONs
+            $produtos = json_decode($request->produtos_json, true);
+            $caixas = json_decode($request->caixas_json, true);
+
+            if (empty($produtos)) {
+                throw new \Exception('Nenhum produto informado para o envio.');
+            }
+
+            if (empty($caixas)) {
+                throw new \Exception('Nenhuma caixa informada para o envio.');
+            }
+
+            // Iniciar transação do banco de dados
+            DB::beginTransaction();
+
+            try {
+                // 1. CRIAR REGISTRO PRINCIPAL DO ENVIO
+                $shipment = new Shipment();
+                $shipment->user_id = Auth::id();
+                $shipment->carrier = 'FEDEX';
+                $shipment->service_code = $request->servico_entrega;
+                $shipment->service_name = $this->getServiceName($request->servico_entrega);
+                $shipment->package_height = $request->altura;
+                $shipment->package_width = $request->largura;
+                $shipment->package_length = $request->comprimento;
+                $shipment->package_weight = $request->peso_total;
+                $shipment->total_price = $request->freight_value;
+                $shipment->currency = 'USD';
+                $shipment->total_price_brl = $request->freight_value;
+                $shipment->freight_value = $request->freight_value;
+                $shipment->status = 'pending_fedex';
+                $shipment->status_description = 'Aguardando processamento na FedEx';
+                $shipment->last_status_update = now();
+                $shipment->ship_date = now();
+                $shipment->estimated_delivery_date = now()->addDays(7);
+                $shipment->is_simulation = false;
+                $shipment->was_delivered = false;
+                $shipment->has_issues = false;
+                $shipment->tipo_envio = $request->tipo_envio;
+                $shipment->tipo_pessoa = $request->tipo_pessoa;
+                $shipment->tipo_operacao = $request->tipo_operacao;
+                $shipment->notes = 'Envio criado via etapa 6 - processamento completo';
+                $shipment->additional_data = json_encode([
+                    'payment_method' => $request->payment_method,
+                    'created_at_step' => 6,
+                    'user_agent' => $request->header('User-Agent'),
+                    'ip_address' => $request->ip()
+                ]);
+                $shipment->save();
+
+                Log::info('Shipment criado com sucesso:', ['shipment_id' => $shipment->id]);
+
+                // 2. SALVAR ENDEREÇO DO REMETENTE
+                $senderAddress = new SenderAddress();
+                $senderAddress->shipment_id = $shipment->id;
+                $senderAddress->name = $request->origem_nome;
+                $senderAddress->phone = $request->origem_telefone;
+                $senderAddress->email = $request->origem_email;
+                $senderAddress->address = $request->origem_endereco;
+                $senderAddress->address_complement = $request->origem_complemento ?? null;
+                $senderAddress->city = $request->origem_cidade;
+                $senderAddress->state = $request->origem_estado;
+                $senderAddress->postal_code = $request->origem_cep;
+                $senderAddress->country = $request->origem_pais;
+                $senderAddress->is_residential = true;
+                $senderAddress->save();
+
+                Log::info('Endereço do remetente salvo:', ['sender_address_id' => $senderAddress->id]);
+
+                // 3. SALVAR ENDEREÇO DO DESTINATÁRIO
+                $recipientAddress = new RecipientAddress();
+                $recipientAddress->shipment_id = $shipment->id;
+                $recipientAddress->name = $request->destino_nome;
+                $recipientAddress->phone = $request->destino_telefone;
+                $recipientAddress->email = $request->destino_email;
+                $recipientAddress->address = $request->destino_endereco;
+                $recipientAddress->address_complement = $request->destino_complemento ?? null;
+                $recipientAddress->city = $request->destino_cidade;
+                $recipientAddress->state = $request->destino_estado;
+                $recipientAddress->postal_code = $request->destino_cep;
+                $recipientAddress->country = $request->destino_pais;
+                $recipientAddress->is_residential = true;
+                $recipientAddress->save();
+
+                Log::info('Endereço do destinatário salvo:', ['recipient_address_id' => $recipientAddress->id]);
+
+                // 4. SALVAR PRODUTOS (SHIPMENT ITEMS)
+                foreach ($produtos as $index => $produto) {
+                    $shipmentItem = new ShipmentItem();
+                    $shipmentItem->shipment_id = $shipment->id;
+                    $shipmentItem->description = $produto['nome'] ?? $produto['descricao'] ?? 'Produto ' . ($index + 1);
+                    $shipmentItem->weight = $produto['peso'] ?? 0;
+                    $shipmentItem->quantity = $produto['quantidade'] ?? 1;
+                    $shipmentItem->unit_price = $produto['valor'] ?? $produto['valor_unitario'] ?? 0;
+                    $shipmentItem->total_price = ($produto['valor'] ?? $produto['valor_unitario'] ?? 0) * ($produto['quantidade'] ?? 1);
+                    $shipmentItem->currency = 'USD';
+                    $shipmentItem->country_of_origin = 'BR';
+                    $shipmentItem->harmonized_code = $produto['codigo'] ?? $produto['ncm'] ?? '000000';
+                    $shipmentItem->save();
+
+                    Log::info('Item do shipment salvo:', [
+                        'item_id' => $shipmentItem->id,
+                        'description' => $shipmentItem->description,
+                        'quantity' => $shipmentItem->quantity
+                    ]);
+                }
+
+                // 5. PROCESSAR PAGAMENTO
+                $resultadoPagamento = $this->processarPagamento($shipment, $request);
+
+                if (!$resultadoPagamento['success']) {
+                    throw new \Exception('Erro ao processar pagamento: ' . ($resultadoPagamento['message'] ?? 'Erro desconhecido'));
+                }
+
+                Log::info('Pagamento processado com sucesso:', ['payment_result' => $resultadoPagamento]);
+
+                // 6. PROCESSAR ENVIO NA FEDEX
+                $respostaFedex = $this->processarEnvioFedex($shipment);
+
+                if ($respostaFedex['success']) {
+                    // Atualizar o envio com os dados retornados pela FedEx
+                    $shipment->tracking_number = $respostaFedex['tracking_number'];
+                    $shipment->shipment_id = $respostaFedex['shipment_id'];
+                    $shipment->shipping_label_url = $respostaFedex['label_url'] ?? null;
+                    $shipment->status = 'created';
+                    $shipment->status_description = 'Envio criado com sucesso na FedEx';
+                    $shipment->save();
+
+                    Log::info('Envio processado na FedEx com sucesso:', [
+                        'tracking_number' => $shipment->tracking_number,
+                        'shipment_id' => $shipment->shipment_id
+                    ]);
+                } else {
+                    // Se falhou na FedEx, manter status como pending_fedex
+                    $shipment->status = 'pending_fedex';
+                    $shipment->status_description = 'Pagamento confirmado, aguardando processamento na FedEx';
+                    $shipment->save();
+
+                    Log::warning('Falha ao processar na FedEx, mas pagamento foi confirmado:', [
+                        'fedex_error' => $respostaFedex['message'] ?? 'Erro desconhecido'
+                    ]);
+                }
+
+                // 7. SALVAR ENDEREÇOS FAVORITOS (se aplicável)
+                $this->salvarEnderecosFavoritos($request, Auth::id());
+
+                // 8. CRIAR LOG DE ATIVIDADE
+                $this->criarLogAtividade($shipment, 'envio_criado', 'Envio criado com sucesso na etapa 6');
+
+                // Commit da transação
+                DB::commit();
+
+                // Preparar resposta de sucesso
+                $resposta = [
+                    'success' => true,
+                    'message' => 'Envio processado com sucesso! ' . 
+                                ($shipment->status === 'created' ? 
+                                'O código de rastreamento é ' . $shipment->tracking_number : 
+                                'Aguardando processamento na FedEx.'),
+                    'shipment' => [
+                        'id' => $shipment->id,
+                        'tracking_number' => $shipment->tracking_number,
+                        'status' => $shipment->status,
+                        'created_at' => $shipment->created_at->format('Y-m-d H:i:s'),
+                        'label_url' => $shipment->shipping_label_url
+                    ],
+                    'payment' => $resultadoPagamento,
+                    'fedex_response' => $respostaFedex,
+                    'nextStep' => 'confirmacao',
+                    'hash' => base64_encode($shipment->id . '|' . $shipment->created_at->timestamp)
+                ];
+
+                Log::info('Processamento completo de envio finalizado com sucesso:', $resposta);
+
+                return response()->json($resposta);
+
+            } catch (\Exception $e) {
+                // Rollback da transação em caso de erro
+                DB::rollBack();
+                throw $e;
+            }
+
+        } catch (\Exception $e) {
+            Log::error('Erro no processamento completo de envio:', [
+                'error' => $e->getMessage(),
+                'file' => $e->getFile(),
+                'line' => $e->getLine(),
+                'trace' => $e->getTraceAsString()
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Erro ao processar envio: ' . $e->getMessage(),
+                'error_details' => [
+                    'message' => $e->getMessage(),
+                    'code' => $e->getCode(),
+                    'file' => $e->getFile(),
+                    'line' => $e->getLine()
+                ]
+            ], 500);
+        }
+    }
+
+    /**
+     * Salva endereços como favoritos para uso futuro
+     */
+    private function salvarEnderecosFavoritos(Request $request, $userId)
+    {
+        try {
+            // Salvar endereço de origem como favorito
+            if ($request->origem_nome && $request->origem_endereco) {
+                \App\Models\SavedAddress::updateOrCreate(
+                    [
+                        'user_id' => $userId,
+                        'address_type' => 'sender',
+                        'name' => $request->origem_nome,
+                        'address' => $request->origem_endereco
+                    ],
+                    [
+                        'nickname' => 'Endereço de Origem',
+                        'phone' => $request->origem_telefone,
+                        'email' => $request->origem_email,
+                        'address_complement' => $request->origem_complemento,
+                        'city' => $request->origem_cidade,
+                        'state' => $request->origem_estado,
+                        'postal_code' => $request->origem_cep,
+                        'country' => $request->origem_pais,
+                        'is_residential' => true
+                    ]
+                );
+            }
+
+            // Salvar endereço de destino como favorito
+            if ($request->destino_nome && $request->destino_endereco) {
+                \App\Models\SavedAddress::updateOrCreate(
+                    [
+                        'user_id' => $userId,
+                        'address_type' => 'recipient',
+                        'name' => $request->destino_nome,
+                        'address' => $request->destino_endereco
+                    ],
+                    [
+                        'nickname' => 'Endereço de Destino',
+                        'phone' => $request->destino_telefone,
+                        'email' => $request->destino_email,
+                        'address_complement' => $request->destino_complemento,
+                        'city' => $request->destino_cidade,
+                        'state' => $request->destino_estado,
+                        'postal_code' => $request->destino_cep,
+                        'country' => $request->destino_pais,
+                        'is_residential' => true
+                    ]
+                );
+            }
+
+            Log::info('Endereços favoritos salvos com sucesso');
+        } catch (\Exception $e) {
+            Log::warning('Erro ao salvar endereços favoritos:', ['error' => $e->getMessage()]);
+            // Não interromper o fluxo principal se falhar ao salvar favoritos
+        }
+    }
+
+    /**
+     * Cria log de atividade para o envio
+     */
+    private function criarLogAtividade($shipment, $action, $description)
+    {
+        try {
+            \App\Models\ActivityLog::create([
+                'user_id' => Auth::id(),
+                'action' => $action,
+                'description' => $description,
+                'model_type' => 'App\Models\Shipment',
+                'model_id' => $shipment->id,
+                'properties' => json_encode([
+                    'tracking_number' => $shipment->tracking_number,
+                    'status' => $shipment->status,
+                    'service_code' => $shipment->service_code
+                ])
+            ]);
+
+            Log::info('Log de atividade criado:', ['action' => $action, 'shipment_id' => $shipment->id]);
+        } catch (\Exception $e) {
+            Log::warning('Erro ao criar log de atividade:', ['error' => $e->getMessage()]);
+            // Não interromper o fluxo principal se falhar ao criar log
+        }
+    }
+
+
+
 } 
