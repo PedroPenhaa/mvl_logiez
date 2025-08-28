@@ -165,18 +165,19 @@ class EnvioController extends Controller
             }
             
             // 5. Processar pagamento via Asaas
-            $resultadoPagamento = $this->processarPagamento($shipment, $request);
+            //$resultadoPagamento = $this->processarPagamento($shipment, $request);
             
-            if (!$resultadoPagamento['success']) {
-                throw new \Exception('Erro ao processar pagamento: ' . ($resultadoPagamento['message'] ?? 'Erro desconhecido'));
-            }
+            //if (!$resultadoPagamento['success']) {
+            //    throw new \Exception('Erro ao processar pagamento: ' . ($resultadoPagamento['message'] ?? 'Erro desconhecido'));
+            //}
             
             // 6. Se estiver em ambiente de produção ou se for forçar a simulação, processa o envio com a FedEx
             // Em ambiente de teste, apenas simula o envio
             if (app()->environment('production') || $request->has('forcar_simulacao')) {
                 // Processar o envio real na FedEx apenas se o pagamento for por cartão de crédito
                 // Para outros métodos, aguardar confirmação de pagamento
-                if ($request->payment_method === 'credit_card' && $resultadoPagamento['status'] === 'confirmed') {
+                //if ($request->payment_method === 'credit_card' && $resultadoPagamento['status'] === 'confirmed') {
+
                     $respostaFedex = $this->processarEnvioFedex($shipment);
                     
                     if ($respostaFedex['success']) {
@@ -187,10 +188,7 @@ class EnvioController extends Controller
                         $shipment->status = 'created';
                         $shipment->save();
                         
-                    } else {
-                        // Não lançar exceção aqui, apenas registrar o erro
-                        // O envio será processado posteriormente quando o pagamento for confirmado
-                    }
+                  
                 }
             }
             
@@ -208,7 +206,7 @@ class EnvioController extends Controller
                     'created_at' => $shipment->created_at->format('Y-m-d H:i:s'),
                     'label_url' => $shipment->shipping_label_url
                 ],
-                'payment' => $resultadoPagamento,
+                //'payment' => $resultadoPagamento,
                 'nextStep' => 'confirmacao',
                 'hash' => base64_encode($shipment->id . '|' . $shipment->created_at->timestamp)
             ];
