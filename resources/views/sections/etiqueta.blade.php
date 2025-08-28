@@ -501,12 +501,18 @@
             tbody.append(row);
         }
 
+        // Variáveis globais para paginação
+        let currentPage = 1;
+        let totalPages = 1;
+        let totalRecords = 0;
+
         // Carregar etiquetas
-        function carregarEtiquetasUsuario() {
+        function carregarEtiquetasUsuario(page = 1) {
             showLoader();
             $.ajax({
                 url: '/api/sections/etiquetas-usuario',
                 method: 'GET',
+                data: { page: page },
                 success: function(response) {
                     hideLoader();
                     if (response.success && response.etiquetas.length > 0) {
@@ -532,12 +538,23 @@
                             `;
                             tbody.append(row);
                         });
+                        
+                        // Atualizar variáveis de paginação
+                        currentPage = response.pagination.current_page;
+                        totalPages = response.pagination.total_pages;
+                        totalRecords = response.pagination.total_records;
+                        
+                        // Atualizar paginação
+                        atualizarPaginacao();
+                        
                         $('#sem-etiquetas').hide();
                         $('#etiquetas-disponiveis').show();
                     } else {
                         $('table tbody').empty();
                         $('#sem-etiquetas').show();
                         $('#etiquetas-disponiveis').hide();
+                        // Limpar paginação quando não há dados
+                        $('.pagination').hide();
                     }
                 },
                 error: function() {
@@ -545,6 +562,46 @@
                     showAlert('danger', 'Erro ao buscar etiquetas do usuário.');
                 }
             });
+        }
+
+        // Atualizar paginação
+        function atualizarPaginacao() {
+            const paginationContainer = $('.pagination');
+            
+            // Só mostrar paginação se houver mais de 6 registros
+            if (totalRecords <= 6) {
+                paginationContainer.hide();
+                return;
+            }
+            
+            paginationContainer.show();
+            
+            let paginationHtml = '';
+            
+            // Botão Anterior
+            if (currentPage > 1) {
+                paginationHtml += '<li class="page-item"><a class="page-link" href="#" data-page="' + (currentPage - 1) + '">Anterior</a></li>';
+            } else {
+                paginationHtml += '<li class="page-item disabled"><a class="page-link" href="#" tabindex="-1" aria-disabled="true">Anterior</a></li>';
+            }
+            
+            // Números das páginas
+            for (let i = 1; i <= totalPages; i++) {
+                if (i === currentPage) {
+                    paginationHtml += '<li class="page-item active"><a class="page-link" href="#" data-page="' + i + '">' + i + '</a></li>';
+                } else {
+                    paginationHtml += '<li class="page-item"><a class="page-link" href="#" data-page="' + i + '">' + i + '</a></li>';
+                }
+            }
+            
+            // Botão Próximo
+            if (currentPage < totalPages) {
+                paginationHtml += '<li class="page-item"><a class="page-link" href="#" data-page="' + (currentPage + 1) + '">Próximo</a></li>';
+            } else {
+                paginationHtml += '<li class="page-item disabled"><a class="page-link" href="#" tabindex="-1" aria-disabled="true">Próximo</a></li>';
+            }
+            
+            paginationContainer.html(paginationHtml);
         }
 
         // ========== INICIALIZAÇÃO ==========
@@ -715,7 +772,7 @@
             $('#sem-etiquetas').hide();
             $('#etiquetas-disponiveis').show();
             $('#codigo-envio').val('');
-            carregarEtiquetasUsuario();
+            carregarEtiquetasUsuario(1);
         });
 
         // Handler para voltar para todas as etiquetas
@@ -723,11 +780,20 @@
             $('#sem-etiquetas').hide();
             $('#etiquetas-disponiveis').show();
             $('#codigo-envio').val('');
-            carregarEtiquetasUsuario();
+            carregarEtiquetasUsuario(1);
+        });
+
+        // Handler para paginação
+        $(document).on('click', '.pagination .page-link', function(e) {
+            e.preventDefault();
+            const page = $(this).data('page');
+            if (page && !$(this).parent().hasClass('disabled')) {
+                carregarEtiquetasUsuario(page);
+            }
         });
 
         // Carregar dados iniciais
-        carregarEtiquetasUsuario();
+        carregarEtiquetasUsuario(1);
     });
 
     function renderInvoiceModal(invoice) {

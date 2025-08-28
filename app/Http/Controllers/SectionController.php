@@ -1558,11 +1558,20 @@ class SectionController extends Controller
         if (!\Illuminate\Support\Facades\Auth::check()) {
             return response()->json(['success' => false, 'message' => 'Não autenticado.'], 401);
         }
+        
         $userId = \Illuminate\Support\Facades\Auth::id();
-        $etiquetas = \App\Models\Shipment::where('user_id', $userId)
+        $page = $request->get('page', 1);
+        $perPage = 6; // 6 etiquetas por página
+        
+        $query = \App\Models\Shipment::where('user_id', $userId)
             ->whereNotNull('tracking_number')
-            ->orderByDesc('created_at')
-            ->get();
+            ->orderByDesc('created_at');
+            
+        $total = $query->count();
+        $etiquetas = $query->skip(($page - 1) * $perPage)
+                          ->take($perPage)
+                          ->get();
+        
         // Retornar apenas os campos necessários para a tabela
         $dados = $etiquetas->map(function($etiqueta) {
             return [
@@ -1577,7 +1586,19 @@ class SectionController extends Controller
                 'service_name' => $etiqueta->service_name,
             ];
         });
-        return response()->json(['success' => true, 'etiquetas' => $dados]);
+        
+        $totalPages = ceil($total / $perPage);
+        
+        return response()->json([
+            'success' => true, 
+            'etiquetas' => $dados,
+            'pagination' => [
+                'current_page' => $page,
+                'total_pages' => $totalPages,
+                'total_records' => $total,
+                'per_page' => $perPage
+            ]
+        ]);
     }
 
     /**
