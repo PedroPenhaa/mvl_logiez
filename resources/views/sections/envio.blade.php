@@ -862,9 +862,6 @@
                                         })();
                                         </script>
                                     </div>
-                                    <div class="text-end">
-                                        <button type="button" class="btn btn-primary" id="btn-step-1-next">Continuar</button>
-                                    </div>
                                 </div>
                             </div>
                         </div>
