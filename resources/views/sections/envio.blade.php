@@ -101,6 +101,81 @@
         border-color: var(--roxo-secundario) !important;
         background: #fff !important;
     }
+
+    /* Estilos para os cards da primeira etapa */
+    .card {
+        transition: all 0.3s ease;
+        border: 2px solid transparent;
+    }
+
+    .card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1) !important;
+        border-color: var(--roxo-claro);
+    }
+
+    .form-select, .form-control {
+        transition: all 0.3s ease;
+    }
+
+    .form-select:focus, .form-control:focus {
+        box-shadow: 0 0 0 0.2rem rgba(118, 75, 162, 0.25) !important;
+        border-color: var(--roxo-principal) !important;
+    }
+
+    .form-select:hover, .form-control:hover {
+        background-color: #f8f9fa !important;
+    }
+
+    /* Gradientes para os ícones */
+    .bg-gradient-primary {
+        background: linear-gradient(135deg, var(--roxo-principal) 0%, var(--roxo-secundario) 100%) !important;
+    }
+
+    .bg-gradient-success {
+        background: linear-gradient(135deg, #28a745 0%, #20c997 100%) !important;
+    }
+
+    .bg-gradient-warning {
+        background: linear-gradient(135deg, #ffc107 0%, #fd7e14 100%) !important;
+    }
+
+    .bg-gradient-info {
+        background: linear-gradient(135deg, #17a2b8 0%, #6f42c1 100%) !important;
+    }
+
+    /* Animação para campos selecionados */
+    .form-select:not([value=""]), .form-control:not([value=""]) {
+        background-color: #f8f9fa !important;
+        border-left: 4px solid var(--roxo-principal) !important;
+    }
+
+    /* Efeito de pulso para o botão */
+    @keyframes pulse {
+        0% { transform: scale(1); }
+        50% { transform: scale(1.05); }
+        100% { transform: scale(1); }
+    }
+
+    .btn-primary:hover {
+        animation: pulse 0.6s ease-in-out;
+    }
+
+    /* Efeitos para campos selecionados e focados */
+    .card.selected {
+        border-color: var(--roxo-principal) !important;
+        box-shadow: 0 8px 20px rgba(118, 75, 162, 0.15) !important;
+    }
+
+    .card.focused {
+        border-color: var(--roxo-claro) !important;
+        box-shadow: 0 0 0 3px rgba(118, 75, 162, 0.1) !important;
+    }
+
+    .field-selected {
+        background-color: #f8f9fa !important;
+        border-left: 4px solid var(--roxo-principal) !important;
+    }
     .btn-outline-secondary:hover {
         background: var(--roxo-secundario) !important;
         color: #fff !important;
@@ -565,7 +640,7 @@
                     <div class="row g-2">
                         <div class="col-md-6">
                             <ul class="list-unstyled mb-0">
-                                <li class="mb-1"><i class="fas fa-check-circle text-success me-2"></i><strong>Etapa 1:</strong> Tipo de envio e pessoa</li>
+                                <li class="mb-1"><i class="fas fa-check-circle text-success me-2"></i><strong>Etapa 1:</strong> Tipo de envio, pessoa e operação</li>
                                 <li class="mb-1"><i class="fas fa-box text-primary me-2"></i><strong>Etapa 2:</strong> Produtos e embalagens</li>
                                 <li class="mb-1"><i class="fas fa-map-marker-alt text-info me-2"></i><strong>Etapa 3:</strong> Endereços de origem e destino</li>
                             </ul>
@@ -592,56 +667,129 @@
             <div id="wizard-steps">
                 <!-- Etapa 1: Tipo de Envio -->
                 <div id="step-1" data-step="1">
-                    <div class="row mb-2">
+                    <div class="row mb-4">
                         <div class="col-12">
-                            <div class="card border-light shadow-sm">
-                                <div class="card-body">
-                                    <div class="row g-4">
-                                        <div class="col-md-6 mb-3">
-                                            <label for="tipo_envio" class="form-label required"><i class="fas fa-box me-1"></i> Tipo de Envio</label>
-                                            <select class="form-select" id="tipo_envio" name="tipo_envio" required style="color: #B0B0B0 !important;">
-                                                <option value="">Selecione o tipo de envio</option>
-                                                <option value="venda">Venda</option>
-                                                <option value="amostra">Envio de Amostras</option>
-                                                <option value="pessoal">Envio Pessoal</option>
+                            <!-- Header da Etapa -->
+                            <div class="text-center mb-4">
+                                <div class="d-inline-flex align-items-center justify-content-center bg-gradient-primary text-white rounded-circle mb-3" style="width: 80px; height: 80px;">
+                                    <i class="fas fa-shipping-fast fs-2"></i>
+                                </div>
+                                <h3 class="fw-bold text-dark mb-2">Informações do Envio</h3>
+                                <p class="text-muted mb-0">Defina as características básicas do seu envio internacional</p>
+                            </div>
+
+                            <!-- Cards dos Campos -->
+                            <div class="row g-4">
+                                <!-- Categoria do Envio -->
+                                <div class="col-lg-6 col-md-12">
+                                    <div class="card border-0 shadow-sm h-100" style="border-radius: 15px; transition: all 0.3s ease;">
+                                        <div class="card-body p-4">
+                                            <div class="d-flex align-items-center mb-3">
+                                                <div class="bg-gradient-primary rounded-circle d-flex align-items-center justify-content-center me-3" style="width: 50px; height: 50px;">
+                                                    <i class="fas fa-box text-white fs-5"></i>
+                                                </div>
+                                                <div>
+                                                    <h6 class="fw-bold text-dark mb-1">Categoria do Envio</h6>
+                                                    <small class="text-muted">Tipo de mercadoria</small>
+                                                </div>
+                                            </div>
+                                            <select class="form-select form-select-lg border-0 bg-light" id="tipo_envio" name="tipo_envio" required style="border-radius: 10px; font-size: 1rem; padding: 12px 16px;">
+                                                <option value="">Selecione a categoria</option>
+                                                <option value="venda">🛒 Venda</option>
+                                                <option value="amostra">📦 Envio de Amostras</option>
+                                                <option value="pessoal">👤 Envio Pessoal</option>
                                             </select>
                                         </div>
-                                        <div class="col-md-6 mb-3">
-                                            <label for="tipo_pessoa" class="form-label required"><i class="fas fa-user me-1"></i> Tipo de Pessoa</label>
-                                            <select class="form-select" id="tipo_pessoa" name="tipo_pessoa" required style="color: #B0B0B0 !important;">
+                                    </div>
+                                </div>
+
+                                <!-- Tipo de Pessoa -->
+                                <div class="col-lg-6 col-md-12">
+                                    <div class="card border-0 shadow-sm h-100" style="border-radius: 15px; transition: all 0.3s ease;">
+                                        <div class="card-body p-4">
+                                            <div class="d-flex align-items-center mb-3">
+                                                <div class="bg-gradient-success rounded-circle d-flex align-items-center justify-content-center me-3" style="width: 50px; height: 50px;">
+                                                    <i class="fas fa-user text-white fs-5"></i>
+                                                </div>
+                                                <div>
+                                                    <h6 class="fw-bold text-dark mb-1">Tipo de Pessoa</h6>
+                                                    <small class="text-muted">Quem está enviando</small>
+                                                </div>
+                                            </div>
+                                            <select class="form-select form-select-lg border-0 bg-light" id="tipo_pessoa" name="tipo_pessoa" required style="border-radius: 10px; font-size: 1rem; padding: 12px 16px;">
                                                 <option value="">Selecione o tipo de pessoa</option>
-                                                <option value="pf">Pessoa Física</option>
-                                                <option value="pj">Pessoa Jurídica</option>
+                                                <option value="pf">👤 Pessoa Física</option>
+                                                <option value="pj">🏢 Pessoa Jurídica</option>
                                             </select>
                                         </div>
-                                        <div class="col-md-6 mb-3">
-                                            <label for="tipo_operacao" class="form-label required"><i class="fas fa-exchange-alt me-1"></i> Você vai:</label>
-                                            <select class="form-select" id="tipo_operacao" name="tipo_operacao" required style="color: #B0B0B0 !important;">
-                                                <option value="">Selecione a operação</option>
-                                                <option value="enviar">Enviar</option>
-                                                <option value="receber">Receber</option>
+                                    </div>
+                                </div>
+
+                                <!-- Tipo de Envio -->
+                                <div class="col-lg-6 col-md-12">
+                                    <div class="card border-0 shadow-sm h-100" style="border-radius: 15px; transition: all 0.3s ease;">
+                                        <div class="card-body p-4">
+                                            <div class="d-flex align-items-center mb-3">
+                                                <div class="bg-gradient-warning rounded-circle d-flex align-items-center justify-content-center me-3" style="width: 50px; height: 50px;">
+                                                    <i class="fas fa-exchange-alt text-white fs-5"></i>
+                                                </div>
+                                                <div>
+                                                    <h6 class="fw-bold text-dark mb-1">Tipo de Envio</h6>
+                                                    <small class="text-muted">Direção do envio</small>
+                                                </div>
+                                            </div>
+                                            <select class="form-select form-select-lg border-0 bg-light" id="tipo_operacao" name="tipo_operacao" required style="border-radius: 10px; font-size: 1rem; padding: 12px 16px;">
+                                                <option value="">Selecione o tipo de envio</option>
+                                                <option value="enviar">📤 Enviar (Brasil → Exterior)</option>
+                                                <option value="receber">📥 Receber (Exterior → Brasil)</option>
                                             </select>
                                         </div>
-                                        <!-- Campo CPF (aparece quando seleciona Pessoa Física) -->
-                                        <div class="col-md-6 mb-3" id="cpf-field" style="display: none;">
-                                            <label for="cpf" class="form-label required"><i class="fas fa-id-card me-1"></i> CPF</label>
-                                            <input type="text" class="form-control" id="cpf" name="cpf" placeholder="000.000.000-00" maxlength="14">
+                                    </div>
+                                </div>
+
+                                <!-- Campo CPF/CNPJ -->
+                                <div class="col-lg-6 col-md-12">
+                                    <div class="card border-0 shadow-sm h-100" id="documento-field" style="border-radius: 15px; transition: all 0.3s ease; display: none;">
+                                        <div class="card-body p-4">
+                                            <div class="d-flex align-items-center mb-3">
+                                                <div class="bg-gradient-info rounded-circle d-flex align-items-center justify-content-center me-3" style="width: 50px; height: 50px;">
+                                                    <i class="fas fa-id-card text-white fs-5" id="documento-icon"></i>
+                                                </div>
+                                                <div>
+                                                    <h6 class="fw-bold text-dark mb-1" id="documento-titulo">Documento</h6>
+                                                    <small class="text-muted" id="documento-subtitulo">Identificação</small>
+                                                </div>
+                                            </div>
+                                            <input type="text" class="form-control form-control-lg border-0 bg-light" id="cpf" name="cpf" placeholder="000.000.000-00" maxlength="14" style="border-radius: 10px; font-size: 1rem; padding: 12px 16px;">
+                                            <input type="text" class="form-control form-control-lg border-0 bg-light" id="cnpj" name="cnpj" placeholder="00.000.000/0000-00" maxlength="18" style="border-radius: 10px; font-size: 1rem; padding: 12px 16px; display: none;">
                                         </div>
-                                        <!-- Campo CNPJ (aparece quando seleciona Pessoa Jurídica) -->
-                                        <div class="col-md-6 mb-3" id="cnpj-field" style="display: none;">
-                                            <label for="cnpj" class="form-label required"><i class="fas fa-building me-1"></i> CNPJ</label>
-                                            <input type="text" class="form-control" id="cnpj" name="cnpj" placeholder="00.000.000/0000-00" maxlength="18">
-                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Botão Continuar -->
+                            <div class="text-center mt-5">
+                                <button type="button" class="btn btn-primary btn-lg px-5 py-3 fw-bold" id="btn-step-1-next" style="border-radius: 25px; min-width: 200px; font-size: 1.1rem; box-shadow: 0 4px 15px rgba(118, 75, 162, 0.3);">
+                                    <i class="fas fa-arrow-right me-2"></i>Continuar
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
 
                                         <script>
                                         // SOLUÇÃO DEFINITIVA PARA CPF/CNPJ - FUNCIONA SEMPRE
                                         (function() {
                                             function toggleCPFCNPJ() {
                                                 var tipo = document.getElementById('tipo_pessoa');
-                                                var cpfField = document.getElementById('cpf-field');
-                                                var cnpjField = document.getElementById('cnpj-field');
+                                                var documentoField = document.getElementById('documento-field');
+                                                var cpfInput = document.getElementById('cpf');
+                                                var cnpjInput = document.getElementById('cnpj');
+                                                var documentoTitulo = document.getElementById('documento-titulo');
+                                                var documentoSubtitulo = document.getElementById('documento-subtitulo');
+                                                var documentoIcon = document.getElementById('documento-icon');
                                                 
-                                                if (!tipo || !cpfField || !cnpjField) {
+                                                if (!tipo || !documentoField || !cpfInput || !cnpjInput) {
                                                     console.log('Elementos não encontrados, tentando novamente...');
                                                     setTimeout(toggleCPFCNPJ, 100);
                                                     return;
@@ -650,24 +798,41 @@
                                                 var valor = tipo.value;
                                                 console.log('Tipo de pessoa selecionado:', valor);
                                                 
-                                                // Esconder ambos primeiro
-                                                cpfField.style.display = 'none';
-                                                cnpjField.style.display = 'none';
+                                                // Esconder o campo de documento primeiro
+                                                documentoField.style.display = 'none';
+                                                cpfInput.style.display = 'none';
+                                                cnpjInput.style.display = 'none';
                                                 
                                                 // Mostrar o correto
                                                 if (valor === 'pf') {
-                                                    cpfField.style.display = 'block';
-                                                    document.getElementById('cpf').required = true;
-                                                    document.getElementById('cnpj').required = false;
+                                                    documentoField.style.display = 'block';
+                                                    cpfInput.style.display = 'block';
+                                                    cnpjInput.style.display = 'none';
+                                                    
+                                                    // Atualizar textos e ícone
+                                                    documentoTitulo.textContent = 'CPF';
+                                                    documentoSubtitulo.textContent = 'Documento de identificação';
+                                                    documentoIcon.className = 'fas fa-id-card text-white fs-5';
+                                                    
+                                                    cpfInput.required = true;
+                                                    cnpjInput.required = false;
                                                     console.log('CPF VISÍVEL!');
                                                 } else if (valor === 'pj') {
-                                                    cnpjField.style.display = 'block';
-                                                    document.getElementById('cpf').required = false;
-                                                    document.getElementById('cnpj').required = true;
+                                                    documentoField.style.display = 'block';
+                                                    cpfInput.style.display = 'none';
+                                                    cnpjInput.style.display = 'block';
+                                                    
+                                                    // Atualizar textos e ícone
+                                                    documentoTitulo.textContent = 'CNPJ';
+                                                    documentoSubtitulo.textContent = 'Documento da empresa';
+                                                    documentoIcon.className = 'fas fa-building text-white fs-5';
+                                                    
+                                                    cpfInput.required = false;
+                                                    cnpjInput.required = true;
                                                     console.log('CNPJ VISÍVEL!');
                                                 } else {
-                                                    document.getElementById('cpf').required = false;
-                                                    document.getElementById('cnpj').required = false;
+                                                    cpfInput.required = false;
+                                                    cnpjInput.required = false;
                                                 }
                                             }
                                             
@@ -3591,6 +3756,78 @@
         // Inicializar os selects de países
         carregarPaises();
 
+        // Função para mostrar modal informativo de países
+        function mostrarModalPaises(tipo) {
+            if (tipo === 'enviar') {
+                $('#modal-paises-titulo').text('Envio: Brasil → Exterior');
+                $('#modal-paises-origem').text('Brasil');
+                $('#modal-paises-destino').text('Exterior (EUA como padrão)');
+                $('#modal-paises-detalhes').text('Para envios do Brasil para o exterior, definimos automaticamente Brasil como origem e EUA como destino. Você pode alterar o país de destino na etapa de endereços se necessário.');
+            } else if (tipo === 'receber') {
+                $('#modal-paises-titulo').text('Recebimento: Exterior → Brasil');
+                $('#modal-paises-origem').text('Exterior (EUA como padrão)');
+                $('#modal-paises-destino').text('Brasil');
+                $('#modal-paises-detalhes').text('Para recebimentos do exterior para o Brasil, definimos automaticamente EUA como origem e Brasil como destino. Você pode alterar o país de origem na etapa de endereços se necessário.');
+            }
+            
+            // Mostrar o modal
+            const modal = new bootstrap.Modal(document.getElementById('modalPaises'));
+            modal.show();
+        }
+
+        // Função para definir países baseado no tipo de envio
+        function definirPaisesPorTipoEnvio() {
+            const tipoOperacao = $('#tipo_operacao').val();
+            
+            if (tipoOperacao === 'enviar') {
+                // Enviar: Origem = Brasil, Destino = Exterior
+                $('#origem_pais').val('BR').trigger('change');
+                $('#destino_pais').val('US').trigger('change'); // EUA como padrão para exterior
+                
+                // Limpar campos de origem e destino
+                $('#origem_nome, #origem_endereco, #origem_cidade, #origem_cep, #origem_telefone, #origem_email').val('');
+                $('#destino_nome, #destino_endereco, #destino_cidade, #destino_cep, #destino_telefone, #destino_email').val('');
+                
+                // Mostrar modal informativo
+                mostrarModalPaises('enviar');
+                
+            } else if (tipoOperacao === 'receber') {
+                // Receber: Origem = Exterior, Destino = Brasil
+                $('#origem_pais').val('US').trigger('change'); // EUA como padrão para exterior
+                $('#destino_pais').val('BR').trigger('change');
+                
+                // Limpar campos de origem e destino
+                $('#origem_nome, #origem_endereco, #origem_cidade, #origem_cep, #origem_telefone, #origem_email').val('');
+                $('#destino_nome, #destino_endereco, #destino_cidade, #destino_cep, #destino_telefone, #destino_email').val('');
+                
+                // Mostrar modal informativo
+                mostrarModalPaises('receber');
+            }
+        }
+
+        // Evento para mudança no tipo de operação
+        $('#tipo_operacao').on('change', function() {
+            definirPaisesPorTipoEnvio();
+        });
+
+        // Efeitos visuais para os campos
+        $('.form-select, .form-control').on('change', function() {
+            if ($(this).val()) {
+                $(this).addClass('field-selected');
+                $(this).closest('.card').addClass('selected');
+            } else {
+                $(this).removeClass('field-selected');
+                $(this).closest('.card').removeClass('selected');
+            }
+        });
+
+        // Efeito de foco nos campos
+        $('.form-select, .form-control').on('focus', function() {
+            $(this).closest('.card').addClass('focused');
+        }).on('blur', function() {
+            $(this).closest('.card').removeClass('focused');
+        });
+
         // Evento para consultar serviços de entrega
         $('#consultar-servicos').on('click', function() {
             // Validar se há produtos
@@ -3605,15 +3842,21 @@
                 return false;
             }
 
-            // Validar tipo de envio
+            // Validar categoria do envio
             if (!$('#tipo_envio').val()) {
-                showAlert('Por favor, selecione o tipo de envio.', 'warning');
+                showAlert('Por favor, selecione a categoria do envio.', 'warning');
                 return false;
             }
 
             // Validar tipo de pessoa
             if (!$('#tipo_pessoa').val()) {
                 showAlert('Por favor, selecione o tipo de pessoa.', 'warning');
+                return false;
+            }
+
+            // Validar tipo de operação
+            if (!$('#tipo_operacao').val()) {
+                showAlert('Por favor, selecione o tipo de envio (Enviar ou Receber).', 'warning');
                 return false;
             }
 
@@ -4115,7 +4358,7 @@
         $('#btn-step-1-next').on('click', function() {
             // Validar campos da etapa 1
             if (!$('#tipo_envio').val()) {
-                showAlert('Por favor, selecione o tipo de envio.', 'warning');
+                showAlert('Por favor, selecione a categoria do envio.', 'warning');
                 return;
             }
             if (!$('#tipo_pessoa').val()) {
@@ -4123,7 +4366,7 @@
                 return;
             }
             if (!$('#tipo_operacao').val()) {
-                showAlert('Por favor, selecione se você vai enviar ou receber.', 'warning');
+                showAlert('Por favor, selecione o tipo de envio (Enviar ou Receber).', 'warning');
                 return;
             }
             
@@ -4341,8 +4584,9 @@
             // Informações básicas
             resumo += '<div class="col-md-6"><h6><i class="fas fa-info-circle me-2"></i>Informações Básicas</h6>';
             resumo += '<ul class="list-unstyled">';
-            resumo += '<li><strong>Tipo de Envio:</strong> ' + $('#tipo_envio option:selected').text() + '</li>';
+            resumo += '<li><strong>Categoria do Envio:</strong> ' + $('#tipo_envio option:selected').text() + '</li>';
             resumo += '<li><strong>Tipo de Pessoa:</strong> ' + $('#tipo_pessoa option:selected').text() + '</li>';
+            resumo += '<li><strong>Operação:</strong> ' + $('#tipo_operacao option:selected').text() + '</li>';
             resumo += '</ul></div>';
             
             // Produtos
@@ -5358,6 +5602,77 @@
             <div class="modal-footer border-0 justify-content-center pb-4">
                 <button type="button" class="btn btn-primary px-5 py-3 fw-bold" data-bs-dismiss="modal" style="border-radius: 30px; min-width: 180px; font-size: 1.1rem;">
                     <i class="fas fa-check me-2"></i>Entendi, vou informar
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Informativo de Países -->
+<div class="modal fade" id="modalPaises" tabindex="-1" aria-labelledby="modalPaisesLabel" aria-hidden="true" data-bs-backdrop="static">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content border-0 shadow-lg" style="border-radius: 15px;">
+            <div class="modal-header border-0 bg-gradient-primary text-white" style="border-radius: 15px 15px 0 0;">
+                <div class="d-flex align-items-center w-100">
+                    <div class="flex-shrink-0 me-3">
+                        <i class="fas fa-globe-americas fs-3"></i>
+                    </div>
+                    <div class="flex-grow-1">
+                        <h5 class="modal-title mb-0 fw-bold" id="modalPaisesLabel">
+                            Países Definidos Automaticamente
+                        </h5>
+                    </div>
+                </div>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Fechar"></button>
+            </div>
+            <div class="modal-body py-4">
+                <div class="row align-items-center">
+                    <div class="col-md-3 text-center">
+                        <div class="bg-gradient-success rounded-circle d-inline-flex align-items-center justify-content-center shadow-sm" style="width: 100px; height: 100px; background: linear-gradient(135deg, #28a745 0%, #20c997 100%);">
+                            <i class="fas fa-check-circle text-white fs-1"></i>
+                        </div>
+                    </div>
+                    <div class="col-md-9">
+                        <h5 class="text-dark fw-bold mb-3" id="modal-paises-titulo">
+                            Países configurados com sucesso!
+                        </h5>
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <div class="card border-success border-2 bg-light">
+                                    <div class="card-body text-center">
+                                        <i class="fas fa-map-marker-alt text-success fs-4 mb-2"></i>
+                                        <h6 class="fw-bold text-success">Origem</h6>
+                                        <p class="mb-0" id="modal-paises-origem">Brasil</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="card border-primary border-2 bg-light">
+                                    <div class="card-body text-center">
+                                        <i class="fas fa-map-pin text-primary fs-4 mb-2"></i>
+                                        <h6 class="fw-bold text-primary">Destino</h6>
+                                        <p class="mb-0" id="modal-paises-destino">Exterior</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="alert alert-info border-start border-info border-4 ps-3">
+                            <div class="d-flex align-items-start">
+                                <i class="fas fa-info-circle text-info me-2 mt-1"></i>
+                                <div>
+                                    <strong class="text-dark">Informação Importante:</strong>
+                                    <p class="mb-0 text-muted" id="modal-paises-detalhes">
+                                        Os países foram definidos automaticamente baseado na sua seleção. Você pode alterar qualquer um dos países na etapa de endereços se necessário.
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer border-0 justify-content-center pb-4">
+                <button type="button" class="btn btn-primary px-5 py-3 fw-bold" data-bs-dismiss="modal" style="border-radius: 30px; min-width: 180px; font-size: 1.1rem;">
+                    <i class="fas fa-check me-2"></i>Entendi, continuar
                 </button>
             </div>
         </div>
