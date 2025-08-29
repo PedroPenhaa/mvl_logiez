@@ -71,6 +71,6 @@ class AuthController extends Controller
         $request->session()->invalidate();
         $request->session()->regenerateToken();
         
-        return redirect('http://localhost:8080');
+        return redirect('http://localhost:5000/login');
     }
 }
