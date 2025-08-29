@@ -1,53 +1,47 @@
-name: Deploy Automático
+name: Deploy Laravel
 
 on:
   push:
     branches:
-      - main   # dispara quando fizer push na branch main
+      - main
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout do código
-        uses: actions/checkout@v3
-
-      - name: Deploy via SSH
+      - name: 🚀 Conectar via SSH e fazer deploy
         uses: appleboy/ssh-action@v0.1.10
         with:
-          host: ${{ secrets.SERVER_HOST }}
-          username: ${{ secrets.SERVER_USER }}
-          password: ${{ secrets.SERVER_PASS }}
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.SSH_KEY }}
           port: 22
           script: |
-            set -e  # para o script se algum comando falhar
+            set -e
 
             echo "➡️ Entrando na pasta do projeto"
-            cd /web
+            cd /var/www/meu_projeto
 
-            echo "➡️ Resetando branch main"
+            echo "➡️ Atualizando branch main"
             git fetch origin main
             git reset --hard origin/main
             git clean -fd
 
-            echo "➡️ Verificando branch atual"
-            git branch
-            git status
+            echo "➡️ Instalando dependências"
+            composer install --no-interaction --prefer-dist --optimize-autoloader
 
-            echo "➡️ Atualizando containers"
-            docker compose down
-            docker compose up -d --build
+            echo "➡️ Rodando migrações"
+            php artisan migrate --force
 
-            echo "➡️ Rodando dependências e migrações"
-            docker compose exec -T app composer install --no-interaction --prefer-dist --optimize-autoloader
-            docker compose exec -T app php artisan migrate --force
+            echo "➡️ Limpando e otimizando caches"
+            php artisan config:clear
+            php artisan config:cache
+            php artisan route:cache
+            php artisan view:clear
+            php artisan view:cache
 
-            echo "➡️ Limpando e otimizando caches do Laravel"
-            docker compose exec -T app php artisan config:clear
-            docker compose exec -T app php artisan config:cache
-            docker compose exec -T app php artisan route:cache
-            docker compose exec -T app php artisan view:clear
-            docker compose exec -T app php artisan view:cache
+            echo "➡️ Reiniciando serviço do PHP (ajuste se for outra versão)"
+            sudo systemctl restart php8.2-fpm
 
             echo "✅ Deploy concluído com sucesso!"
