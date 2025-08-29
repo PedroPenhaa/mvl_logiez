@@ -19,8 +19,7 @@ class AppServiceProvider extends ServiceProvider
             return new FedexService();
         });
         
-        // Registrar o handler de exceções
-        $this->app->singleton(\Illuminate\Contracts\Debug\ExceptionHandler::class, \App\Exceptions\Handler::class);
+
         
         // Registrar o Socialite manualmente com a configuração correta
         $this->app->singleton(Factory::class, function ($app) {
