@@ -48,3 +48,4 @@ jobs:
             systemctl restart php8.2-fpm || echo "Não foi possível reiniciar o PHP, reinicie manualmente"
 
             echo "✅ Deploy concluído com sucesso!"
+
