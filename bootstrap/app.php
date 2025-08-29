@@ -21,5 +21,22 @@ return Application::configure(basePath: dirname(__DIR__))
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions) {
-        //
+        // Configurar o renderer de exceções para Laravel 12
+        $exceptions->renderable(function (\Throwable $e) {
+            // Para erros 500, usar a view personalizada
+            if ($e instanceof \Symfony\Component\HttpKernel\Exception\HttpException) {
+                $statusCode = $e->getStatusCode();
+                
+                if ($statusCode === 500) {
+                    return response()->view('errors.500', ['exception' => $e], 500);
+                }
+                
+                if ($statusCode === 404) {
+                    return response()->view('errors.404', ['exception' => $e], 404);
+                }
+            }
+            
+            // Para outros erros, usar a view genérica
+            return response()->view('errors.error', ['exception' => $e], 500);
+        });
     })->create();
