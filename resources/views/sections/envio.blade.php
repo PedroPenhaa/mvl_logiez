@@ -790,6 +790,39 @@
             max-width: 50%;
         }
     }
+    
+    /* CORREÇÃO PARA SOBREPOSIÇÃO COM FOOTER */
+    .card {
+        margin-bottom: 80px !important;
+    }
+    
+    /* Ajuste específico para botões de continuar */
+    .btn-step-container {
+        position: relative;
+        z-index: 999;
+        margin-bottom: 100px !important;
+        padding-bottom: 20px;
+    }
+    
+    /* Garantir que os botões não sejam sobrepostos pelo footer */
+    #btn-step-1-next,
+    #btn-step-2-next,
+    #btn-step-3-next,
+    #btn-step-5-next,
+    #finalizar-pagamento {
+        position: relative;
+        z-index: 999;
+    }
+    
+    /* Ajuste para o container principal */
+    .main-content {
+       /* padding-bottom: 120px !important; */
+    }
+    
+    /* Ajuste específico para a seção de envio */
+    #envio-form {
+      /*  padding-bottom: 100px; */
+    }
 </style>
 @endsection
 
@@ -986,7 +1019,7 @@
                             </div>
 
                             <!-- Botão Continuar -->
-                            <div class="text-center mt-5">
+                            <div class="text-center mt-5 btn-step-container">
                                 <button type="button" class="btn btn-primary btn-lg px-5 py-3 fw-bold" id="btn-step-1-next" style="border-radius: 25px; min-width: 200px; font-size: 1.1rem; box-shadow: 0 4px 15px rgba(118, 75, 162, 0.3);">
                                     <i class="fas fa-arrow-right me-2"></i>Continuar
                                 </button>
@@ -1336,7 +1369,7 @@
                     <input type="hidden" id="servico_entrega" name="servico_entrega">
 
                     <!-- Botão de Continuar -->
-                    <div class="row">
+                    <div class="row btn-step-container">
                         <div class="col-12">
                             <div class="d-flex justify-content-between">
                                 <button type="button" class="btn btn-outline-secondary btn-lg px-4" id="btn-step-2-back">
@@ -1460,7 +1493,7 @@
                             </div>
                         </div>
                     </div>
-                    <div class="text-end">
+                    <div class="text-end btn-step-container">
                         <div class="d-flex justify-content-between">
                             <button type="button" class="btn btn-outline-secondary" id="btn-step-3-back">
                                 <i class="fas fa-arrow-left me-2"></i>Voltar
@@ -1576,7 +1609,7 @@
                                     </div>
 
                                     <!-- Botão de Finalizar -->
-                                    <div class="mt-4">
+                                    <div class="mt-4 btn-step-container">
                                         <div class="d-flex justify-content-between">
                                             <button type="button" class="btn btn-outline-secondary btn-lg" id="btn-step-6-back">
                                                 <i class="fas fa-arrow-left me-2"></i>Voltar
@@ -5376,7 +5409,7 @@
         
         // Adicionar botão de continuar
         container.append(`
-            <div class="d-flex justify-content-between mt-4">
+            <div class="d-flex justify-content-between mt-4 btn-step-container">
                 <button type="button" class="btn btn-outline-secondary btn-lg" id="btn-step-5-back">
                     <i class="fas fa-arrow-left me-2"></i>Voltar
                 </button>
