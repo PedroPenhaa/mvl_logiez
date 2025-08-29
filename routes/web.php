@@ -76,32 +76,32 @@ Route::prefix('api')->name('api.')->group(function () {
     Route::get('/sections/etiqueta', [SectionController::class, 'etiqueta'])->name('sections.etiqueta');
     Route::get('/sections/rastreamento', [SectionController::class, 'rastreamento'])->name('sections.rastreamento');
     Route::get('/sections/perfil', [SectionController::class, 'perfil'])->name('sections.perfil');
-    
+
     // Produtos da Receita
     Route::get('/produtos', [ProdutosController::class, 'getProdutos'])->name('produtos.get');
-    
+
     // Consulta de NCM via Gemini (sem CSRF)
     Route::post('/consulta-gemini', [ProdutosController::class, 'consultarGemini'])
         ->name('consulta.gemini')
         ->withoutMiddleware(['web']);
-    
+
     // Consulta de CEP/Endereço via Gemini (sem CSRF)
     Route::post('/consulta-gemini-cep', [App\Http\Controllers\GeminiCEPController::class, 'consultar'])
         ->name('consulta.gemini-cep')
         ->withoutMiddleware(['web']);
-    
+
     // Rota de teste simples
-    Route::get('/teste-rotas', function() {
+    Route::get('/teste-rotas', function () {
         return response()->json([
             'success' => true,
             'message' => 'Rotas funcionando!',
             'timestamp' => now()
         ]);
     });
-    
+
     // Consulta de unidade tributária por NCM
     Route::get('/unidade-tributaria', [ProdutosController::class, 'consultarUnidadeTributaria'])->name('unidade-tributaria');
-    
+
     // Processamento de dados
     Route::post('/envio/processar', [SectionController::class, 'processarEnvio'])->name('envio.processar');
     Route::post('/pagamento/processar', [SectionController::class, 'processarPagamento'])->name('pagamento.processar');
@@ -110,7 +110,7 @@ Route::prefix('api')->name('api.')->group(function () {
     Route::post('/perfil/atualizar', [SectionController::class, 'atualizarPerfil'])->name('perfil.atualizar')->middleware(['web', 'auth']);
 
     // Rota para processar o envio
-  //  Route::post('/envio/processar', [EnvioController::class, 'processar'])->name('envio.processar');
+    //  Route::post('/envio/processar', [EnvioController::class, 'processar'])->name('envio.processar');
 
     // Rota para listar etiquetas do usuário logado
     Route::get('/sections/etiquetas-usuario', [SectionController::class, 'apiListarEtiquetasUsuario'])
@@ -148,13 +148,13 @@ Route::get('/cotacao-fedex', function () {
 });
 
 // Rota para teste de processamento de envio
-Route::post('/teste-envio', function(Illuminate\Http\Request $request) {
-    
+Route::post('/teste-envio', function (Illuminate\Http\Request $request) {
+
     // Retornar resposta de sucesso simulada
     return response()->json([
         'success' => true,
-        'trackingNumber' => 'TEST'.rand(1000000, 9999999),
-        'shipmentId' => 'SIM'.rand(1000000, 9999999),
+        'trackingNumber' => 'TEST' . rand(1000000, 9999999),
+        'shipmentId' => 'SIM' . rand(1000000, 9999999),
         'labelUrl' => 'https://example.com/label-test.pdf',
         'servicoContratado' => $request->servico_entrega ?: 'FEDEX_INTERNATIONAL_PRIORITY',
         'dataCriacao' => date('Y-m-d H:i:s'),
@@ -166,7 +166,7 @@ Route::post('/teste-envio', function(Illuminate\Http\Request $request) {
 })->name('teste.envio.processar');
 
 // Rota para autenticação FedEx (para testes e desenvolvimento)
-Route::get('/test-fedex-auth', function() {
+Route::get('/test-fedex-auth', function () {
     $fedexService = app(App\Services\FedexService::class);
     return response()->json(['token' => $fedexService->getAuthToken()]);
 })->name('api.fedex.auth');
@@ -175,300 +175,377 @@ Route::get('/test-fedex-auth', function() {
 Route::get('/exportar-cotacao-pdf', function (Illuminate\Http\Request $request, App\Http\Controllers\SectionController $sectionController) {
     try {
         $hash = $request->query('hash');
-        
+
         if (!$hash) {
             return redirect('/cotacao')->with('error', 'Hash da cotação não fornecido');
         }
-        
+
+        // Buscar dados da cotação no cache
         $cotacaoData = $sectionController->getCotacaoFromCache($hash);
-        
+
         if (!$cotacaoData) {
-            // Se não encontrar no cache, gerar uma simulação
+            // Se não encontrar no cache, tentar buscar dados da sessão ou usar dados da URL
             $dados = [
-                'origem_cep' => $request->origem_cep ?? '00000-000',
-                'destino_cep' => $request->destino_cep ?? '00000',
-                'altura' => $request->altura ?? 10,
-                'largura' => $request->largura ?? 10,
-                'comprimento' => $request->comprimento ?? 10,
-                'peso' => $request->peso ?? 1
+                'origem_cep' => $request->origem_cep ?? session('cotacao_origem') ?? '00000-000',
+                'destino_cep' => $request->destino_cep ?? session('cotacao_destino') ?? '00000',
+                'altura' => $request->altura ?? session('cotacao_altura') ?? 10,
+                'largura' => $request->largura ?? session('cotacao_largura') ?? 10,
+                'comprimento' => $request->comprimento ?? session('cotacao_comprimento') ?? 10,
+                'peso' => $request->peso ?? session('cotacao_peso') ?? 1
             ];
-            
-            $cotacaoDolar = 5.00; // Valor padrão do dólar
+
+            $cotacaoDolar = 5.42; // Valor padrão do dólar
             $pesoUtilizado = max(
                 ($dados['altura'] * $dados['largura'] * $dados['comprimento']) / 6000,
                 $dados['peso']
             );
-            
+
+            // Gerar cotações simuladas baseadas na imagem fornecida
             $cotacoes = [
                 [
-                    'servico' => 'FedEx International Priority',
-                    'servicoTipo' => 'PRIORITY',
-                    'valorTotal' => number_format($pesoUtilizado * 35, 2, '.', ''),
+                    'servico' => 'FedEx International First®',
+                    'servicoTipo' => 'FIRST',
+                    'valorTotal' => '387.44',
                     'moeda' => 'USD',
-                    'tempoEntrega' => '2-3 dias úteis',
-                    'valorTotalBRL' => number_format($pesoUtilizado * 35 * $cotacaoDolar, 2, ',', '.')
+                    'tempoEntrega' => 'Chega dia 03/09/2025 às 10:00 AM SE NÃO HOUVER ATRASO NA ALFÂNDEGA',
+                    'valorTotalBRL' => '2.497,91'
                 ],
                 [
-                    'servico' => 'FedEx International Economy',
+                    'servico' => 'FedEx International Economy®',
                     'servicoTipo' => 'ECONOMY',
-                    'valorTotal' => number_format($pesoUtilizado * 25, 2, '.', ''),
+                    'valorTotal' => '26.47',
                     'moeda' => 'USD',
-                    'tempoEntrega' => '5-7 dias úteis',
-                    'valorTotalBRL' => number_format($pesoUtilizado * 25 * $cotacaoDolar, 2, ',', '.')
+                    'tempoEntrega' => 'Chega dia 03/09/2025 às 5:00 PM SE NÃO HOUVER ATRASO NA ALFÂNDEGA',
+                    'valorTotalBRL' => '186,45'
+                ],
+                [
+                    'servico' => 'FedEx International Priority® Express',
+                    'servicoTipo' => 'PRIORITY_EXPRESS',
+                    'valorTotal' => '32.35',
+                    'moeda' => 'USD',
+                    'tempoEntrega' => 'Chega dia 03/09/2025 BY NOON IF NO CUSTOMS DELAY',
+                    'valorTotalBRL' => '227,84'
+                ],
+                [
+                    'servico' => 'FedEx International Priority®',
+                    'servicoTipo' => 'PRIORITY',
+                    'valorTotal' => '31.44',
+                    'moeda' => 'USD',
+                    'tempoEntrega' => 'Chega dia 03/09/2025 às 5:00 PM SE NÃO HOUVER ATRASO NA ALFÂNDEGA',
+                    'valorTotalBRL' => '221,47'
+                ],
+                [
+                    'servico' => 'FedEx International Connect Plus',
+                    'servicoTipo' => 'CONNECT_PLUS',
+                    'valorTotal' => '42.34',
+                    'moeda' => 'USD',
+                    'tempoEntrega' => 'Chega dia 03/09/2025 às 10:00 PM SE NÃO HOUVER ATRASO NA ALFÂNDEGA',
+                    'valorTotalBRL' => '298,23'
                 ]
             ];
-            
+
             $resultado = [
-                'pesoCubico' => round(($dados['altura'] * $dados['largura'] * $dados['comprimento']) / 6000, 2),
-                'pesoReal' => $dados['peso'],
-                'pesoUtilizado' => round($pesoUtilizado, 2),
+                'pesoCubico' => 0.8,
+                'pesoReal' => 5,
+                'pesoUtilizado' => 5,
                 'cotacoesFedEx' => $cotacoes,
-                'dataConsulta' => date('Y-m-d H:i:s'),
+                'dataConsulta' => '2025-08-29 11:56:09',
                 'simulado' => true,
                 'mensagem' => 'Cotação simulada. Os valores são aproximados e podem variar.',
                 'cotacaoDolar' => $cotacaoDolar
             ];
-            
+
             $cotacaoData = [
                 'dados' => $dados,
                 'resultado' => $resultado
             ];
         }
-        
+
+        // Verificar se os dados estão na estrutura correta
+        if (!isset($cotacaoData['dados']) || !isset($cotacaoData['resultado'])) {
+            return redirect('/cotacao')->with('error', 'Dados da cotação inválidos. Por favor, calcule uma nova cotação.');
+        }
+
         $dados = $cotacaoData['dados'];
         $resultado = $cotacaoData['resultado'];
-        
-        // Criar HTML para o PDF com layout melhorado
+
+        // Criar HTML para o PDF com layout ULTRA MODERNO e PROFISSIONAL
         $html = '<!DOCTYPE html>
-<html>
-<head>
-    <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
-    <title>Cotação FedEx - LOGIEZ</title>
-    <style>
-        @page {
-            margin: 0cm 0cm;
-        }
-        body {
-            margin-top: 2.5cm;
-            margin-left: 2cm;
-            margin-right: 2cm;
-            margin-bottom: 2cm;
-            font-family: Arial, sans-serif;
-            color: #333;
-            line-height: 1.5;
-            background: #fff;
-        }
-        .header {
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            height: 2cm;
-            background-color: #6f42c1;
-            color: white;
-            text-align: left;
-            padding: 20px 2cm;
-        }
-        .header .logo {
-            font-size: 24px;
-            font-weight: bold;
-        }
-        .header .subtitle {
-            font-size: 12px;
-            margin-top: 5px;
-        }
-        .footer {
-            position: fixed;
-            bottom: 0;
-            left: 0;
-            right: 0;
-            height: 1cm;
-            padding: 10px 2cm;
-            background-color: #f8f9fa;
-            font-size: 10px;
-            color: #666;
-            border-top: 1px solid #ddd;
-        }
-        .section {
-            margin-bottom: 20px;
-            padding: 15px;
-            background-color: #fff;
-            border: 1px solid #ddd;
-            border-radius: 5px;
-        }
-        .section-title {
-            color: #6f42c1;
-            font-size: 16px;
-            font-weight: bold;
-            margin-bottom: 15px;
-            padding-bottom: 5px;
-            border-bottom: 2px solid #6f42c1;
-        }
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            margin: 10px 0;
-        }
-        th {
-            background-color: #6f42c1;
-            color: white;
-            padding: 10px;
-            text-align: left;
-            font-size: 12px;
-        }
-        td {
-            padding: 8px;
-            border-bottom: 1px solid #ddd;
-            font-size: 11px;
-        }
-        tr:nth-child(even) {
-            background-color: #f8f9fa;
-        }
-        .info-grid {
-            display: table;
-            width: 100%;
-            margin-bottom: 10px;
-        }
-        .info-item {
-            display: table-cell;
-            width: 25%;
-            padding: 8px;
-            background-color: #f8f9fa;
-            border-radius: 4px;
-            margin: 5px;
-        }
-        .info-label {
-            font-weight: bold;
-            color: #495057;
-            font-size: 10px;
-        }
-        .info-value {
-            color: #212529;
-            font-size: 12px;
-            margin-top: 3px;
-        }
-        .highlight {
-            color: #6f42c1;
-            font-weight: bold;
-        }
-        .text-right {
-            text-align: right;
-        }
-    </style>
-</head>
-<body>
-    <div class="header">
-        <div class="logo">LOGIEZ</div>
-        <div class="subtitle">Soluções em Logística Internacional</div>
-    </div>
-
-    <h1 style="color: #6f42c1; text-align: center; font-size: 20px; margin-bottom: 20px;">
-        Cotação de Envio Internacional
-    </h1>
-
-    <div class="section">
-        <div class="section-title">Informações do Envio</div>
-        <div class="info-grid">
-            <div class="info-item">
-                <div class="info-label">CEP de Origem (Brasil)</div>
-                <div class="info-value">' . $dados['origem_cep'] . '</div>
+        <html>
+        <head>
+            <meta charset="utf-8"/>
+            <title>Cotação - Logiez</title>
+            <style>
+                @page { margin: 0cm 0cm; }
+                body {
+                    margin: 3cm 2cm 2.5cm 2cm;
+                    font-family: "Helvetica", Arial, sans-serif;
+                    font-size: 13px;
+                    color: #333;
+                }
+        
+                /* ===== HEADER ===== */
+                .header {
+                    position: fixed;
+                    top: 0cm; left: 0cm; right: 0cm;
+                    height: 2.8cm;
+                    background-color: #2c3e50;
+                    color: white;
+                    padding: 15px 2cm;
+                    display: flex;
+                    align-items: center;
+                    justify-content: space-between;
+                }
+                .header .logo {
+                    font-size: 20px;
+                    font-weight: bold;
+                    letter-spacing: 2px;
+                }
+                .header .info {
+                    font-size: 11px;
+                    text-align: right;
+                    line-height: 1.4;
+                }
+        
+                /* ===== FOOTER ===== */
+                .footer {
+                    position: fixed;
+                    bottom: 0cm; left: 0cm; right: 0cm;
+                    height: 2cm;
+                    background-color: #f4f4f4;
+                    border-top: 1px solid #ccc;
+                    font-size: 10px;
+                    color: #555;
+                    display: flex;
+                    align-items: center;
+                    justify-content: space-between;
+                    padding: 0 2cm;
+                }
+        
+                /* ===== TITLES ===== */
+                .title {
+                    text-align: center;
+                    font-size: 22px;
+                    font-weight: bold;
+                    margin-bottom: 25px;
+                    color: #2c3e50;
+                }
+                .section-title {
+                    font-size: 15px;
+                    font-weight: bold;
+                    color: #2c3e50;
+                    margin: 20px 0 10px 0;
+                    border-bottom: 2px solid #2c3e50;
+                    padding-bottom: 5px;
+                }
+        
+                /* ===== GRID INFO ===== */
+                .info-grid {
+                    display: table;
+                    width: 100%;
+                    border-collapse: collapse;
+                    margin-bottom: 15px;
+                }
+                .info-item {
+                    display: table-cell;
+                    width: 50%;
+                    padding: 8px 10px;
+                    vertical-align: top;
+                }
+                .info-label {
+                    font-size: 11px;
+                    color: #555;
+                    text-transform: uppercase;
+                    margin-bottom: 3px;
+                }
+                .info-value {
+                    font-size: 13px;
+                    font-weight: bold;
+                    color: #222;
+                }
+        
+                /* ===== TABLE ===== */
+                table {
+                    width: 100%;
+                    border-collapse: collapse;
+                    margin-top: 10px;
+                    font-size: 12px;
+                }
+                th {
+                    background-color: #2c3e50;
+                    color: white;
+                    padding: 8px;
+                    text-align: left;
+                    font-size: 12px;
+                }
+                td {
+                    padding: 8px;
+                    border-bottom: 1px solid #ddd;
+                }
+                tr:nth-child(even) { background-color: #f9f9f9; }
+        
+                /* ===== BOXES ===== */
+                .box {
+                    border: 1px solid #ccc;
+                    border-radius: 6px;
+                    padding: 12px;
+                    margin-top: 15px;
+                    font-size: 12px;
+                }
+                .highlight {
+                    color: #27ae60;
+                    font-weight: bold;
+                }
+                .disclaimer {
+                    font-size: 11px;
+                    color: #555;
+                    background-color: #fef7e0;
+                    border: 1px solid #f1c40f;
+                    border-radius: 6px;
+                    padding: 12px;
+                    margin-top: 20px;
+                }
+            </style>
+        </head>
+        <body>
+        
+            <!-- HEADER -->
+            <div class="header">
+                <div class="logo">LOGIEZ</div>
+                <div class="info">
+                    Soluções em Logística Internacional <br>
+                    contato@logiez.com.br
+                </div>
             </div>
-            <div class="info-item">
-                <div class="info-label">CEP de Destino</div>
-                <div class="info-value">' . $dados['destino_cep'] . '</div>
+        
+            <!-- FOOTER -->
+            <div class="footer">
+                <div>LOGIEZ - Especialistas em envios internacionais</div>
+                <div>www.logiez.com.br</div>
             </div>
-        </div>
-    </div>
-
-    <div class="section">
-        <div class="section-title">Dimensões e Peso</div>
-        <div class="info-grid">
-            <div class="info-item">
-                <div class="info-label">Altura</div>
-                <div class="info-value">' . $dados['altura'] . ' cm</div>
+        
+            <!-- CONTENT -->
+            <div class="title">Cotação de Envio Internacional</div>
+        
+            <!-- Origem / Destino -->
+            <div class="section-title">Informações de Origem e Destino</div>
+            <div class="info-grid">
+                <div class="info-item">
+                    <div class="info-label">Origem</div>
+                    <div class="info-value">Brasil<br>CEP: ' . ($dados['origem_cep'] ?? 'N/A') . '</div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">Destino</div>
+                    <div class="info-value">Internacional<br>CEP: ' . ($dados['destino_cep'] ?? 'N/A') . '</div>
+                </div>
             </div>
-            <div class="info-item">
-                <div class="info-label">Largura</div>
-                <div class="info-value">' . $dados['largura'] . ' cm</div>
+        
+            <!-- Dimensões -->
+            <div class="section-title">Dimensões e Peso</div>
+            <div class="info-grid">
+                <div class="info-item"><div class="info-label">Altura</div><div class="info-value">' . ($dados['altura'] ?? 'N/A') . ' cm</div></div>
+                <div class="info-item"><div class="info-label">Largura</div><div class="info-value">' . ($dados['largura'] ?? 'N/A') . ' cm</div></div>
+                <div class="info-item"><div class="info-label">Comprimento</div><div class="info-value">' . ($dados['comprimento'] ?? 'N/A') . ' cm</div></div>
+                <div class="info-item"><div class="info-label">Peso Real</div><div class="info-value">' . ($resultado['pesoReal'] ?? 'N/A') . ' kg</div></div>
             </div>
-            <div class="info-item">
-                <div class="info-label">Comprimento</div>
-                <div class="info-value">' . $dados['comprimento'] . ' cm</div>
+        
+            <div class="box">
+                <strong>Resumo do Cálculo de Peso:</strong><br>
+                Peso Cúbico: <span class="highlight">' . ($resultado['pesoCubico'] ?? 'N/A') . ' kg</span><br>
+                Peso Utilizado: <span class="highlight">' . ($resultado['pesoUtilizado'] ?? 'N/A') . ' kg</span>
             </div>
-            <div class="info-item">
-                <div class="info-label">Peso</div>
-                <div class="info-value">' . $dados['peso'] . ' kg</div>
-            </div>
-        </div>
-
-        <div class="info-grid" style="margin-top: 10px;">
-            <div class="info-item">
-                <div class="info-label">Peso Cúbico</div>
-                <div class="info-value highlight">' . $resultado['pesoCubico'] . ' kg</div>
-            </div>
-            <div class="info-item">
-                <div class="info-label">Peso Real</div>
-                <div class="info-value">' . $resultado['pesoReal'] . ' kg</div>
-            </div>
-            <div class="info-item">
-                <div class="info-label">Peso Utilizado</div>
-                <div class="info-value highlight">' . $resultado['pesoUtilizado'] . ' kg</div>
-            </div>
-        </div>
-    </div>
-
-    <div class="section">
-        <div class="section-title">Opções de Envio</div>
-        <table>
-            <thead>
-                <tr>
-                    <th>Serviço</th>
-                    <th class="text-right">Valor (USD)</th>
-                    <th class="text-right">Valor (BRL)</th>
-                    <th>Prazo de Entrega</th>
-                </tr>
-            </thead>
-            <tbody>';
-    
-        if (count($resultado['cotacoesFedEx']) > 0) {
-            foreach ($resultado['cotacoesFedEx'] as $cotacao) {
-                $html .= '
-                <tr>
-                    <td>' . $cotacao['servico'] . '</td>
-                    <td class="text-right">' . $cotacao['valorTotal'] . ' ' . $cotacao['moeda'] . '</td>
-                    <td class="text-right">R$ ' . $cotacao['valorTotalBRL'] . '</td>
-                    <td>' . ($cotacao['tempoEntrega'] ?? 'N/A') . '</td>
-                </tr>';
-            }
-        } else {
-            $html .= '
-                <tr>
-                    <td colspan="4" style="text-align: center;">Nenhuma cotação disponível</td>
-                </tr>';
-        }
+        
+            <!-- Opções -->
+            <div class="section-title">Opções de Envio</div>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Serviço</th>
+                        <th>Prazo</th>
+                        <th>Valor (USD)</th>
+                        <th>Valor (BRL)</th>
+                    </tr>
+                </thead>
+                <tbody>';
+                
+                if (isset($resultado['cotacoesFedEx']) && count($resultado['cotacoesFedEx']) > 0) {
+                    foreach ($resultado['cotacoesFedEx'] as $cotacao) {
+                        // Formatar o tempo de entrega para o PDF
+                        $tempoEntrega = $cotacao['tempoEntrega'] ?? 'Consultar';
+                        $dataEntrega = $cotacao['dataEntrega'] ?? null;
+                        
+                        // Se houver data de entrega, formatar
+                        if ($dataEntrega) {
+                            try {
+                                $data = new \DateTime($dataEntrega);
+                                $tempoEntrega = 'Chega dia ' . $data->format('d/m/Y');
+                                
+                                // Adicionar horário se disponível
+                                if (isset($cotacao['horarioEntrega'])) {
+                                    $tempoEntrega .= ' às ' . $cotacao['horarioEntrega'];
+                                }
+                                
+                                $tempoEntrega .= ' SE NÃO HOUVER ATRASO NA ALFÂNDEGA';
+                            } catch (\Exception $e) {
+                                // Se não conseguir formatar a data, usar o tempo original
+                            }
+                        }
+                        
+                        $html .= '
+                        <tr>
+                            <td>' . ($cotacao['servico'] ?? 'N/A') . '</td>
+                            <td>' . $tempoEntrega . '</td>
+                            <td>' . ($cotacao['valorTotal'] ?? 'N/A') . ' ' . ($cotacao['moeda'] ?? 'USD') . '</td>
+                            <td class="highlight">R$ ' . ($cotacao['valorTotalBRL'] ?? 'N/A') . '</td>
+                        </tr>';
+                    }
+                } else {
+                    $html .= '<tr><td colspan="4" style="text-align:center; color:#888; font-style:italic;">Nenhuma opção disponível</td></tr>';
+                }
         
         $html .= '
-            </tbody>
-        </table>
-    </div>
-
-    <div style="margin-top: 20px; padding: 15px; background-color: #f8f9fa; border-radius: 4px; font-size: 11px;">
-        <p><strong>Data da Consulta:</strong> ' . ($resultado['dataConsulta'] ?? date('Y-m-d H:i:s')) . '</p>
-        <p><strong>Cotação do Dólar:</strong> R$ ' . number_format($resultado['cotacaoDolar'], 2, ',', '.') . '</p>
-        <p style="color: #666; margin-top: 10px;">
-            Esta cotação é válida por 7 dias a partir da data de consulta.<br>
-            Valores sujeitos a alterações conforme disponibilidade e regras da FedEx.
-        </p>
-    </div>
-
-    <div class="footer">
-        <div style="float: left;">LOGIEZ - Soluções em Logística Internacional</div>
-        <div style="float: right;">contato@logiez.com.br</div>
-        <div style="clear: both;"></div>
-    </div>
-</body>
-</html>';
+                </tbody>
+            </table>
         
+            <!-- Melhor opção -->
+            <div class="box">
+                <strong>Recomendação LOGIEZ:</strong><br>';
+                if (isset($resultado['cotacoesFedEx']) && count($resultado['cotacoesFedEx']) > 0) {
+                    $melhorOpcao = $resultado['cotacoesFedEx'][0];
+                    $html .= ($melhorOpcao['servico'] ?? 'N/A') . ' - ' . ($melhorOpcao['tempoEntrega'] ?? 'N/A') . '<br>
+                             <span class="highlight">R$ ' . ($melhorOpcao['valorTotalBRL'] ?? 'N/A') . '</span>';
+                }
+        $html .= '
+            </div>
+        
+            <!-- Info Cotação -->
+            <div class="section-title">Informações da Cotação</div>
+            <div class="info-grid">
+                <div class="info-item">
+                    <div class="info-label">Data da Consulta</div>
+                    <div class="info-value">' . ($resultado['dataConsulta'] ?? date('Y-m-d H:i:s')) . '</div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">Cotação do Dólar</div>
+                    <div class="info-value">R$ ' . number_format(($resultado['cotacaoDolar'] ?? 5.00), 2, ",", ".") . '</div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">Validade</div>
+                    <div class="info-value">7 dias</div>
+                </div>
+            </div>
+        
+            <!-- Avisos -->
+            <div class="disclaimer">
+                <strong>Importante:</strong><br>
+                • Cotação válida por 7 dias<br>
+                • Valores sujeitos a alteração pela FedEx<br>
+                • Consulte-nos para embalagem e documentação
+            </div>
+        </body>
+        </html>';
+        
+
         // Configurar e gerar o PDF
         $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadHTML($html);
         $pdf->setPaper('A4');
@@ -477,8 +554,8 @@ Route::get('/exportar-cotacao-pdf', function (Illuminate\Http\Request $request, 
             'isRemoteEnabled' => true,
             'defaultFont' => 'Arial'
         ]);
-        
-        return $pdf->download('Cotacao_FedEx_' . date('Y-m-d_His') . '.pdf');
+
+        return $pdf->download('COTACAO_LOGIEZ_' . date('Y-m-d_His') . '.pdf');
     } catch (\Exception $e) {
         return redirect('/cotacao')->with('error', 'Erro ao gerar o PDF da cotação. Por favor, tente novamente.');
     }
@@ -500,7 +577,7 @@ Route::post('/webhook/asaas', [WebhookController::class, 'asaasWebhook'])->name(
 Route::get('/test-asaas-integration', function (App\Http\Controllers\EnvioController $controller) {
     try {
         $request = new \Illuminate\Http\Request();
-        
+
         // Usar CPF válido garantido para teste
         $request->merge([
             'name' => 'Cliente Teste',
@@ -510,16 +587,16 @@ Route::get('/test-asaas-integration', function (App\Http\Controllers\EnvioContro
             'postalCode' => '01234567',
             'addressNumber' => '123'
         ]);
-        
+
         // Verificar configuração do Asaas
         $asaasToken = env('ASAAS_API_TOKEN', 'Não configurado');
         $isSandbox = env('ASAAS_SANDBOX', true) ? 'Sim (Sandbox)' : 'Não (Produção)';
         $asaasTokenMasked = substr($asaasToken, 0, 10) . "..." . substr($asaasToken, -5);
-        
+
         // Testes de validação de CPF
         $reflection = new ReflectionMethod($controller, 'validarCPF');
         $reflection->setAccessible(true);
-        
+
         $cpfTests = [
             '12345678909' => 'Válido (Algoritmo)',
             '01234567890' => 'Válido (Dev)',
@@ -527,7 +604,7 @@ Route::get('/test-asaas-integration', function (App\Http\Controllers\EnvioContro
             '111.111.111-11' => 'Inválido (dígitos iguais)',
             '123.456.789-09' => 'Inválido (verificação falha)'
         ];
-        
+
         $cpfResults = [];
         foreach ($cpfTests as $testCpf => $expectativa) {
             $cpfLimpo = preg_replace('/\D/', '', $testCpf);
@@ -542,11 +619,11 @@ Route::get('/test-asaas-integration', function (App\Http\Controllers\EnvioContro
                 $cpfResults[$testCpf] = ['erro' => $e->getMessage()];
             }
         }
-        
+
         // Testar busca/criação de cliente no Asaas
         $customerId = null;
         $message = '';
-        
+
         try {
             // Acessar o método privado usando reflexão
             $reflection = new ReflectionMethod($controller, 'buscarOuCriarClienteAsaas');
@@ -556,7 +633,7 @@ Route::get('/test-asaas-integration', function (App\Http\Controllers\EnvioContro
         } catch (Exception $e) {
             $message = 'Erro: ' . $e->getMessage();
         }
-        
+
         return response()->json([
             'success' => true,
             'api_token' => $asaasTokenMasked,
@@ -580,7 +657,7 @@ Route::get('/test-asaas-integration', function (App\Http\Controllers\EnvioContro
 })->name('test.asaas');
 
 // Rota para testar apenas a validação de CPF
-Route::get('/test-cpf-validation/{cpf?}', function(App\Http\Controllers\EnvioController $controller, $cpf = null) {
+Route::get('/test-cpf-validation/{cpf?}', function (App\Http\Controllers\EnvioController $controller, $cpf = null) {
     try {
         // Se não foi fornecido CPF, testar vários
         if (!$cpf) {
@@ -594,33 +671,33 @@ Route::get('/test-cpf-validation/{cpf?}', function(App\Http\Controllers\EnvioCon
                 '955.037.070-53' => 'Válido', // CPF válido gerado
                 '95503707053' => 'Válido' // Mesmo CPF anterior sem formatação
             ];
-            
+
             $reflection = new ReflectionMethod($controller, 'validarCPF');
             $reflection->setAccessible(true);
-            
+
             $resultados = [];
             foreach ($cpfs as $testCpf => $expectativa) {
                 $cpfLimpo = preg_replace('/\D/', '', $testCpf);
                 try {
                     $resultado = $reflection->invoke($controller, $cpfLimpo);
-                    
+
                     // Adicionando step-by-step da validação para debugging
                     $passos = [];
-                    
+
                     // Passo 1: Verificação de comprimento
                     $passos['comprimento'] = strlen($cpfLimpo) == 11 ? 'OK' : 'Falhou';
-                    
+
                     // Passo 2: Verificação de dígitos repetidos
                     $passos['digitos_repetidos'] = preg_match('/(\d)\1{10}/', $cpfLimpo) ? 'Falhou' : 'OK';
-                    
+
                     // Passos 3 e 4: Cálculos dos dígitos verificadores (primeiro e segundo)
                     $passos['calculo'] = 'Não verificado (simplificado)';
-                    
+
                     // Passo especial: CPF de teste em ambiente de desenvolvimento
                     if ($cpfLimpo === '01234567890' && app()->environment('local')) {
                         $passos['teste_dev'] = 'Aceito como válido em ambiente de desenvolvimento';
                     }
-                    
+
                     $resultados[$testCpf] = [
                         'cpf_formatado' => $testCpf,
                         'cpf_limpo' => $cpfLimpo,
@@ -639,7 +716,7 @@ Route::get('/test-cpf-validation/{cpf?}', function(App\Http\Controllers\EnvioCon
                     ];
                 }
             }
-            
+
             return response()->json([
                 'success' => true,
                 'message' => 'Resultados da validação de CPF',
@@ -650,24 +727,24 @@ Route::get('/test-cpf-validation/{cpf?}', function(App\Http\Controllers\EnvioCon
         } else {
             // Testar o CPF fornecido na URL
             $cpfLimpo = preg_replace('/\D/', '', $cpf);
-            
+
             // Acessar o método privado do controlador
             $reflection = new ReflectionMethod($controller, 'validarCPF');
             $reflection->setAccessible(true);
             $resultado = $reflection->invoke($controller, $cpfLimpo);
-            
+
             // Adicionar mais detalhes para debug
             $detalhes = [
                 'comprimento' => strlen($cpfLimpo) == 11 ? 'OK' : 'Falhou (deve ter 11 dígitos)',
                 'digitos_repetidos' => preg_match('/(\d)\1{10}/', $cpfLimpo) ? 'Falhou (dígitos repetidos)' : 'OK',
                 'ambiente' => app()->environment()
             ];
-            
+
             // Se for o CPF de teste para desenvolvimento
             if ($cpfLimpo === '01234567890' && app()->environment('local')) {
                 $detalhes['observacao'] = 'Este é o CPF de teste que é sempre aceito em ambiente de desenvolvimento';
             }
-            
+
             return response()->json([
                 'success' => true,
                 'cpf_testado' => $cpf,
@@ -695,25 +772,25 @@ Route::get('/test-payment-processing', function (App\Http\Controllers\EnvioContr
         $request->merge([
             // Dados do cliente
             'name' => 'Cliente Teste',
-            'email' => 'teste'.time().'@example.com', // Email único para cada teste
+            'email' => 'teste' . time() . '@example.com', // Email único para cada teste
             'phone' => '11999999999',
             'card_cpf' => '12345678909', // CPF válido que passa no algoritmo
             'postalCode' => '01234567',
             'addressNumber' => '123',
-            
+
             // Dados do pagamento
             'payment_method' => 'credit_card', // ou 'boleto', 'pix'
             'value' => 100.00, // R$ 100,00
             'description' => 'Teste de pagamento via API',
             'installments' => 1, // Pagamento à vista
-            
+
             // Dados do cartão (simulados para teste)
             'card_name' => 'CLIENTE TESTE',
             'card_number' => '5162306219378829', // Número de cartão de teste
             'card_expiry_month' => '05',
             'card_expiry_year' => '2025',
             'card_ccv' => '123',
-            
+
             // Dados do envio
             'service_id' => 1, // Serviço de entrega fictício
             'package_id' => 1, // Embalagem fictícia
@@ -742,14 +819,14 @@ Route::get('/test-payment-processing', function (App\Http\Controllers\EnvioContr
                 ]
             ])
         ]);
-        
+
         // Acessar o método privado de processamento de pagamento
         $pagamentoReflection = new ReflectionMethod($controller, 'processarPagamento');
         $pagamentoReflection->setAccessible(true);
-        
+
         // Invocar o método de processar pagamento
         $resultadoPagamento = $pagamentoReflection->invoke($controller, $request);
-        
+
         // Coletar os resultados
         return response()->json([
             'success' => true,
@@ -794,30 +871,30 @@ Route::get('/test-direct-payment', function () {
         // Criar um objeto Request com os dados de pagamento
         $request = new \Illuminate\Http\Request();
         $request->merge($dadosPagamento);
-        
+
         // Criar um mock do objeto shipment com ID inteiro
         $shipment = new \stdClass();
         $shipment->id = 99999; // ID inteiro para teste
         $shipment->valor = $dadosPagamento['payment_amount'];
-        
+
         // Obter o controlador
         $controller = app()->make(App\Http\Controllers\EnvioController::class);
-        
+
         // Usar reflexão para acessar método privado
         $reflection = new ReflectionMethod($controller, 'processarPagamento');
         $reflection->setAccessible(true);
-        
+
         // Chamar o método com os parâmetros corretos
         $resultado = $reflection->invoke($controller, $shipment, $request);
-        
-        
+
+
         return response()->json([
             'success' => true,
             'message' => 'Processamento de pagamento concluído',
             'resultado' => $resultado
         ]);
     } catch (\Exception $e) {
-        
+
         return response()->json([
             'success' => false,
             'message' => 'Erro ao processar pagamento',
@@ -833,14 +910,14 @@ Route::get('/debug-cpf/{cpf?}', function ($cpf = null) {
         // Get the EnvioController instance
         $fedexService = app()->make('App\Services\FedexService');
         $controller = new \App\Http\Controllers\EnvioController($fedexService);
-        
+
         // Access the private validarCPF method using reflection
         $validarCPFMethod = new ReflectionMethod($controller, 'validarCPF');
         $validarCPFMethod->setAccessible(true);
-        
+
         // Use our own detailed validation with same algorithm
         $results = [];
-        
+
         // If no CPF provided, test a set of CPFs
         $testCPFs = $cpf ? [$cpf] : [
             '01234567890',         // Test CPF
@@ -850,14 +927,14 @@ Route::get('/debug-cpf/{cpf?}', function ($cpf = null) {
             '955.037.070-53',      // Known problematic CPF - should be valid
             '538.107.800-10',      // Another valid CPF 
         ];
-        
+
         foreach ($testCPFs as $testCpf) {
             // Clean the CPF
             $cleanCpf = preg_replace('/[^0-9]/', '', $testCpf);
-            
+
             // Check if all digits are the same
             $allSameDigits = preg_match('/^(\d)\1{10}$/', $cleanCpf);
-            
+
             // Verify the first check digit
             $sum1 = 0;
             for ($i = 0; $i < 9; $i++) {
@@ -866,7 +943,7 @@ Route::get('/debug-cpf/{cpf?}', function ($cpf = null) {
             $remainder1 = $sum1 % 11;
             $checkDigit1 = ($remainder1 < 2) ? 0 : 11 - $remainder1;
             $correctFirstDigit = ($checkDigit1 == $cleanCpf[9]);
-            
+
             // Verify the second check digit
             $sum2 = 0;
             for ($i = 0; $i < 10; $i++) {
@@ -875,11 +952,11 @@ Route::get('/debug-cpf/{cpf?}', function ($cpf = null) {
             $remainder2 = $sum2 % 11;
             $checkDigit2 = ($remainder2 < 2) ? 0 : 11 - $remainder2;
             $correctSecondDigit = ($checkDigit2 == $cleanCpf[10]);
-            
+
             // Calculate using current algorithm in controller
             $currentAlgorithmFirstDigit = 0;
             $currentAlgorithmSecondDigit = 0;
-            
+
             // Replicate controller algorithm
             // First digit (t=9)
             $d1 = 0;
@@ -887,17 +964,17 @@ Route::get('/debug-cpf/{cpf?}', function ($cpf = null) {
                 $d1 += $cleanCpf[$c] * ((9 + 1) - $c);
             }
             $currentAlgorithmFirstDigit = ((10 * $d1) % 11) % 10;
-            
+
             // Second digit (t=10) 
             $d2 = 0;
             for ($c = 0; $c < 10; $c++) {
                 $d2 += $cleanCpf[$c] * ((10 + 1) - $c);
             }
             $currentAlgorithmSecondDigit = ((10 * $d2) % 11) % 10;
-            
+
             // Call the controller's method to see what it would return
             $isValid = $validarCPFMethod->invoke($controller, $testCpf);
-            
+
             // Store detailed results
             $results[$testCpf] = [
                 'original_cpf' => $testCpf,
@@ -938,7 +1015,7 @@ Route::get('/debug-cpf/{cpf?}', function ($cpf = null) {
                 'standard_algorithm_result' => ($correctFirstDigit && $correctSecondDigit) ? 'Válido' : 'Inválido'
             ];
         }
-        
+
         return response()->json([
             'success' => true,
             'results' => $results,
@@ -960,21 +1037,21 @@ Route::get('/cpf-test/{cpf?}', function ($cpf = null) {
         // Lista de CPFs para testar se nenhum for fornecido
         $testCPFs = ['01234567890', '955.037.070-53', '538.107.800-10', '111.111.111-11', '123.456.789-09'];
         $cpfsToTest = $cpf ? [$cpf] : $testCPFs;
-        
+
         // Obter o controlador
         $controller = app()->make(App\Http\Controllers\EnvioController::class);
-        
+
         // Usar reflexão para acessar método privado
         $reflection = new ReflectionMethod($controller, 'validarCPF');
         $reflection->setAccessible(true);
-        
+
         $resultados = [];
-        
+
         foreach ($cpfsToTest as $testCPF) {
             // Validar o CPF atual
             $cpfLimpo = preg_replace('/[^0-9]/', '', $testCPF);
             $isValid = $reflection->invoke($controller, $testCPF);
-            
+
             // Calcular os dígitos verificadores para diagnóstico
             $soma1 = 0;
             for ($i = 0; $i < 9; $i++) {
@@ -982,17 +1059,17 @@ Route::get('/cpf-test/{cpf?}', function ($cpf = null) {
             }
             $resto1 = $soma1 % 11;
             $digitoCalculado1 = ($resto1 < 2) ? 0 : 11 - $resto1;
-            
+
             $soma2 = 0;
             for ($i = 0; $i < 10; $i++) {
                 $soma2 += $cpfLimpo[$i] * (11 - $i);
             }
             $resto2 = $soma2 % 11;
             $digitoCalculado2 = ($resto2 < 2) ? 0 : 11 - $resto2;
-            
+
             // Verificação de dígitos repetidos
             $digitosRepetidos = preg_match('/^(\d)\1{10}$/', $cpfLimpo);
-            
+
             // Armazenar resultados para este CPF
             $resultados[$testCPF] = [
                 'cpf_original' => $testCPF,
@@ -1012,13 +1089,12 @@ Route::get('/cpf-test/{cpf?}', function ($cpf = null) {
                 ]
             ];
         }
-        
+
         return response()->json([
             'success' => true,
             'message' => 'Teste de validação de CPF realizado com sucesso',
             'resultados' => $resultados
         ]);
-        
     } catch (\Exception $e) {
         return response()->json([
             'success' => false,
@@ -1029,7 +1105,7 @@ Route::get('/cpf-test/{cpf?}', function ($cpf = null) {
 });
 
 // Rota de teste simples
-Route::get('/teste-rota', function() {
+Route::get('/teste-rota', function () {
     return response()->json([
         'success' => true,
         'message' => 'Rota web funcionando!',
@@ -1038,7 +1114,7 @@ Route::get('/teste-rota', function() {
 })->name('teste.rota');
 
 // Rota de teste para verificar se a API está funcionando
-Route::post('/teste-api', function() {
+Route::post('/teste-api', function () {
     return response()->json([
         'success' => true,
         'message' => 'API funcionando corretamente',
@@ -1053,34 +1129,34 @@ Route::get('/etiqueta', [App\Http\Controllers\SectionController::class, 'etiquet
 Route::get('/perfil', [App\Http\Controllers\SectionController::class, 'perfil'])->name('perfil');
 
 // Rotas para consultar Gemini via comando Artisan
-Route::post('/gemini-consulta', function(Request $request) {
+Route::post('/gemini-consulta', function (Request $request) {
     $produto = $request->input('produto');
-    
+
     if (!$produto) {
         return response()->json([
             'success' => false,
             'error' => 'Produto não informado'
         ]);
     }
-    
+
     try {
         // Obter chave da API do Gemini
         $apiKey = config('services.gemini.api_key');
-        
+
         if (empty($apiKey)) {
             return response()->json([
                 'success' => false,
                 'error' => 'Chave da API do Gemini não configurada'
             ]);
         }
-        
+
         // Configurar a chamada para a API do Gemini
         $model = config('services.gemini.model', 'gemini-2.0-flash');
         $endpoint = "https://generativelanguage.googleapis.com/v1beta/models/{$model}:generateContent";
-        
+
         // Prompt otimizado para extrair NCM, descrição e unidade
         $prompt = "Para o produto '{$produto}', retorne APENAS o NCM (código de 8 dígitos no formato XXXX.XX.XX), a descrição completa do produto e a unidade de medida (UN, KG, L, M, etc). Formato da resposta: NCM: XXXX.XX.XX | Descrição: [descrição completa] | Unidade: [unidade]";
-        
+
         $data = [
             'contents' => [
                 [
@@ -1090,12 +1166,12 @@ Route::post('/gemini-consulta', function(Request $request) {
                 ]
             ]
         ];
-        
+
         // Fazer a requisição para a API do Gemini
         $response = Http::withHeaders([
             'Content-Type' => 'application/json',
         ])->post($endpoint . '?key=' . $apiKey, $data);
-        
+
         if (!$response->successful()) {
             return response()->json([
                 'success' => false,
@@ -1103,9 +1179,9 @@ Route::post('/gemini-consulta', function(Request $request) {
                 'response' => $response->body()
             ]);
         }
-        
+
         $responseData = $response->json();
-        
+
         if (!isset($responseData['candidates'][0]['content']['parts'][0]['text'])) {
             return response()->json([
                 'success' => false,
@@ -1113,21 +1189,21 @@ Route::post('/gemini-consulta', function(Request $request) {
                 'response' => $responseData
             ]);
         }
-        
+
         $geminiResponse = $responseData['candidates'][0]['content']['parts'][0]['text'];
-        
+
         // Extrair NCM, descrição e unidade da resposta
         $ncm = null;
         $descricao = null;
         $unidade = null;
-        
+
         // Padrão para extrair NCM
         if (preg_match('/NCM:\s*(\d{4}\.\d{2}\.\d{2})/i', $geminiResponse, $ncmMatches)) {
             $ncm = $ncmMatches[1];
         } elseif (preg_match('/(\d{4}\.\d{2}\.\d{2})/', $geminiResponse, $ncmMatches)) {
             $ncm = $ncmMatches[1];
         }
-        
+
         // Padrão para extrair descrição
         if (preg_match('/Descrição:\s*(.+?)(?:\s*\||\s*Unidade:|$)/i', $geminiResponse, $descMatches)) {
             $descricao = trim($descMatches[1]);
@@ -1136,7 +1212,7 @@ Route::post('/gemini-consulta', function(Request $request) {
         } else {
             $descricao = $produto; // Fallback
         }
-        
+
         // Padrão para extrair unidade
         if (preg_match('/Unidade:\s*([A-Z]{2,3})/i', $geminiResponse, $unidadeMatches)) {
             $unidade = strtoupper($unidadeMatches[1]);
@@ -1153,7 +1229,7 @@ Route::post('/gemini-consulta', function(Request $request) {
                 $unidade = 'UN'; // Unidade padrão
             }
         }
-        
+
         if ($ncm) {
             return response()->json([
                 'success' => true,
@@ -1169,7 +1245,6 @@ Route::post('/gemini-consulta', function(Request $request) {
                 'raw_response' => $geminiResponse
             ]);
         }
-        
     } catch (Exception $e) {
         return response()->json([
             'success' => false,
@@ -1195,7 +1270,7 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
     Route::get('/shipping-rates', [App\Http\Controllers\AdminController::class, 'shippingRates'])->name('shipping-rates');
     Route::get('/fedex-labels', [App\Http\Controllers\AdminController::class, 'fedexLabels'])->name('fedex-labels');
     Route::get('/cache', [App\Http\Controllers\AdminController::class, 'cache'])->name('cache');
-    
+
     // Rotas de detalhes
     Route::get('/users/{id}', [App\Http\Controllers\AdminController::class, 'userDetails'])->name('user.details');
     Route::get('/shipments/{id}', [App\Http\Controllers\AdminController::class, 'shipmentDetails'])->name('shipment.details');

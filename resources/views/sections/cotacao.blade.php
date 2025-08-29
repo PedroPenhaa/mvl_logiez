@@ -492,14 +492,20 @@ $(document).ready(function() {
             html += '<div class="d-flex gap-2">';
             html += '<button id="btn-realizar-envio" class="btn btn-success">';
             html += '<i class="fas fa-shipping-fast me-2"></i>Realizar Envio</button>';
-            html += '<button onclick="window.print();" class="btn btn-outline-secondary">';
-            html += '<i class="fas fa-print me-2"></i>Imprimir</button>';
             
-            if (response.hash) {
-                html += '<a href="/exportar-cotacao-pdf?hash=' + response.hash + '" ';
-                html += 'class="btn btn-danger" target="_blank">';
-                html += '<i class="fas fa-file-pdf me-2"></i>Baixar PDF</a>';
+            // Botão de download sempre visível
+            var pdfUrl = '/exportar-cotacao-pdf?hash=' + (response.hash || '');
+            
+            // Adicionar parâmetros como fallback
+            var formData = $('#cotacao-form').serialize();
+            if (formData) {
+                pdfUrl += '&' + formData;
             }
+            
+            html += '<a href="' + pdfUrl + '" ';
+            html += 'class="btn btn-primary" download="COTACAO_LOGIEZ.pdf">';
+            html += '<i class="fas fa-download me-2"></i>Baixar</a>';
+            
             html += '</div></div>';
             
             html += '</div></div>';

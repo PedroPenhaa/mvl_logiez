@@ -330,6 +330,20 @@ class SectionController extends Controller
             $resultado['cotacoesFedEx'] = $cotacoesProcessadas;
             $resultado['cotacaoDolar'] = $valorDolar;
             
+            // Salvar dados na sessão para uso no PDF
+            session([
+                'cotacao_origem' => $request->origem,
+                'cotacao_destino' => $request->destino,
+                'cotacao_altura' => $request->altura,
+                'cotacao_largura' => $request->largura,
+                'cotacao_comprimento' => $request->comprimento,
+                'cotacao_peso' => $request->peso
+            ]);
+            
+            // Gerar hash para o PDF
+            $hash = $this->saveCotacaoToCache($request, $resultado);
+            $resultado['hash'] = $hash;
+            
             // Salvar cotação na tabela quotes
             try {
                 $userId = \Illuminate\Support\Facades\Auth::check() ? \Illuminate\Support\Facades\Auth::id() : null;
@@ -444,6 +458,10 @@ class SectionController extends Controller
         $hash = md5($paramsKey . date('Y-m-d')); // Hash baseado nos parâmetros + data atual
         $cacheKey = 'cotacao_' . $hash;
         
+
+        
+
+        
         // Verificar se já existe uma cotação recente com os mesmos parâmetros
         $existingCotacao = DB::table('cache')
             ->where('key', $cacheKey)
@@ -470,6 +488,7 @@ class SectionController extends Controller
         // Armazenar diretamente na tabela cache
         $expiration = now()->addDays(7)->timestamp;
         $userId = \Illuminate\Support\Facades\Auth::check() ? \Illuminate\Support\Facades\Auth::id() : null;
+        
         $value = serialize([
             'dados' => $dados,
             'resultado' => $resultado
@@ -1536,6 +1555,7 @@ class SectionController extends Controller
     {
         try {
             $key = 'cotacao_' . $hash;
+            
             $cached = DB::table('cache')
                 ->where('key', $key)
                 ->where('expiration', '>', time())
@@ -1545,6 +1565,7 @@ class SectionController extends Controller
                 return unserialize($cached->value);
             }
         } catch (\Exception $e) {
+            // Log silencioso do erro
         }
         
         return null;
