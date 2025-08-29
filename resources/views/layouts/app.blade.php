@@ -14,8 +14,9 @@
     <!-- Bootstrap CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <!-- Font Awesome -->
-    <link rel="stylesheet" href="https://use.fontawesome.com/releases/v6.4.0/css/all.css">
-    <link rel="stylesheet" href="https://use.fontawesome.com/releases/v6.4.0/css/v4-shims.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css?v=2.0">
+    <link rel="stylesheet" href="https://use.fontawesome.com/releases/v6.4.0/css/all.css?v=2.0">
+    <link rel="stylesheet" href="https://use.fontawesome.com/releases/v6.4.0/css/v4-shims.css?v=2.0">
     
     <!-- Seção para estilos específicos da página -->
     @yield('styles')
@@ -24,6 +25,11 @@
         /* Aplicar Rubik globalmente */
         * {
             font-family: 'Rubik', sans-serif !important;
+        }
+        
+        /* Exceção para ícones Font Awesome - IMPORTANTE */
+        .fab, .fas, .far, .fa {
+            font-family: "Font Awesome 6 Free", "Font Awesome 6 Brands" !important;
         }
         
         /* Estilo global para page-header-wrapper */
@@ -35,14 +41,14 @@
             margin-top: 20px;
         }
 
-        /* Exceção para ícones Font Awesome */
-        .fas, .far, .fab, .fa {
-            font-family: "Font Awesome 6 Free" !important;
-        }
-        
         /* Garantir que os ícones sólidos tenham o peso correto */
         .fas {
             font-weight: 900 !important;
+        }
+        
+        /* Garantir que os ícones de marcas tenham o peso correto */
+        .fab {
+            font-weight: 400 !important;
         }
         
         /* Estilos Globais */
@@ -307,6 +313,115 @@
             font-size: 1em;
             transition: font-size 0.2s;
         }
+
+        /* WhatsApp Flutuante */
+        .whatsapp-float {
+            position: fixed;
+            bottom: 80px;
+            right: 20px;
+            background-color: #25d366;
+            color: white;
+            border-radius: 50px;
+            text-align: center;
+            font-size: 30px;
+            box-shadow: 2px 2px 3px #999;
+            z-index: 9999;
+            width: 60px;
+            height: 60px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-decoration: none;
+            transition: all 0.3s ease;
+            animation: pulse 2s infinite;
+        }
+
+        .whatsapp-float:hover {
+            background-color: #128c7e;
+            transform: scale(1.1);
+            color: white;
+            text-decoration: none;
+        }
+
+        @keyframes pulse {
+            0% {
+                box-shadow: 0 0 0 0 rgba(37, 211, 102, 0.7);
+            }
+            70% {
+                box-shadow: 0 0 0 10px rgba(37, 211, 102, 0);
+            }
+            100% {
+                box-shadow: 0 0 0 0 rgba(37, 211, 102, 0);
+            }
+        }
+
+        /* Responsividade para o WhatsApp */
+        @media (max-width: 576px) {
+            .whatsapp-float {
+                bottom: 70px;
+                right: 15px;
+                width: 55px;
+                height: 55px;
+                font-size: 28px;
+            }
+        }
+
+        /* Garantir que o ícone do WhatsApp seja sempre visível */
+        .whatsapp-float i {
+            font-size: inherit !important;
+            color: white !important;
+            display: block !important;
+            font-family: "Font Awesome 6 Brands" !important;
+            font-weight: 400 !important;
+        }
+        
+        /* Forçar visibilidade do ícone WhatsApp */
+        .whatsapp-float .fab.fa-whatsapp {
+            font-size: 30px !important;
+            color: white !important;
+            display: block !important;
+            font-family: "Font Awesome 6 Brands" !important;
+            font-weight: 400 !important;
+        }
+        
+        /* Fallback WhatsApp com Emoji */
+        .whatsapp-float-emoji {
+            position: fixed;
+            bottom: 80px;
+            right: 20px;
+            background-color: #25d366;
+            color: white;
+            border-radius: 50px;
+            text-align: center;
+            font-size: 30px;
+            box-shadow: 2px 2px 3px #999;
+            z-index: 9999;
+            width: 60px;
+            height: 60px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-decoration: none;
+            transition: all 0.3s ease;
+            animation: pulse 2s infinite;
+        }
+
+        .whatsapp-float-emoji:hover {
+            background-color: #128c7e;
+            transform: scale(1.1);
+            color: white;
+            text-decoration: none;
+        }
+
+        @media (max-width: 576px) {
+            .whatsapp-float-emoji {
+                bottom: 70px;
+                right: 15px;
+                width: 55px;
+                height: 55px;
+                font-size: 28px;
+            }
+        }
     </style>
 </head>
 <body>
@@ -416,6 +531,16 @@
         Sistema em Fase de Desenvolvimento
     </div>
 
+    <!-- WhatsApp Flutuante -->
+    <a href="https://wa.me/551151982327" target="_blank" class="whatsapp-float" title="Fale conosco no WhatsApp">
+        <i class="fab fa-whatsapp"></i>
+    </a>
+    
+    <!-- WhatsApp Fallback com Emoji -->
+    <a href="https://wa.me/551151982327" target="_blank" class="whatsapp-float-emoji" title="Fale conosco no WhatsApp" style="display: none;">
+        💬
+    </a>
+
     <!-- Scripts -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://code.jquery.com/jquery-3.6.4.min.js"></script>
@@ -465,6 +590,21 @@
                     }
                 });
             }
+            
+            // Verificar se o Font Awesome carregou para o WhatsApp
+            setTimeout(function() {
+                const whatsappIcon = document.querySelector('.whatsapp-float i');
+                const whatsappFallback = document.querySelector('.whatsapp-float-emoji');
+                
+                if (whatsappIcon && whatsappIcon.offsetWidth === 0) {
+                    // Font Awesome não carregou, mostrar fallback
+                    document.querySelector('.whatsapp-float').style.display = 'none';
+                    if (whatsappFallback) {
+                        whatsappFallback.style.display = 'flex';
+                    }
+                }
+            }, 3000);
+
         });
     </script>
     
