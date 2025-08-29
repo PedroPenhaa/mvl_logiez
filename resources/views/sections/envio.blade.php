@@ -572,6 +572,224 @@
     .servico-option .text-muted {
         font-size: 0.875rem;
     }
+    
+    /* Estilos modernos para o modal de revisão final */
+    #modal-revisao-final .modal-content {
+        animation: modalSlideIn 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+        border: none;
+        box-shadow: 0 25px 50px rgba(0, 0, 0, 0.15);
+    }
+    
+    #modal-revisao-final .modal-header {
+        position: relative;
+        overflow: hidden;
+    }
+    
+    #modal-revisao-final .modal-header::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        z-index: -1;
+    }
+    
+    #modal-revisao-final .modal-header::after {
+        content: '';
+        position: absolute;
+        top: -50%;
+        right: -50%;
+        width: 200%;
+        height: 200%;
+        background: radial-gradient(circle, rgba(255, 255, 255, 0.1) 0%, transparent 70%);
+        animation: shimmer 3s ease-in-out infinite;
+    }
+    
+    @keyframes shimmer {
+        0%, 100% { transform: rotate(0deg); }
+        50% { transform: rotate(180deg); }
+    }
+    
+    #modal-revisao-final .btn-close-lg {
+        width: 2rem;
+        height: 2rem;
+        opacity: 0.8;
+        transition: all 0.3s ease;
+    }
+    
+    #modal-revisao-final .btn-close-lg:hover {
+        opacity: 1;
+        transform: scale(1.1);
+    }
+    
+    #modal-revisao-final .modal-body {
+        scrollbar-width: thin;
+        scrollbar-color: var(--roxo-claro) #f1f1f1;
+    }
+    
+    #modal-revisao-final .modal-body::-webkit-scrollbar {
+        width: 8px;
+    }
+    
+    #modal-revisao-final .modal-body::-webkit-scrollbar-track {
+        background: #f1f1f1;
+        border-radius: 4px;
+    }
+    
+    #modal-revisao-final .modal-body::-webkit-scrollbar-thumb {
+        background: var(--roxo-claro);
+        border-radius: 4px;
+    }
+    
+    #modal-revisao-final .modal-body::-webkit-scrollbar-thumb:hover {
+        background: var(--roxo-principal);
+    }
+    
+    /* Estilos para o resumo compacto sem scroll */
+    .resumo-compacto {
+        max-height: none;
+        overflow: visible;
+    }
+    
+    .resumo-item {
+        transition: all 0.2s ease;
+        border: 1px solid #e9ecef;
+        display: flex;
+        flex-direction: column;
+        height: 100%;
+    }
+    
+    .resumo-item:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    }
+    
+    .resumo-item .small {
+        font-size: 0.8rem;
+        line-height: 1.3;
+        flex-grow: 1;
+    }
+    
+    .resumo-item .small div {
+        margin-bottom: 0.2rem;
+    }
+    
+    .resumo-item .small div:last-child {
+        margin-bottom: 0;
+    }
+    
+    .bg-gradient-light {
+        background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+    }
+    
+    /* Garantir que todos os cards tenham a mesma altura */
+    .h-100 {
+        height: 100% !important;
+    }
+    
+    /* Ajuste para o resumo financeiro */
+    .resumo-item .row {
+        margin-top: auto;
+    }
+    
+    /* Cores das bordas laterais */
+    .border-primary {
+        border-left-color: var(--roxo-principal) !important;
+    }
+    
+    .border-success {
+        border-left-color: #28a745 !important;
+    }
+    
+    .border-warning {
+        border-left-color: #ffc107 !important;
+    }
+    
+    .border-info {
+        border-left-color: #17a2b8 !important;
+    }
+    
+    .border-danger {
+        border-left-color: #dc3545 !important;
+    }
+    
+    /* Responsividade para o modal */
+    @media (max-width: 768px) {
+        #modal-revisao-final .modal-dialog {
+            margin: 0.5rem;
+            max-width: 95vw !important;
+        }
+        
+        #modal-revisao-final .modal-header {
+            padding: 0.75rem 1rem;
+        }
+        
+        #modal-revisao-final .modal-body {
+            padding: 0.75rem;
+        }
+        
+        #modal-revisao-final .modal-footer {
+            padding: 0.5rem 1rem;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+        
+        #modal-revisao-final .modal-footer .d-flex {
+            flex-direction: column;
+            width: 100%;
+        }
+        
+        #modal-revisao-final .btn {
+            width: 100%;
+            padding: 0.4rem 0.75rem;
+            font-size: 0.85rem;
+        }
+        
+        .resumo-item {
+            padding: 0.75rem !important;
+            margin-bottom: 0.5rem;
+        }
+        
+        .resumo-item .small {
+            font-size: 0.75rem;
+        }
+        
+        .resumo-item .small div {
+            margin-bottom: 0.15rem;
+        }
+    }
+    
+    @media (max-width: 576px) {
+        #modal-revisao-final .modal-dialog {
+            margin: 0.25rem;
+            max-width: 98vw !important;
+        }
+        
+        #modal-revisao-final .modal-content {
+            border-radius: 10px;
+        }
+        
+        .resumo-item {
+            padding: 0.5rem !important;
+            margin-bottom: 0.25rem;
+        }
+        
+        .resumo-item .small {
+            font-size: 0.7rem;
+        }
+        
+        .resumo-item .small div {
+            margin-bottom: 0.1rem;
+        }
+        
+        /* Em mobile, os cards ficam em 2 colunas */
+        .col-sm-6 {
+            flex: 0 0 50%;
+            max-width: 50%;
+        }
+    }
 </style>
 @endsection
 
@@ -1377,18 +1595,55 @@
             <!-- Modal de Revisão Final (Etapa 4) -->
             <div class="modal fade" id="modal-revisao-final" tabindex="-1" aria-labelledby="modalRevisaoFinalLabel" aria-hidden="true">
                 <div class="modal-dialog modal-lg modal-dialog-centered">
-                    <div class="modal-content">
-                        <div class="modal-header bg-primary text-white">
-                            <h5 class="modal-title" id="modalRevisaoFinalLabel">Revisão Final</h5>
-                            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Fechar"></button>
+                    <div class="modal-content border-0 shadow-lg" style="border-radius: 16px; overflow: hidden;">
+                        <!-- Header Compacto -->
+                        <div class="modal-header border-0 text-white" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 1rem 1.5rem;">
+                            <div class="d-flex align-items-center w-100">
+                                <div class="me-2">
+                                    <div class="bg-white bg-opacity-20 rounded-circle d-flex align-items-center justify-content-center" style="width: 35px; height: 35px;">
+                                        <i class="fas fa-clipboard-check text-white"></i>
+                                    </div>
+                                </div>
+                                <div class="flex-grow-1">
+                                    <h6 class="modal-title mb-0 fw-bold" id="modalRevisaoFinalLabel">
+                                        <i class="fas fa-eye me-2"></i>Revisão Final
+                                    </h6>
+                                    <small class="opacity-75">Confirme todos os dados antes de prosseguir</small>
+                                </div>
+                                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Fechar"></button>
+                            </div>
                         </div>
-                        <div class="modal-body">
-                            <!-- Aqui você pode montar o resumo dos dados preenchidos -->
-                            <div id="resumo-revisao-final"></div>
+                        
+                        <!-- Body Sem Scroll -->
+                        <div class="modal-body p-3">
+                            <!-- Container do Resumo -->
+                            <div id="resumo-revisao-final">
+                                <!-- Loading State -->
+                                <div class="text-center py-3" id="loading-revisao">
+                                    <div class="spinner-border text-primary mb-2" role="status" style="width: 1.5rem; height: 1.5rem;">
+                                        <span class="visually-hidden">Carregando...</span>
+                                    </div>
+                                    <small class="text-muted">Preparando resumo dos dados...</small>
+                                </div>
+                            </div>
                         </div>
-                        <div class="modal-footer">
-                            <button type="button" class="btn btn-outline-secondary" id="btn-editar-etapas">Editar</button>
-                            <button type="button" class="btn btn-success" id="btn-confirmar-revisao">Confirmar e Continuar</button>
+                        
+                        <!-- Footer Compacto -->
+                        <div class="modal-footer border-0 bg-light" style="padding: 0.75rem 1.5rem;">
+                            <div class="d-flex justify-content-between align-items-center w-100">
+                                <div class="d-flex align-items-center">
+                                    <i class="fas fa-info-circle text-primary me-2"></i>
+                                    <small class="text-muted">Revise todos os dados antes de confirmar</small>
+                                </div>
+                                <div class="d-flex gap-2">
+                                    <button type="button" class="btn btn-outline-secondary btn-sm px-3" id="btn-editar-etapas" style="border-radius: 6px; font-weight: 500;">
+                                        <i class="fas fa-edit me-1"></i>Editar
+                                    </button>
+                                    <button type="button" class="btn btn-success btn-sm px-3" id="btn-confirmar-revisao" style="border-radius: 6px; font-weight: 600; background: linear-gradient(135deg, #28a745 0%, #20c997 100%); border: none; box-shadow: 0 2px 6px rgba(40, 167, 69, 0.3);">
+                                        <i class="fas fa-check-circle me-1"></i>Confirmar
+                                    </button>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -4576,50 +4831,82 @@
 
         // Função para montar o resumo da revisão
         function montarResumoRevisao() {
-            let resumo = '<div class="row">';
+            // Esconder loading
+            $('#loading-revisao').hide();
+            
+            let resumo = '<div class="resumo-compacto">';
+            
+            // Layout horizontal - todos os cards lado a lado
+            resumo += '<div class="row g-2">';
             
             // Informações básicas
-            resumo += '<div class="col-md-6"><h6><i class="fas fa-info-circle me-2"></i>Informações Básicas</h6>';
-            resumo += '<ul class="list-unstyled">';
-            resumo += '<li><strong>Categoria do Envio:</strong> ' + $('#tipo_envio option:selected').text() + '</li>';
-            resumo += '<li><strong>Tipo de Pessoa:</strong> ' + $('#tipo_pessoa option:selected').text() + '</li>';
-            resumo += '<li><strong>Operação:</strong> ' + $('#tipo_operacao option:selected').text() + '</li>';
-            resumo += '</ul></div>';
+            resumo += '<div class="col-md-4 col-sm-6">';
+            resumo += '<div class="resumo-item bg-light rounded p-2 border-start border-3 border-primary h-100">';
+            resumo += '<div class="d-flex align-items-center mb-1"><i class="fas fa-info-circle text-primary me-2"></i><small class="fw-bold text-dark">Informações Básicas</small></div>';
+            resumo += '<div class="small text-muted">';
+            resumo += '<div><strong>Categoria:</strong> ' + $('#tipo_envio option:selected').text() + '</div>';
+            resumo += '<div><strong>Tipo:</strong> ' + $('#tipo_pessoa option:selected').text() + '</div>';
+            resumo += '<div><strong>Operação:</strong> ' + $('#tipo_operacao option:selected').text() + '</div>';
+            resumo += '</div>';
+            resumo += '</div></div>';
             
             // Produtos
-            resumo += '<div class="col-md-6"><h6><i class="fas fa-box me-2"></i>Produtos (' + produtos.length + ')</h6>';
-            resumo += '<ul class="list-unstyled">';
+            resumo += '<div class="col-md-4 col-sm-6">';
+            resumo += '<div class="resumo-item bg-light rounded p-2 border-start border-3 border-success h-100">';
+            resumo += '<div class="d-flex align-items-center mb-1"><i class="fas fa-box text-success me-2"></i><small class="fw-bold text-dark">Produtos (' + produtos.length + ')</small></div>';
+            resumo += '<div class="small text-muted">';
             produtos.forEach(function(produto) {
-                resumo += '<li>' + produto.nome + ' - Qtd: ' + produto.quantidade + ' - R$ ' + (produto.valor * produto.quantidade).toFixed(2) + '</li>';
+                resumo += '<div>' + produto.nome + ' - Qtd: ' + produto.quantidade + ' - R$ ' + (produto.valor * produto.quantidade).toFixed(2) + '</div>';
             });
-            resumo += '</ul></div>';
+            resumo += '</div>';
+            resumo += '</div></div>';
             
             // Caixas
-            resumo += '<div class="col-md-6"><h6><i class="fas fa-cube me-2"></i>Caixas (' + caixas.length + ')</h6>';
-            resumo += '<ul class="list-unstyled">';
+            resumo += '<div class="col-md-4 col-sm-6">';
+            resumo += '<div class="resumo-item bg-light rounded p-2 border-start border-3 border-warning h-100">';
+            resumo += '<div class="d-flex align-items-center mb-1"><i class="fas fa-cube text-warning me-2"></i><small class="fw-bold text-dark">Caixas (' + caixas.length + ')</small></div>';
+            resumo += '<div class="small text-muted">';
             caixas.forEach(function(caixa, index) {
-                resumo += '<li>Caixa ' + (index + 1) + ': ' + caixa.altura + '×' + caixa.largura + '×' + caixa.comprimento + 'cm - ' + caixa.peso + 'kg</li>';
+                resumo += '<div>Caixa ' + (index + 1) + ': ' + caixa.altura + '×' + caixa.largura + '×' + caixa.comprimento + 'cm - ' + caixa.peso + 'kg</div>';
             });
-            resumo += '</ul></div>';
+            resumo += '</div>';
+            resumo += '</div></div>';
             
             // Origem
-            resumo += '<div class="col-md-6"><h6><i class="fas fa-map-marker-alt me-2"></i>Origem</h6>';
-            resumo += '<ul class="list-unstyled">';
-            resumo += '<li><strong>' + $('#origem_nome').val() + '</strong></li>';
-            resumo += '<li>' + $('#origem_endereco').val() + '</li>';
-            resumo += '<li>' + $('#origem_cidade').val() + ' - ' + $('#origem_estado').val() + '</li>';
-            resumo += '<li>CEP: ' + $('#origem_cep').val() + '</li>';
-            resumo += '</ul></div>';
+            resumo += '<div class="col-md-4 col-sm-6">';
+            resumo += '<div class="resumo-item bg-light rounded p-2 border-start border-3 border-info h-100">';
+            resumo += '<div class="d-flex align-items-center mb-1"><i class="fas fa-map-marker-alt text-info me-2"></i><small class="fw-bold text-dark">Origem</small></div>';
+            resumo += '<div class="small text-muted">';
+            resumo += '<div><strong>' + $('#origem_nome').val() + '</strong></div>';
+            resumo += '<div>' + $('#origem_endereco').val() + '</div>';
+            resumo += '<div>' + $('#origem_cidade').val() + ' - ' + $('#origem_estado').val() + '</div>';
+            resumo += '<div>CEP: ' + $('#origem_cep').val() + '</div>';
+            resumo += '</div>';
+            resumo += '</div></div>';
             
             // Destino
-            resumo += '<div class="col-md-6"><h6><i class="fas fa-map-marker me-2"></i>Destino</h6>';
-            resumo += '<ul class="list-unstyled">';
-            resumo += '<li><strong>' + $('#destino_nome').val() + '</strong></li>';
-            resumo += '<li>' + $('#destino_endereco').val() + '</li>';
-            resumo += '<li>' + $('#destino_cidade').val() + ' - ' + $('#destino_estado').val() + '</li>';
-            resumo += '<li>CEP: ' + $('#destino_cep').val() + '</li>';
-            resumo += '</ul></div>';
+            resumo += '<div class="col-md-4 col-sm-6">';
+            resumo += '<div class="resumo-item bg-light rounded p-2 border-start border-3 border-danger h-100">';
+            resumo += '<div class="d-flex align-items-center mb-1"><i class="fas fa-map-marker text-danger me-2"></i><small class="fw-bold text-dark">Destino</small></div>';
+            resumo += '<div class="small text-muted">';
+            resumo += '<div><strong>' + $('#destino_nome').val() + '</strong></div>';
+            resumo += '<div>' + $('#destino_endereco').val() + '</div>';
+            resumo += '<div>' + $('#destino_cidade').val() + ' - ' + $('#destino_estado').val() + '</div>';
+            resumo += '<div>CEP: ' + $('#destino_cep').val() + '</div>';
+            resumo += '</div>';
+            resumo += '</div></div>';
             
+            // Resumo financeiro
+            resumo += '<div class="col-md-4 col-sm-6">';
+            resumo += '<div class="resumo-item bg-gradient-light rounded p-2 border border-primary h-100">';
+            resumo += '<div class="d-flex align-items-center mb-1"><i class="fas fa-calculator text-primary me-2"></i><small class="fw-bold text-dark">Resumo Financeiro</small></div>';
+            resumo += '<div class="row g-1 text-center">';
+            resumo += '<div class="col-6"><div class="bg-white rounded p-1"><small class="text-primary fw-bold">Valor</small><br><span class="fw-bold text-success">R$ ' + valorTotal.toFixed(2) + '</span></div></div>';
+            resumo += '<div class="col-6"><div class="bg-white rounded p-1"><small class="text-primary fw-bold">Peso</small><br><span class="fw-bold text-info">' + pesoTotal.toFixed(2) + ' kg</span></div></div>';
+            resumo += '</div>';
+            resumo += '</div></div>';
+            
+            resumo += '</div>';
             resumo += '</div>';
             
             $('#resumo-revisao-final').html(resumo);
