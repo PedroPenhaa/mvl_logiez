@@ -46,4 +46,17 @@ return [
 
     'debug' => env('VIEW_DEBUG', false),
 
+    /*
+    |--------------------------------------------------------------------------
+    | View Namespaces
+    |--------------------------------------------------------------------------
+    |
+    | Here you may define the namespaces for your views.
+    |
+    */
+
+    'namespaces' => [
+        'laravel-exceptions-renderer' => resource_path('views/errors'),
+    ],
+
 ];
