@@ -669,14 +669,14 @@
                 <div id="step-1" data-step="1">
                     <div class="row mb-4">
                         <div class="col-12">
-                            <!-- Header da Etapa -->
+                            <!-- Header da Etapa
                             <div class="text-center mb-4">
                                 <div class="d-inline-flex align-items-center justify-content-center bg-gradient-primary text-white rounded-circle mb-3" style="width: 80px; height: 80px;">
                                     <i class="fas fa-shipping-fast fs-2"></i>
                                 </div>
                                 <h3 class="fw-bold text-dark mb-2">Informações do Envio</h3>
                                 <p class="text-muted mb-0">Defina as características básicas do seu envio internacional</p>
-                            </div>
+                            </div> -->
 
                             <!-- Cards dos Campos -->
                             <div class="row g-4">
