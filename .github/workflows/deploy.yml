@@ -21,7 +21,7 @@ jobs:
             set -e
 
             echo "➡️ Entrando na pasta do projeto"
-            cd /var/www/meu_projeto
+            cd /web
 
             echo "➡️ Atualizando branch main"
             git fetch origin main
