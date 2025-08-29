@@ -269,6 +269,13 @@ Route::get('/exportar-cotacao-pdf', function (Illuminate\Http\Request $request, 
         $dados = $cotacaoData['dados'];
         $resultado = $cotacaoData['resultado'];
 
+        // Converter imagem para base64
+        $logoPath = base_path('public/img/logo_logiez1.png');
+        $logoBase64 = '';
+        if (file_exists($logoPath)) {
+            $logoBase64 = 'data:image/png;base64,' . base64_encode(file_get_contents($logoPath));
+        }
+
         // Criar HTML para o PDF com layout ULTRA MODERNO e PROFISSIONAL
         $html = '<!DOCTYPE html>
         <html>
@@ -286,25 +293,29 @@ Route::get('/exportar-cotacao-pdf', function (Illuminate\Http\Request $request, 
         
                 /* ===== HEADER ===== */
                 .header {
-                    position: fixed;
-                    top: 0cm; left: 0cm; right: 0cm;
-                    height: 2.8cm;
-                    background-color: #2c3e50;
+                    background-color: #6f42c1;
+                    width: 100%;
                     color: white;
-                    padding: 15px 2cm;
+                    padding: 15px;
+                    height: 120px;
                     display: flex;
                     align-items: center;
-                    justify-content: space-between;
+                    justify-content: space-around;
+                    margin: 0 0 15px 0;
+                }
+                body {
+                    margin: 0cm 0cm 2.5cm 0cm;
+                    font-family: "Helvetica", Arial, sans-serif;
+                    font-size: 13px;
+                    color: #333;
                 }
                 .header .logo {
-                    font-size: 20px;
-                    font-weight: bold;
-                    letter-spacing: 2px;
+                    height: 60px;
+                    width: auto;
+                    margin-right: 20px;
                 }
                 .header .info {
-                    font-size: 11px;
-                    text-align: right;
-                    line-height: 1.4;
+                    display: none;
                 }
         
                 /* ===== FOOTER ===== */
@@ -328,6 +339,7 @@ Route::get('/exportar-cotacao-pdf', function (Illuminate\Http\Request $request, 
                     font-size: 22px;
                     font-weight: bold;
                     margin-bottom: 25px;
+                    margin-top: 0px;
                     color: #2c3e50;
                 }
                 .section-title {
@@ -411,11 +423,13 @@ Route::get('/exportar-cotacao-pdf', function (Illuminate\Http\Request $request, 
         
             <!-- HEADER -->
             <div class="header">
-                <div class="logo">LOGIEZ</div>
-                <div class="info">
-                    Soluções em Logística Internacional <br>
-                    contato@logiez.com.br
+                <div class="logo">
+                    <img src="' . $logoBase64 . '" alt="Logiez" style="width: 120px;  height:auto;">
                 </div>
+                <span style="color: white; font-size: 9px; float: right; margin-top: 10px; margin-right: 50px;">
+                    Soluções em Logística<br>
+                    contato@logiez.com.br
+                </span>
             </div>
         
             <!-- FOOTER -->
@@ -425,6 +439,7 @@ Route::get('/exportar-cotacao-pdf', function (Illuminate\Http\Request $request, 
             </div>
         
             <!-- CONTENT -->
+            <div style="margin: 0 2cm;">
             <div class="title">Cotação de Envio Internacional</div>
         
             <!-- Origem / Destino -->
@@ -541,6 +556,7 @@ Route::get('/exportar-cotacao-pdf', function (Illuminate\Http\Request $request, 
                 • Cotação válida por 7 dias<br>
                 • Valores sujeitos a alteração pela FedEx<br>
                 • Consulte-nos para embalagem e documentação
+            </div>
             </div>
         </body>
         </html>';
