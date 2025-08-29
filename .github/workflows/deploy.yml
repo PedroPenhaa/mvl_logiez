@@ -45,11 +45,33 @@ jobs:
             php artisan optimize:clear
             php artisan optimize
 
-            echo "➡️ Reiniciando serviço do PHP (ajuste se necessário)"
-            # Se o usuário tem permissão sudo:
-            # sudo systemctl restart php8.2-fpm
-            # Ou se já for root:
-            systemctl restart php8.2-fpm || echo "Não foi possível reiniciar o PHP, reinicie manualmente"
+            echo "➡️ Verificando e corrigindo permissões"
+            chmod -R 755 storage/
+            chmod -R 755 bootstrap/cache/
+            chown -R www-data:www-data storage/ || echo "Não foi possível alterar owner do storage"
+            chown -R www-data:www-data bootstrap/cache/ || echo "Não foi possível alterar owner do cache"
+
+            echo "➡️ Verificando arquivo .env"
+            if [ ! -f .env ]; then
+                echo "⚠️  Arquivo .env não encontrado, criando a partir do .env.example"
+                cp .env.example .env || echo "Não foi possível copiar .env.example"
+            fi
+
+            echo "➡️ Gerando chave da aplicação se necessário"
+            php artisan key:generate --force || echo "Não foi possível gerar chave"
+
+            echo "➡️ Reiniciando serviço do PHP"
+            # Tentar diferentes métodos de reiniciar o PHP
+            if command -v systemctl &> /dev/null; then
+                systemctl restart php8.2-fpm || systemctl restart php8.1-fpm || systemctl restart php-fpm || echo "Não foi possível reiniciar via systemctl"
+            elif command -v service &> /dev/null; then
+                service php8.2-fpm restart || service php8.1-fpm restart || service php-fpm restart || echo "Não foi possível reiniciar via service"
+            else
+                echo "⚠️  Não foi possível reiniciar o PHP automaticamente. Reinicie manualmente."
+            fi
+
+            echo "➡️ Verificando status do PHP"
+            php -v || echo "PHP não está funcionando corretamente"
 
             echo "✅ Deploy concluído com sucesso!"
 
