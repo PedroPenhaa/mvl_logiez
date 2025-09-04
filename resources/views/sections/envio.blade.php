@@ -1760,6 +1760,9 @@
 
         // Variável para armazenar a última resposta do Gemini
         let ultimaDescricaoGemini = '';
+        
+        // Variável para armazenar a descrição original digitada pelo usuário
+        let descricaoOriginalUsuario = '';
 
         // Array para armazenar os produtos adicionados
         let produtos = [];
@@ -2737,6 +2740,9 @@
 
             const buscaDescricao = $('#busca-descricao').val();
             const buscaNCM = $('#busca-codigo').val();
+            
+            // Armazenar o valor original digitado pelo usuário
+            descricaoOriginalUsuario = buscaDescricao;
 
             // Limpar a descrição anterior do Gemini
             ultimaDescricaoGemini = '';
@@ -3634,7 +3640,7 @@
                 };
 
                 // Preencher as informações no modal
-                $('#modal-produto-nome').text(nome.split(' (NCM:')[0]); // Remover a parte do NCM do nome
+                $('#modal-produto-nome').text(descricaoOriginalUsuario); // Mostrar o que o usuário digitou originalmente
                 $('#modal-produto-ncm').text(codigo);
                 $('#modal-produto-valor').text('R$ ' + valorInformado.toFixed(2));
                 $('#modal-produto-peso').text(pesoInformado.toFixed(2) + ' kg');
