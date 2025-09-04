@@ -1,0 +1,170 @@
+[33meb2308b6[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mmain[m[33m)[m Adicionando envios tela dashboard
+[33m57e8d7b1[m[33m ([m[1;31morigin/main[m[33m, [m[1;31morigin/HEAD[m[33m)[m Sair
+[33m221d1c06[m ajsutes
+[33m24cf5a19[m adicionando botao whatsAssp
+[33m2189a3cb[m Ajustes modal de confirmaçõa de informações
+[33m513471d6[m fix: criar ExceptionServiceProvider para registrar handler de exceções corretamente
+[33m1e9167e0[m fix: criar handler de exceções padrão para Laravel 12
+[33m687c2401[m fix: remover configuração de exceções customizada e adicionar namespace para laravel-exceptions-renderer
+[33mbb4ba223[m fix: corrigir erro 500 e melhorar script de deploy
+[33m2ec89cbe[m fix: corrigir erro de hint path laravel-exceptions-renderer no Laravel 12
+[33md5bcef06[m teste
+[33mc55f7b7b[m ajuste
+[33m91fbed5a[m composer
+[33m5d90b61f[m Ajuste deploy
+[33m55edd96b[m Ajuste deploy
+[33m42d53213[m ajuste envio
+[33m6335b273[m AJuste Pdf
+[33m8ba450d3[m Deploy
+[33m0b12da2f[m Deploy
+[33m53656daa[m Deploy
+[33mbff2bdb5[m Deploy
+[33m4419a6f9[m Ajuste Pdf
+[33m8f21abd7[m etapa 1 envio
+[33m025e9b3a[m Ajuste primeira etapa
+[33md00a9479[m Resolvendo paginação da tela de eituqeta
+[33mc8fad9f6[m Desabilitando pagamento
+[33mae36f271[m Ajustes envio AQUIIIIIIIIIIIIII
+[33m704a7aac[m Ajustes imagens
+[33m170d8638[m AJuste imagem banner
+[33meac35021[m Mudando imagem logo para avif
+[33md9d66841[m Ajustes tela de perfil
+[33m90ea09fe[m Ajuste etiqueta
+[33m86354266[m Adicionando cmapo de peso no envio de produto, juntamento com validador de valor e peso
+[33m7725ead7[m Tela registro
+[33mefae2cc5[m Ajuste para buscar produtos Gemini
+[33m80a02e51[m 🔧 Corrige caminho do projeto para /web no servidor
+[33m11ce364b[m 📚 Adiciona documentação de deploy automático
+[33m887c5d1f[m 🚀 Configuração de deploy automático com GitHub Actions
+[33m00ea096a[m ajuste rastreamento
+[33m50418baa[m ajustes
+[33m04d3278a[m Invoice
+[33m7c5d2d60[m ajustes!
+[33me838b038[m Ajuste Envio
+[33m98ff811d[m Ajustando paises
+[33md262116e[m Ajustando caixas de envio
+[33m9fe5b01e[m Mudando porta docker
+[33m8b6fc634[m Tipo operacao
+[33m2e34fecf[m Mobile
+[33mecdeb7c9[m Mobile
+[33m6d693de3[m Ajuste icon menu
+[33m50c5908f[m AJuste
+[33mecec22cd[m Adicionando tela de Admin
+[33m8a93ac50[m etiqueta funcionando
+[33m8c29e18d[m Salvando dados de envio no banco
+[33mc367d099[m Envio fedex na tela funcionando
+[33mcb9dba69[m Ajuste
+[33m2e6dd2b9[m Testando api de envio
+[33mb14a6375[m Adicionando porcentagem na cotação
+[33m747b4dae[m SAlvamento de cotações
+[33mbe6567f6[m Retirando logs e infos
+[33m116f736d[m ajustes
+[33m2242e062[m Ajuste rastreamento
+[33mffa70be4[m Retirando logs
+[33m882ab4d9[m Adicionando botao voltar nas etapas do envio
+[33m41e126ca[m Adicionando campo CPF/CNPJ
+[33md1936a1f[m Ajuste Payment
+[33m5e1b1948[m Ajuste busca etiqueta
+[33m00fd7200[m remove: removendo arquivos sensíveis do repositório remoto
+[33m436cc198[m Sobe
+[33md06d41cc[m Up Laravel 12
+[33m5185d233[m etiqueta
+[33mb7042abb[m Ajuste fedex
+[33meeb8b03a[m ajustes
+[33me67d9831[m Cotação envio
+[33md4524009[m Resolved cotacao
+[33m8b1bb3ea[m cotacao resolvida
+[33m329ea2d4[m Retirando Cep destino em envio
+[33mf7d678e8[m Cotacao retornando
+[33mc0923f70[m MUdando para produao
+[33m8acc86cc[m Remove .htaccess from tracking and add to .gitignore
+[33m4b7f89fd[m AJustes .env
+[33m2209e7cf[m Cotação envio
+[33md57e71c3[m ajustes tela de origem/destino
+[33mfeee0dcf[m Consulta Cep
+[33ma5422520[m ajuste produto envio
+[33m78baa6c9[m Ajustando pesquisa ncm
+[33m88aa1af5[m Ajustes envio
+[33m1e354496[m Ajuste em rastreamento
+[33m3b5e131d[m AJustes Rastreamento
+[33m9c98b461[m Ajuste na tela de cotação para produção
+[33m2ed2cc3f[m Ajustes cotação em producao
+[33mc53604f4[m Ajuste etapa produto
+[33m2ef2f798[m Ajustes
+[33mafa8ef29[m Ajuste severo envio
+[33m9aa5a512[m Ajuste pagamentos
+[33m90dcbd4e[m Ajustes tela de envio
+[33m3bb84ae9[m Envio push
+[33md11ce164[m ajustes tela envio
+[33mc983ed4e[m ajuste menu
+[33m61ec438c[m Ajustes front
+[33m089073c0[m Favicon Icon
+[33m526eac70[m Ajsutes cotacao
+[33md32a2a71[m AJustes tela cotacao
+[33maaeef992[m ajustes dashboard
+[33m52d1c17f[m Login ajustado
+[33mcd920126[m ajustando cotação fedex
+[33m7021a8ee[m ajustes funcionamento container
+[33mcff85118[m[33m ([m[1;31morigin/hml[m[33m, [m[1;32mhml[m[33m)[m ajuste container
+[33m7c287a21[m Ajustes em pastas
+[33m3202cf34[m Ajustes pagamentos
+[33m910ee52b[m ajustes finais
+[33m1c89a673[m Ajustes pdf cotação
+[33m1392ecc0[m ajustes front
+[33md77fb840[m juastes dashboard
+[33m2106786e[m ultimos ajustes
+[33m3e300326[m ajsuas
+[33m2249480d[m Migrations p
+[33mcd29042d[m migrations
+[33m55b17a1d[m ajustes tela principal dashboard
+[33m9bde45fa[m Ajustes invoices
+[33me4cec2e2[m  ajustes
+[33m669bd730[m ajustes pagamento e envio
+[33me772f974[m ajustes
+[33m15ce7b00[m Ajustes pagamento
+[33me8e67058[m ajuste busca de produtos
+[33m35a8288d[m ajustes
+[33m0b92c317[m Ajustes
+[33mb9173fa6[m Tratando mudança de valores
+[33m0fc1ea81[m AJustes banco de dados
+[33m45a5b9b1[m Ajustes
+[33m001ab3c6[m Ajustes Api Fedex
+[33md5d7613e[m Tratando serviços na tela de envio
+[33m0a846fe8[m ADicionando busca automatica por cep
+[33m42dd44a1[m Depara unidade de NCM
+[33m5af6c95d[m Envio para fedex
+[33md4d4e9e2[m Ajuste layout rastreamento
+[33m456a794f[m Rastreamento ok
+[33mf29786b7[m Resolvendo busca ncm/descricao gemini
+[33m73f70e66[m Ajustes busca gemini
+[33md9f8f53f[m Autenticacao gmail e icloud
+[33mb9c517d6[m Command Gemini
+[33m14e12335[m Ajustes rastreamento
+[33ma7e71a04[m Ajuste tela login
+[33ma3b58dec[m Ajustes tela envioclear
+[33m5754a26b[m Ajustes tela envio
+[33mf5ce8cbe[m Ajustes tela envio
+[33m34216f25[m Ajustes tela envio
+[33md80a5887[m Produtos tela envio
+[33ma9cfc653[m Command que busca produtos na receita
+[33me53d7591[m Ultimas alteracaoes
+[33m8ed4ae76[m Cotacao funcionando
+[33m33548423[m asasas
+[33mcebb93f7[m Simulacao de calculo de cotacao
+[33m1fee1771[m Simulacao de calculo de cotacao
+[33mf93d64f2[m Autenticacao funcionando fedex
+[33m37b6f86b[m Ajustes no projeto
+[33m26829136[m[33m ([m[1;31morigin/ajustes-finais[m[33m)[m Ajustes confiavies
+[33m36107781[m Ajustes fieis
+[33mb69d9bd8[m Ultimos ajustes
+[33m1dc65df0[m asa
+[33mfc79dafd[m asa
+[33m0f917054[m asa
+[33me324c82e[m asa
+[33m853e9ab7[m Ajuste system
+[33m1a5d4761[m Ajuste system
+[33m5e696177[m Ajuste login css
+[33m3b7d6c2d[m Criando validador login
+[33mc2f5347f[m Criando validador login
+[33mfd5e16c2[m Primeiro commit
+[33m1964dc57[m first commit

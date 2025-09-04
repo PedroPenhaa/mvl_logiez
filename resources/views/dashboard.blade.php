@@ -63,18 +63,20 @@
     </div>
 
     <!-- Seção de Envios em Andamento -->
-    @if($enviosEmAndamento->count() > 0)
     <div class="card mb-4 envios-card">
         <div class="card-body p-4">
             <div class="d-flex justify-content-between align-items-center mb-4">
                 <h2 class="display-6" style="font-size: 1.8rem; font-weight: 700; color: #430776; position: relative; padding-left: 15px; border-left: 4px solid #7209B7;">
                     Seus <span style="color: #7209B7">envios em andamento</span>
                 </h2>
+                @if($enviosEmAndamento->count() > 0)
                 <a href="{{ route('rastreamento') }}" class="btn btn-outline-primary btn-sm">
                     <i class="fas fa-search me-1"></i> Ver todos
                 </a>
+                @endif
             </div>
             
+            @if($enviosEmAndamento->count() > 0)
             <div class="row g-3">
                 @foreach($enviosEmAndamento as $envio)
                 <div class="col-12 col-md-6 col-lg-4">
@@ -152,9 +154,30 @@
                 </div>
                 @endforeach
             </div>
+            @else
+            <!-- Mensagem quando não há envios -->
+            <div class="no-shipments-container">
+                <div class="no-shipments-content">
+                    <div class="no-shipments-icon">
+                        <i class="fas fa-box-open"></i>
+                    </div>
+                    <h3 class="no-shipments-title">Você não tem envios realizados</h3>
+                    <p class="no-shipments-description">
+                        Quando você realizar seus primeiros envios, eles aparecerão aqui para acompanhamento.
+                    </p>
+                    <div class="no-shipments-actions">
+                        <a href="{{ route('cotacao') }}" class="btn btn-primary btn-lg">
+                            <i class="fas fa-calculator me-2"></i> Fazer Cotação
+                        </a>
+                        <a href="{{ route('envio') }}" class="btn btn-outline-primary btn-lg ms-3">
+                            <i class="fas fa-shipping-fast me-2"></i> Novo Envio
+                        </a>
+                    </div>
+                </div>
+            </div>
+            @endif
         </div>
     </div>
-    @endif
 
     <!--
 
@@ -864,6 +887,132 @@ body, h1, h2, h3, h4, h5, h6, p, span, div, a, button {
     .detail-item {
         font-size: 0.75rem;
         padding: 0.3rem 0.6rem;
+    }
+}
+
+/* Estilos para mensagem quando não há envios */
+.no-shipments-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 300px;
+    padding: 2rem;
+}
+
+.no-shipments-content {
+    text-align: center;
+    max-width: 500px;
+}
+
+.no-shipments-icon {
+    font-size: 4rem;
+    color: #d1d5db;
+    margin-bottom: 1.5rem;
+    opacity: 0.7;
+}
+
+.no-shipments-title {
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: #374151;
+    margin-bottom: 1rem;
+}
+
+.no-shipments-description {
+    font-size: 1rem;
+    color: #6b7280;
+    margin-bottom: 2rem;
+    line-height: 1.6;
+}
+
+.no-shipments-actions {
+    display: flex;
+    justify-content: center;
+    gap: 1rem;
+    flex-wrap: wrap;
+}
+
+.no-shipments-actions .btn {
+    border-radius: 12px;
+    font-weight: 600;
+    padding: 0.75rem 1.5rem;
+    transition: all 0.3s ease;
+}
+
+.no-shipments-actions .btn-primary {
+    background: linear-gradient(135deg, #7209B7, #430776);
+    border: none;
+}
+
+.no-shipments-actions .btn-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 15px rgba(114, 9, 183, 0.3);
+}
+
+.no-shipments-actions .btn-outline-primary {
+    border: 2px solid #7209B7;
+    color: #7209B7;
+}
+
+.no-shipments-actions .btn-outline-primary:hover {
+    background: #7209B7;
+    border-color: #7209B7;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 15px rgba(114, 9, 183, 0.2);
+}
+
+/* Responsividade para mensagem de não há envios */
+@media (max-width: 768px) {
+    .no-shipments-container {
+        min-height: 250px;
+        padding: 1.5rem;
+    }
+    
+    .no-shipments-icon {
+        font-size: 3rem;
+        margin-bottom: 1rem;
+    }
+    
+    .no-shipments-title {
+        font-size: 1.25rem;
+    }
+    
+    .no-shipments-description {
+        font-size: 0.9rem;
+        margin-bottom: 1.5rem;
+    }
+    
+    .no-shipments-actions {
+        flex-direction: column;
+        align-items: center;
+    }
+    
+    .no-shipments-actions .btn {
+        width: 100%;
+        max-width: 250px;
+    }
+    
+    .no-shipments-actions .btn.ms-3 {
+        margin-left: 0 !important;
+        margin-top: 0.5rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .no-shipments-container {
+        padding: 1rem;
+    }
+    
+    .no-shipments-icon {
+        font-size: 2.5rem;
+    }
+    
+    .no-shipments-title {
+        font-size: 1.1rem;
+    }
+    
+    .no-shipments-description {
+        font-size: 0.85rem;
     }
 }
 </style>
