@@ -1207,7 +1207,7 @@
                                             </label>
                                             <div class="input-group">
                                                 <span class="input-group-text bg-light">R$</span>
-                                                <input type="number" class="form-control" id="produto-valor" min="0" step="0.01" value="0.00">
+                                                <input type="text" class="form-control" id="produto-valor" value="0,00">
                                             </div>
                                         </div>
                                         <div class="col-lg-2 col-md-3 col-sm-6">
@@ -2674,7 +2674,7 @@
 
                 // Sugerir valor inicial (pode ser editado pelo usuário)
                 const valorSugerido = produtoSelecionado.valor || 10.00;
-                $('#produto-valor').val(valorSugerido.toFixed(2));
+                $('#produto-valor').val(valorSugerido.toLocaleString('pt-BR', {minimumFractionDigits: 2, maximumFractionDigits: 2}));
                 $('#produto-valor').select(); // Seleciona o texto para fácil edição
 
                 // Se já temos uma unidade no campo, não sobrescrever
@@ -3318,7 +3318,7 @@
             $('#sem-produtos-alert').removeClass('d-none');
 
             // Também limpar os valores dos campos relacionados
-            $('#produto-valor').val('0.00');
+            $('#produto-valor').val('0,00');
             $('#produto-quantidade').val('1');
         });
 
@@ -3347,6 +3347,25 @@
         $('#produto-valor, #produto-peso').on('input focus', function() {
             $(this).removeClass('border-danger');
         });
+
+        // Formatação automática de valores em reais para o campo produto-valor
+        $('#produto-valor').on('input', function() {
+            let value = $(this).val().replace(/\D/g, ''); // Remove tudo que não é dígito
+            
+            if (value.length === 0) {
+                $(this).val('0,00');
+                return;
+            }
+            
+            // Converte para centavos e formata
+            let valorFormatado = (parseInt(value) / 100).toLocaleString('pt-BR', {
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2
+            });
+            
+            $(this).val(valorFormatado);
+        });
+
 
         // Função para atualizar o resumo de produtos
         function atualizarResumo() {
@@ -3470,7 +3489,7 @@
                                 <div class="d-flex justify-content-between align-items-center">
                                     <div class="text-end">
                                         <small class="text-muted d-block fw-semibold">Subtotal</small>
-                                        <strong class="text-success fs-5">R$ ${(produto.valor * produto.quantidade).toFixed(2)}</strong>
+                                        <strong class="text-success fs-5">R$ ${(produto.valor * produto.quantidade).toLocaleString('pt-BR', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</strong>
                                     </div>
                                     <button type="button" class="btn btn-outline-danger btn-sm btn-remover" data-index="${index}" style="border-radius: 8px;">
                                         <i class="fas fa-trash me-1"></i>Remover
@@ -3542,7 +3561,7 @@
 
             // Verificar se o peso foi informado
             const pesoInformado = parseFloat($('#produto-peso').val()) || 0;
-            const valorInformado = parseFloat($('#produto-valor').val()) || 0;
+            const valorInformado = parseFloat($('#produto-valor').val().replace('.', '').replace(',', '.')) || 0;
             
             // Limpar destaque vermelho anterior
             $('#produto-peso, #produto-valor').removeClass('border-danger');
@@ -3713,7 +3732,7 @@
 
             // Limpar campos de quantidade, valor, peso e unidade
             $('#produto-quantidade').val(1);
-            $('#produto-valor').val(0.00);
+            $('#produto-valor').val('0,00');
             $('#produto-peso').val('');
             $('#produto-unidade').val('');
 
@@ -4909,7 +4928,7 @@
             resumo += '<div class="d-flex align-items-center mb-1"><i class="fas fa-box text-success me-2"></i><small class="fw-bold text-dark">Produtos (' + produtos.length + ')</small></div>';
             resumo += '<div class="small text-muted">';
             produtos.forEach(function(produto) {
-                resumo += '<div>' + produto.nome + ' - Qtd: ' + produto.quantidade + ' - R$ ' + (produto.valor * produto.quantidade).toFixed(2) + '</div>';
+                resumo += '<div>' + produto.nome + ' - Qtd: ' + produto.quantidade + ' - R$ ' + (produto.valor * produto.quantidade).toLocaleString('pt-BR', {minimumFractionDigits: 2, maximumFractionDigits: 2}) + '</div>';
             });
             resumo += '</div>';
             resumo += '</div></div>';
