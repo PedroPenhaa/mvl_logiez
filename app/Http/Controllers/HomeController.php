@@ -196,6 +196,14 @@ class HomeController extends Controller
             return redirect()->route('login');
         }
         
-        return view('dashboard');
+        // Buscar envios do usuário que têm tracking_number (mesma lógica da tela de etiquetas)
+        $enviosEmAndamento = Shipment::where('user_id', Auth::id())
+            ->whereNotNull('tracking_number')
+            ->with(['senderAddress', 'recipientAddress', 'trackingEvents'])
+            ->orderBy('created_at', 'desc')
+            ->limit(5)
+            ->get();
+        
+        return view('dashboard', compact('enviosEmAndamento'));
     }
 } 

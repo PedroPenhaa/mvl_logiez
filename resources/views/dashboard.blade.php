@@ -62,6 +62,100 @@
         </div>
     </div>
 
+    <!-- Seção de Envios em Andamento -->
+    @if($enviosEmAndamento->count() > 0)
+    <div class="card mb-4 envios-card">
+        <div class="card-body p-4">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h2 class="display-6" style="font-size: 1.8rem; font-weight: 700; color: #430776; position: relative; padding-left: 15px; border-left: 4px solid #7209B7;">
+                    Seus <span style="color: #7209B7">envios em andamento</span>
+                </h2>
+                <a href="{{ route('rastreamento') }}" class="btn btn-outline-primary btn-sm">
+                    <i class="fas fa-search me-1"></i> Ver todos
+                </a>
+            </div>
+            
+            <div class="row g-3">
+                @foreach($enviosEmAndamento as $envio)
+                <div class="col-12 col-md-6 col-lg-4">
+                    <div class="envio-card">
+                        <div class="envio-header">
+                            <div class="envio-status">
+                                <span class="status-badge status-{{ strtolower(str_replace('_', '-', $envio->status)) }}">
+                                    {{ ucfirst(str_replace('_', ' ', $envio->status)) }}
+                                </span>
+                            </div>
+                            <div class="envio-tracking">
+                                <small class="text-muted">#{{ $envio->tracking_number ?? 'N/A' }}</small>
+                            </div>
+                        </div>
+                        
+                        <div class="envio-content">
+                            <div class="envio-route">
+                                <div class="route-point origin">
+                                    <div class="point-icon">
+                                        <i class="fas fa-map-marker-alt"></i>
+                                    </div>
+                                    <div class="point-info">
+                                        <small class="text-muted">Origem</small>
+                                        <div class="location">
+                                            {{ $envio->senderAddress->city ?? 'N/A' }}, {{ $envio->senderAddress->state ?? 'N/A' }}
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="route-line">
+                                    <div class="route-progress">
+                                        <div class="progress-dot active"></div>
+                                        <div class="progress-line"></div>
+                                        <div class="progress-dot {{ $envio->status === 'DELIVERED' ? 'active' : '' }}"></div>
+                                    </div>
+                                </div>
+                                
+                                <div class="route-point destination">
+                                    <div class="point-icon">
+                                        <i class="fas fa-flag-checkered"></i>
+                                    </div>
+                                    <div class="point-info">
+                                        <small class="text-muted">Destino</small>
+                                        <div class="location">
+                                            {{ $envio->recipientAddress->city ?? 'N/A' }}, {{ $envio->recipientAddress->state ?? 'N/A' }}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="envio-details">
+                                <div class="detail-item">
+                                    <i class="fas fa-weight-hanging me-2"></i>
+                                    <span>{{ $envio->package_weight ?? 'N/A' }} kg</span>
+                                </div>
+                                <div class="detail-item">
+                                    <i class="fas fa-calendar me-2"></i>
+                                    <span>{{ $envio->ship_date ? $envio->ship_date->format('d/m/Y') : 'N/A' }}</span>
+                                </div>
+                                @if($envio->estimated_delivery_date)
+                                <div class="detail-item">
+                                    <i class="fas fa-clock me-2"></i>
+                                    <span>Entrega: {{ $envio->estimated_delivery_date->format('d/m/Y') }}</span>
+                                </div>
+                                @endif
+                            </div>
+                        </div>
+                        
+                        <div class="envio-footer">
+                            <a href="{{ route('rastreamento') }}?tracking={{ $envio->tracking_number }}" class="btn btn-primary btn-sm w-100">
+                                <i class="fas fa-search me-1"></i> Rastrear Envio
+                            </a>
+                        </div>
+                    </div>
+                </div>
+                @endforeach
+            </div>
+        </div>
+    </div>
+    @endif
+
     <!--
 
     <div class="row">
@@ -226,6 +320,7 @@ body, h1, h2, h3, h4, h5, h6, p, span, div, a, button {
 
 .text-gradient {
     background: linear-gradient(120deg, #2563eb, #4f46e5);
+    background-clip: text;
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     font-weight: 600;
@@ -504,7 +599,271 @@ body, h1, h2, h3, h4, h5, h6, p, span, div, a, button {
     }
     
     .feature-image {
-     /*   padding: 30px;*/
+        padding: 30px;
+    }
+}
+
+/* Estilos para a seção de envios em andamento */
+.envios-card {
+    border: none;
+    border-radius: 20px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+    overflow: hidden;
+    background: linear-gradient(145deg, #ffffff 0%, #f8f9fa 100%);
+}
+
+.envio-card {
+    background: white;
+    border-radius: 16px;
+    padding: 1.5rem;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+    transition: all 0.3s ease;
+    border: 1px solid rgba(67, 7, 118, 0.1);
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+}
+
+.envio-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 30px rgba(67, 7, 118, 0.15);
+}
+
+.envio-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 1rem;
+}
+
+.status-badge {
+    padding: 0.4rem 0.8rem;
+    border-radius: 20px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.status-pending {
+    background: linear-gradient(135deg, #fef3c7, #fbbf24);
+    color: #92400e;
+}
+
+.status-in-transit {
+    background: linear-gradient(135deg, #dbeafe, #3b82f6);
+    color: #1e40af;
+}
+
+.status-processing {
+    background: linear-gradient(135deg, #e0e7ff, #6366f1);
+    color: #3730a3;
+}
+
+.status-picked-up {
+    background: linear-gradient(135deg, #d1fae5, #10b981);
+    color: #065f46;
+}
+
+.status-in-delivery {
+    background: linear-gradient(135deg, #fce7f3, #ec4899);
+    color: #be185d;
+}
+
+.envio-tracking {
+    text-align: right;
+}
+
+.envio-content {
+    flex: 1;
+    margin-bottom: 1rem;
+}
+
+.envio-route {
+    margin-bottom: 1rem;
+}
+
+.route-point {
+    display: flex;
+    align-items: center;
+    margin-bottom: 0.5rem;
+}
+
+.route-point.origin {
+    margin-bottom: 1rem;
+}
+
+.point-icon {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-right: 0.75rem;
+    flex-shrink: 0;
+}
+
+.route-point.origin .point-icon {
+    background: linear-gradient(135deg, #7209B7, #430776);
+    color: white;
+}
+
+.route-point.destination .point-icon {
+    background: linear-gradient(135deg, #10b981, #059669);
+    color: white;
+}
+
+.point-info {
+    flex: 1;
+}
+
+.location {
+    font-weight: 600;
+    color: #374151;
+    font-size: 0.9rem;
+}
+
+.route-line {
+    margin: 0.5rem 0;
+    padding-left: 16px;
+}
+
+.route-progress {
+    display: flex;
+    align-items: center;
+    height: 20px;
+}
+
+.progress-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: #d1d5db;
+    transition: all 0.3s ease;
+}
+
+.progress-dot.active {
+    background: #7209B7;
+    box-shadow: 0 0 0 4px rgba(114, 9, 183, 0.2);
+}
+
+.progress-line {
+    flex: 1;
+    height: 2px;
+    background: linear-gradient(90deg, #7209B7, #d1d5db);
+    margin: 0 0.5rem;
+}
+
+.envio-details {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    margin-top: 1rem;
+}
+
+.detail-item {
+    display: flex;
+    align-items: center;
+    font-size: 0.8rem;
+    color: #6b7280;
+    background: #f9fafb;
+    padding: 0.4rem 0.8rem;
+    border-radius: 12px;
+    flex: 1;
+    min-width: 120px;
+}
+
+.detail-item i {
+    color: #7209B7;
+    font-size: 0.7rem;
+}
+
+.envio-footer {
+    margin-top: auto;
+}
+
+.envio-footer .btn {
+    border-radius: 12px;
+    font-weight: 600;
+    padding: 0.6rem 1rem;
+    background: linear-gradient(135deg, #7209B7, #430776);
+    border: none;
+    transition: all 0.3s ease;
+}
+
+.envio-footer .btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 15px rgba(114, 9, 183, 0.3);
+}
+
+/* Responsividade para envios */
+@media (max-width: 768px) {
+    .envio-card {
+        padding: 1rem;
+    }
+    
+    .envio-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.5rem;
+    }
+    
+    .envio-tracking {
+        text-align: left;
+    }
+    
+    .envio-details {
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+    
+    .detail-item {
+        min-width: auto;
+        justify-content: center;
+    }
+    
+    .route-point {
+        margin-bottom: 0.75rem;
+    }
+    
+    .point-icon {
+        width: 28px;
+        height: 28px;
+        margin-right: 0.5rem;
+    }
+    
+    .location {
+        font-size: 0.85rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .envios-card .card-body {
+        padding: 1.5rem !important;
+    }
+    
+    .envio-card {
+        padding: 0.8rem;
+    }
+    
+    .status-badge {
+        font-size: 0.7rem;
+        padding: 0.3rem 0.6rem;
+    }
+    
+    .point-icon {
+        width: 24px;
+        height: 24px;
+    }
+    
+    .location {
+        font-size: 0.8rem;
+    }
+    
+    .detail-item {
+        font-size: 0.75rem;
+        padding: 0.3rem 0.6rem;
     }
 }
 </style>
