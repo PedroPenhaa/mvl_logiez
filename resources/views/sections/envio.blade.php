@@ -712,7 +712,8 @@
     }
     
     .border-danger {
-        border-left-color: #dc3545 !important;
+        border-color: #dc3545 !important;
+        border-width: 2px !important;
     }
     
     /* Responsividade para o modal */
@@ -3336,6 +3337,11 @@
             }, 2000);
         });
 
+        // Eventos para remover destaque vermelho dos campos de preço e peso
+        $('#produto-valor, #produto-peso').on('input focus', function() {
+            $(this).removeClass('border-danger');
+        });
+
         // Função para atualizar o resumo de produtos
         function atualizarResumo() {
             valorTotal = 0;
@@ -3532,7 +3538,14 @@
             const pesoInformado = parseFloat($('#produto-peso').val()) || 0;
             const valorInformado = parseFloat($('#produto-valor').val()) || 0;
             
+            // Limpar destaque vermelho anterior
+            $('#produto-peso, #produto-valor').removeClass('border-danger');
+            
+            // Verificar se o peso foi informado
             if (isNaN(pesoInformado) || pesoInformado <= 0) {
+                // Destacar campo em vermelho
+                $('#produto-peso').addClass('border-danger');
+                
                 // Mostrar modal de aviso para peso
                 $('#modal-aviso-titulo').text('Peso Necessário');
                 $('#modal-aviso-mensagem').text('Para continuar, precisamos que você informe o peso do produto.');
@@ -3545,17 +3558,19 @@
                 // Focar no campo de peso quando o modal for fechado
                 $('#modalAviso').off('hidden.bs.modal').on('hidden.bs.modal', function () {
                     $('#produto-peso').focus();
-                    // Adicionar destaque visual no campo
-                    $('#produto-peso').addClass('border-warning');
+                    // Manter destaque vermelho por mais tempo
                     setTimeout(function() {
-                        $('#produto-peso').removeClass('border-warning');
-                    }, 2000);
+                        $('#produto-peso').removeClass('border-danger');
+                    }, 3000);
                 });
                 return;
             }
             
             // Verificar se o valor foi informado
             if (isNaN(valorInformado) || valorInformado <= 0) {
+                // Destacar campo em vermelho
+                $('#produto-valor').addClass('border-danger');
+                
                 // Mostrar modal de aviso para valor
                 $('#modal-aviso-titulo').text('Valor Necessário');
                 $('#modal-aviso-mensagem').text('Para continuar, precisamos que você informe o valor do produto.');
@@ -3568,11 +3583,10 @@
                 // Focar no campo de valor quando o modal for fechado
                 $('#modalAviso').off('hidden.bs.modal').on('hidden.bs.modal', function () {
                     $('#produto-valor').focus();
-                    // Adicionar destaque visual no campo
-                    $('#produto-valor').addClass('border-warning');
+                    // Manter destaque vermelho por mais tempo
                     setTimeout(function() {
-                        $('#produto-valor').removeClass('border-warning');
-                    }, 2000);
+                        $('#produto-valor').removeClass('border-danger');
+                    }, 3000);
                 });
                 return;
             }
