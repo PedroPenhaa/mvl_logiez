@@ -1385,6 +1385,17 @@
                 </div>
                 <!-- Etapa 3: Endereço de Origem e Destino -->
                 <div id="step-3" data-step="3" class="d-none">
+                    <!-- Exibição do CPF/CNPJ -->
+                    <div class="alert alert-info border-0 mb-4" style="background: linear-gradient(135deg, #e3f2fd 0%, #f3e5f5 100%);">
+                        <div class="d-flex align-items-center">
+                            <i class="fas fa-id-card text-primary me-3 fs-4"></i>
+                            <div>
+                                <h6 class="mb-1 fw-bold text-primary">Documento de Identificação</h6>
+                                <p class="mb-0 text-muted" id="documento-exibicao">CPF: <span id="cpf-exibido">-</span></p>
+                            </div>
+                        </div>
+                    </div>
+                    
                     <div class="row mb-4">
                         <div class="col-md-6 mb-4">
                             <!-- Bloco de origem -->
@@ -4562,6 +4573,21 @@
             
             // Atualizar progresso do wizard
             atualizarProgressoWizard(etapa);
+            
+            // Atualizar exibição do CPF/CNPJ na etapa 3
+            if (etapa === 3) {
+                const tipoPessoa = $('#tipo_pessoa').val();
+                const cpf = $('#cpf').val();
+                const cnpj = $('#cnpj').val();
+                
+                if (tipoPessoa === 'pf' && cpf) {
+                    $('#documento-exibicao').html('CPF: <span id="cpf-exibido">' + cpf + '</span>');
+                } else if (tipoPessoa === 'pj' && cnpj) {
+                    $('#documento-exibicao').html('CNPJ: <span id="cnpj-exibido">' + cnpj + '</span>');
+                } else {
+                    $('#documento-exibicao').html('Documento: <span id="documento-exibido">Não informado</span>');
+                }
+            }
             
             // Scroll suave para o topo
             $('html, body').animate({
