@@ -166,10 +166,10 @@
                         Quando você realizar seus primeiros envios, eles aparecerão aqui para acompanhamento.
                     </p>
                     <div class="no-shipments-actions">
-                        <a href="{{ route('sections.cotacao') }}" class="btn btn-primary btn-lg">
+                        <a href="{{ route('cotacao.index') }}" class="btn btn-primary btn-lg">
                             <i class="fas fa-calculator me-2"></i> Fazer Cotação
                         </a>
-                        <a href="{{ route('sections.envio') }}" class="btn btn-outline-primary btn-lg ms-3">
+                        <a href="{{ route('envio') }}" class="btn btn-outline-primary btn-lg ms-3">
                             <i class="fas fa-shipping-fast me-2"></i> Novo Envio
                         </a>
                     </div>
