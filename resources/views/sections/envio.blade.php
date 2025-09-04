@@ -690,7 +690,7 @@
     }
     
     /* Ajuste para o resumo financeiro */
-    .resumo-item .row {
+    .resumo-item .row { 
         margin-top: auto;
     }
     
