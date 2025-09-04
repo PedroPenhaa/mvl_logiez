@@ -3838,10 +3838,10 @@
             }
 
             // Resetar os valores para adicionar nova caixa
-            $('#altura').val(10);
-            $('#largura').val(20);
-            $('#comprimento').val(30);
-            $('#peso_caixa').val(0.0);
+            $('#altura').val(0);
+            $('#largura').val(0);
+            $('#comprimento').val(0);
+            $('#peso_caixa').val(0);
 
             // Renderizar as caixas e atualizar o resumo
             renderizarCaixas();
