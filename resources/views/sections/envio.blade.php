@@ -686,7 +686,7 @@
     
     /* Garantir que todos os cards tenham a mesma altura */
     .h-100 {
-        height: 100% !important;
+        height: 90% !important;
     }
     
     /* Ajuste para o resumo financeiro */
@@ -794,7 +794,7 @@
     
     /* CORREÇÃO PARA SOBREPOSIÇÃO COM FOOTER */
     .card {
-        margin-bottom: 80px !important;
+        margin-bottom: 15px !important;
     }
     
     /* Ajuste específico para botões de continuar */
@@ -931,7 +931,7 @@
                             </div> -->
 
                             <!-- Cards dos Campos -->
-                            <div class="row g-4">
+                            <div class="row g-0">
                                 <!-- Categoria do Envio -->
                                 <div class="col-lg-6 col-md-12">
                                     <div class="card border-0 shadow-sm h-100" style="border-radius: 15px; transition: all 0.3s ease;">
