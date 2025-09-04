@@ -285,10 +285,13 @@ Route::get('/exportar-cotacao-pdf', function (Illuminate\Http\Request $request, 
             <style>
                 @page { margin: 0cm 0cm; }
                 body {
-                    margin: 3cm 2cm 2.5cm 2cm;
+                    margin: 0cm 0cm 1cm 0cm;
                     font-family: "Helvetica", Arial, sans-serif;
-                    font-size: 13px;
+                    font-size: 11px;
                     color: #333;
+                    height: 100vh;
+                    min-height: 26cm;
+                    line-height: 1.2;
                 }
         
                 /* ===== HEADER ===== */
@@ -296,12 +299,12 @@ Route::get('/exportar-cotacao-pdf', function (Illuminate\Http\Request $request, 
                     background-color: #6f42c1;
                     width: 100%;
                     color: white;
-                    padding: 15px;
-                    height: 120px;
+                    padding: 10px;
+                    height: 80px;
                     display: flex;
                     align-items: center;
                     justify-content: space-around;
-                    margin: 0 0 15px 0;
+                    margin: 0 0 10px 0;
                 }
                 body {
                     margin: 0cm 0cm 2.5cm 0cm;
@@ -322,33 +325,33 @@ Route::get('/exportar-cotacao-pdf', function (Illuminate\Http\Request $request, 
                 .footer {
                     position: fixed;
                     bottom: 0cm; left: 0cm; right: 0cm;
-                    height: 2cm;
+                    height: 1cm;
                     background-color: #f4f4f4;
                     border-top: 1px solid #ccc;
-                    font-size: 10px;
+                    font-size: 9px;
                     color: #555;
                     display: flex;
                     align-items: center;
                     justify-content: space-between;
-                    padding: 0 2cm;
+                    padding: 0 0.5cm;
                 }
         
                 /* ===== TITLES ===== */
                 .title {
                     text-align: center;
-                    font-size: 22px;
+                    font-size: 18px;
                     font-weight: bold;
-                    margin-bottom: 25px;
+                    margin-bottom: 10px;
                     margin-top: 0px;
                     color: #2c3e50;
                 }
                 .section-title {
-                    font-size: 15px;
+                    font-size: 12px;
                     font-weight: bold;
                     color: #2c3e50;
-                    margin: 20px 0 10px 0;
-                    border-bottom: 2px solid #2c3e50;
-                    padding-bottom: 5px;
+                    margin: 8px 0 5px 0;
+                    border-bottom: 1px solid #2c3e50;
+                    padding-bottom: 3px;
                 }
         
                 /* ===== GRID INFO ===== */
@@ -356,22 +359,22 @@ Route::get('/exportar-cotacao-pdf', function (Illuminate\Http\Request $request, 
                     display: table;
                     width: 100%;
                     border-collapse: collapse;
-                    margin-bottom: 15px;
+                    margin-bottom: 8px;
                 }
                 .info-item {
                     display: table-cell;
                     width: 50%;
-                    padding: 8px 10px;
+                    padding: 6px 8px;
                     vertical-align: top;
                 }
                 .info-label {
-                    font-size: 11px;
+                    font-size: 10px;
                     color: #555;
                     text-transform: uppercase;
-                    margin-bottom: 3px;
+                    margin-bottom: 2px;
                 }
                 .info-value {
-                    font-size: 13px;
+                    font-size: 11px;
                     font-weight: bold;
                     color: #222;
                 }
@@ -380,18 +383,18 @@ Route::get('/exportar-cotacao-pdf', function (Illuminate\Http\Request $request, 
                 table {
                     width: 100%;
                     border-collapse: collapse;
-                    margin-top: 10px;
-                    font-size: 12px;
+                    margin-top: 5px;
+                    font-size: 10px;
                 }
                 th {
                     background-color: #2c3e50;
                     color: white;
-                    padding: 8px;
+                    padding: 5px;
                     text-align: left;
-                    font-size: 12px;
+                    font-size: 10px;
                 }
                 td {
-                    padding: 8px;
+                    padding: 5px;
                     border-bottom: 1px solid #ddd;
                 }
                 tr:nth-child(even) { background-color: #f9f9f9; }
@@ -399,23 +402,23 @@ Route::get('/exportar-cotacao-pdf', function (Illuminate\Http\Request $request, 
                 /* ===== BOXES ===== */
                 .box {
                     border: 1px solid #ccc;
-                    border-radius: 6px;
-                    padding: 12px;
-                    margin-top: 15px;
-                    font-size: 12px;
+                    border-radius: 4px;
+                    padding: 8px;
+                    margin-top: 8px;
+                    font-size: 10px;
                 }
                 .highlight {
                     color: #27ae60;
                     font-weight: bold;
                 }
                 .disclaimer {
-                    font-size: 11px;
+                    font-size: 9px;
                     color: #555;
                     background-color: #fef7e0;
                     border: 1px solid #f1c40f;
-                    border-radius: 6px;
-                    padding: 12px;
-                    margin-top: 20px;
+                    border-radius: 4px;
+                    padding: 8px;
+                    margin-top: 10px;
                 }
             </style>
         </head>
@@ -424,9 +427,9 @@ Route::get('/exportar-cotacao-pdf', function (Illuminate\Http\Request $request, 
             <!-- HEADER -->
             <div class="header">
                 <div class="logo">
-                    <img src="' . $logoBase64 . '" alt="Logiez" style="width: 120px;  height:auto;">
+                    <img src="' . $logoBase64 . '" alt="Logiez" style="width: 100px;  height:auto;">
                 </div>
-                <span style="color: white; font-size: 9px; float: right; margin-top: 10px; margin-right: 50px;">
+                <span style="color: white; font-size: 9px; float: right; margin-top: 5px; margin-right: 30px;">
                     Soluções em Logística<br>
                     contato@logiez.com.br
                 </span>
@@ -439,7 +442,7 @@ Route::get('/exportar-cotacao-pdf', function (Illuminate\Http\Request $request, 
             </div>
         
             <!-- CONTENT -->
-            <div style="margin: 0 2cm;">
+            <div style="margin: 0 0.5cm;">
             <div class="title">Cotação de Envio Internacional</div>
         
             <!-- Origem / Destino -->
