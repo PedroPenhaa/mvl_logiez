@@ -1598,7 +1598,7 @@ class SectionController extends Controller
             return [
                 'id' => $etiqueta->id,
                 'tracking_number' => $etiqueta->tracking_number,
-                'ship_date' => optional($etiqueta->ship_date)->format('Y-m-d'),
+                'ship_date' => $etiqueta->created_at->format('Y-m-d H:i:s'),
                 'recipient_name' => optional($etiqueta->recipientAddress)->name ?? '',
                 'recipient_city' => optional($etiqueta->recipientAddress)->city ?? '',
                 'recipient_country' => optional($etiqueta->recipientAddress)->country ?? '',
