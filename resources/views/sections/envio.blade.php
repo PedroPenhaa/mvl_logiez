@@ -1409,10 +1409,6 @@
                                         <label for="origem_nome" class="form-label">Nome/Razão Social</label>
                                         <input type="text" class="form-control" id="origem_nome" name="origem_nome" required>
                                     </div>
-                                    <div class="mb-3">
-                                        <label for="origem_endereco" class="form-label">Endereço</label>
-                                        <input type="text" class="form-control" id="origem_endereco" name="origem_endereco" required>
-                                    </div>
                                     <div class="row g-2 mb-3">
                                         <div class="col-md-4">
                                             <label for="origem_cep" class="form-label">CEP</label>
@@ -1433,6 +1429,10 @@
                                                 <option value="">Selecione o estado</option>
                                             </select>
                                         </div>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label for="origem_endereco" class="form-label">Endereço</label>
+                                        <input type="text" class="form-control" id="origem_endereco" name="origem_endereco" required>
                                     </div>
                                     <div class="mb-3" id="origem_cidade_container">
                                         <label for="origem_cidade" class="form-label">Cidade</label>
@@ -1463,15 +1463,12 @@
                                         <label for="destino_nome" class="form-label">Nome/Razão Social</label>
                                         <input type="text" class="form-control" id="destino_nome" name="destino_nome" required>
                                     </div>
-                                    <div class="mb-3">
-                                        <label for="destino_endereco" class="form-label">Endereço</label>
-                                        <input type="text" class="form-control" id="destino_endereco" name="destino_endereco" required>
-                                    </div>
                                     <div class="row g-2 mb-3">
                                         <div class="col-md-4">
                                             <label for="destino_cep" class="form-label">CEP</label>
                                             <div class="input-group">
                                                 <input type="text" class="form-control" id="destino_cep" name="destino_cep" maxlength="9" required>
+                                                <button type="button" class="btn btn-outline-secondary" id="destino_buscar_cep">Buscar CEP</button>
                                             </div>
                                         </div>
                                         <div class="col-md-4">
@@ -1486,6 +1483,10 @@
                                                 <option value="">Selecione o estado</option>
                                             </select>
                                         </div>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label for="destino_endereco" class="form-label">Endereço</label>
+                                        <input type="text" class="form-control" id="destino_endereco" name="destino_endereco" required>
                                     </div>
                                     <div class="mb-3" id="destino_cidade_container">
                                         <label for="destino_cidade" class="form-label">Cidade</label>
@@ -3954,10 +3955,10 @@
             $(`#${prefixo}_cidade`).val('');
         });
 
-        // Função para buscar CEP via API ViaCEP (Brasil)
+        // Função para buscar CEP via API Gemini
         function buscarCEP(cep, prefixo) {
-            if (cep.length < 8) {
-                alert('CEP inválido. Por favor, digite um CEP válido com 8 dígitos.');
+            if (cep.length < 5) {
+                alert('CEP inválido. Por favor, digite um CEP válido.');
                 return;
             }
 
@@ -3965,43 +3966,82 @@
             cep = cep.replace(/\D/g, '');
 
             // Mostrar indicador de carregamento
-            $(`#${prefixo}_endereco`).val('Buscando...');
+            $(`#${prefixo}_endereco`).val('Consultando IA...');
+            $(`#${prefixo}_pais`).val('');
+            $(`#${prefixo}_estado`).val('');
+            $(`#${prefixo}_cidade`).val('');
 
-            $.getJSON(`https://viacep.com.br/ws/${cep}/json/?callback=?`, function(data) {
-                if (!data.erro) {
+            // Consultar CEP via Gemini
+            $.ajax({
+                url: '/api/consulta-gemini-cep',
+                method: 'POST',
+                data: JSON.stringify({
+                    cep: cep
+                }),
+                contentType: 'application/json',
+                headers: {
+                    'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+                }
+            })
+            .done(function(response) {
+                if (response.success && response.data) {
+                    const data = response.data;
+                    
                     // Preencher o endereço
-                    $(`#${prefixo}_endereco`).val(data.logradouro + (data.complemento ? ', ' + data.complemento : '') + ' - ' + data.bairro);
-
-                    // Encontrar o país (Brasil)
-                    const paisBrasil = paises.find(pais => pais.id === 'BR');
-                    if (paisBrasil) {
-                        // Selecionar Brasil como país
-                        $(`#${prefixo}_pais`).val(paisBrasil.id).trigger('change');
-
-                        // Aguardar o carregamento dos estados
-                        setTimeout(function() {
-                            // Encontrar o estado pelo código UF
-                            const estado = estados['BR'].find(estado =>
-                                estado.id === data.uf
-                            );
-
-                            if (estado) {
-                                // Selecionar o estado
-                                $(`#${prefixo}_estado`).val(estado.id).trigger('change');
-
-                                // Aguardar o carregamento das cidades
-                                setTimeout(function() {
-                                    $(`#${prefixo}_cidade`).val(data.localidade);
-                                }, 800);
-                            }
-                        }, 300);
+                    if (data.rua) {
+                        $(`#${prefixo}_endereco`).val(data.rua);
+                    }
+                    
+                    // Preencher país
+                    if (data.pais) {
+                        const paisEncontrado = paises.find(pais => 
+                            pais.nome.toLowerCase().includes(data.pais.toLowerCase()) ||
+                            data.pais.toLowerCase().includes(pais.nome.toLowerCase())
+                        );
+                        
+                        if (paisEncontrado) {
+                            $(`#${prefixo}_pais`).val(paisEncontrado.id).trigger('change');
+                            
+                            // Aguardar carregamento dos estados
+                            setTimeout(function() {
+                                // Preencher estado
+                                if (data.estado && estados[paisEncontrado.id]) {
+                                    const estadoEncontrado = estados[paisEncontrado.id].find(estado =>
+                                        estado.nome.toLowerCase().includes(data.estado.toLowerCase()) ||
+                                        estado.id.toLowerCase() === data.estado.toLowerCase() ||
+                                        data.estado.toLowerCase().includes(estado.nome.toLowerCase())
+                                    );
+                                    
+                                    if (estadoEncontrado) {
+                                        $(`#${prefixo}_estado`).val(estadoEncontrado.id).trigger('change');
+                                        
+                                        // Aguardar carregamento das cidades
+                                        setTimeout(function() {
+                                            // Preencher cidade
+                                            if (data.cidade) {
+                                                $(`#${prefixo}_cidade`).val(data.cidade);
+                                            }
+                                        }, 800);
+                                    } else {
+                                        $(`#${prefixo}_cidade`).val(data.cidade || '');
+                                    }
+                                } else {
+                                    $(`#${prefixo}_cidade`).val(data.cidade || '');
+                                }
+                            }, 300);
+                        } else {
+                            $(`#${prefixo}_cidade`).val(data.cidade || '');
+                        }
+                    } else {
+                        $(`#${prefixo}_cidade`).val(data.cidade || '');
                     }
                 } else {
                     alert('CEP não encontrado. Por favor, digite o endereço manualmente.');
                     $(`#${prefixo}_endereco`).val('');
                 }
-            }).fail(function(jqxhr, textStatus, error) {
-                alert('Erro ao buscar o CEP. Por favor, digite o endereço manualmente.');
+            })
+            .fail(function(jqxhr, textStatus, error) {
+                alert('Erro ao consultar o CEP. Por favor, digite o endereço manualmente.');
                 $(`#${prefixo}_endereco`).val('');
             });
 
@@ -5137,168 +5177,6 @@
                 $(this).val(cnpj);
             });
 
-            // Função para buscar informações do CEP usando a API ViaCEP
-            function buscarCEP(cep, tipo) {
-                // Remove caracteres não numéricos
-                cep = cep.replace(/\D/g, '');
-
-                // Verifica se o CEP tem 8 dígitos
-                if (cep.length !== 8) {
-                    return;
-                }
-
-                // Define os campos com base no tipo (origem ou destino)
-                const campoEndereco = `#${tipo}_endereco`;
-                const campoCidade = `#${tipo}_cidade`;
-                const campoEstado = `#${tipo}_estado`;
-                const campoComplemento = `#${tipo}_complemento`;
-                const campoPais = `#${tipo}_pais`;
-
-                // Mostra mensagem de carregamento
-                $(campoEndereco).attr('placeholder', 'Buscando CEP...');
-
-                // Primeira tentativa: API ViaCEP com JSONP para evitar problemas de CORS
-                $.ajax({
-                    url: `https://viacep.com.br/ws/${cep}/json/?callback=?`,
-                    dataType: 'jsonp',
-                    timeout: 3000, // 3 segundos de timeout
-                    success: function(data) {
-                        if (!data.erro) {
-                            preencherCampos(data);
-                        } else {
-                            // Se a primeira API falhar, tentar a segunda
-                            tentarApiAlternativa();
-                        }
-                    },
-                    error: function(jqXHR, textStatus, errorThrown) {
-                        // Se a primeira API falhar, tentar a segunda
-                        tentarApiAlternativa();
-                    }
-                });
-
-                // Função para preencher os campos com os dados do CEP
-                function preencherCampos(data) {
-                    // Preenche os campos com os dados retornados
-                    $(campoEndereco).val(data.logradouro || data.rua || '');
-                    $(campoCidade).val(data.localidade || data.cidade || '');
-                    $(campoEstado).val(data.uf || data.estado || '');
-
-                    // Se for um CEP brasileiro, seleciona Brasil no país
-                    if (tipo === 'destino') {
-                        // Verifica se Brasil está na lista
-                        if ($(campoPais).find('option[value="BR"]').length > 0) {
-                            $(campoPais).val('BR');
-                        }
-                    }
-
-                    // Se tiver complemento, preenche também
-                    if (data.complemento) {
-                        $(campoComplemento).val(data.complemento);
-                    }
-
-                    // Limpa o placeholder
-                    $(campoEndereco).attr('placeholder', '');
-
-                }
-
-                // Função para tentar uma API alternativa
-                function tentarApiAlternativa() {
-
-                    // API alternativa: BrasilAPI
-                    $.ajax({
-                        url: `https://brasilapi.com.br/api/cep/v1/${cep}`,
-                        dataType: 'json',
-                        timeout: 3000, // 3 segundos de timeout
-                        success: function(data) {
-                            if (data && data.cep) {
-                                preencherCampos(data);
-                            } else {
-                                tentarGemini();
-                            }
-                        },
-                        error: function(jqXHR, textStatus, errorThrown) {
-                            // Última tentativa: API PostalCode
-                            $.ajax({
-                                url: `https://ws.apicep.com/cep/${cep}.json`,
-                                dataType: 'json',
-                                timeout: 3000, // 3 segundos de timeout
-                                success: function(data) {
-                                    if (data && data.status === 200) {
-                                        preencherCampos(data);
-                                    } else {
-                                        tentarGemini();
-                                    }
-                                },
-                                error: function(jqXHR, textStatus, errorThrown) {
-                                    tentarGemini();
-                                }
-                            });
-                        }
-                    });
-                }
-
-                // Função para tentar consulta via Gemini
-                function tentarGemini() {
-                    // Mostrar indicador de IA
-                    $(campoEndereco).attr('placeholder', 'Consultando IA...');
-                    
-                    $.ajax({
-                        url: '/gemini-cep-api.php',
-                        method: 'POST',
-                        data: JSON.stringify({
-                            cep: cep
-                        }),
-                        contentType: 'application/json',
-                        timeout: 10000, // 10 segundos de timeout para IA
-                        success: function(response) {
-                            if (response.success && response.tipo === 'cep') {
-                                const data = response.data;
-                                
-                                // Preencher campos com dados do Gemini
-                                $(campoEndereco).val(data.rua || '');
-                                $(campoCidade).val(data.cidade || '');
-                                $(campoEstado).val(data.estado || '');
-                                
-                                // Se tiver país, selecionar
-                                if (data.pais) {
-                                    const paisSelect = $(campoPais);
-                                    const paisOption = paisSelect.find(`option:contains("${data.pais}")`);
-                                    if (paisOption.length > 0) {
-                                        paisSelect.val(paisOption.val());
-                                    }
-                                }
-                                
-                                // Limpar placeholder
-                                $(campoEndereco).attr('placeholder', '');
-                                
-                                // Mostrar mensagem de sucesso da IA
-                                showAlert(`<strong>Sucesso!</strong> Endereço encontrado via IA para o CEP ${cep}.`, 'success');
-                                
-                            } else {
-                                informarErro('CEP não encontrado nas APIs tradicionais nem via IA');
-                            }
-                        },
-                        error: function(jqXHR, textStatus, errorThrown) {
-                            informarErro('CEP não encontrado');
-                        }
-                    });
-                }
-
-                // Função para informar erro
-                function informarErro(mensagem) {
-                    // Limpa os campos
-                    $(campoEndereco).val('');
-                    $(campoCidade).val('');
-                    $(campoEstado).val('');
-                    $(campoComplemento).val('');
-
-                    // Limpa o placeholder
-                    $(campoEndereco).attr('placeholder', '');
-
-                    // Alerta mais amigável
-                    showAlert(`<strong>Atenção:</strong> ${mensagem}. Por favor, preencha os dados manualmente.`, 'warning');
-                }
-            }
 
             // Função para consultar CEP via Gemini quando endereço, país, estado e cidade são preenchidos
             function consultarCEPviaEndereco(tipo) {

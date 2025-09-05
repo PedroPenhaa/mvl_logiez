@@ -72,7 +72,21 @@ class GeminiCEPController extends Controller
             
             // Preparar a pergunta baseada no tipo de consulta
             if ($tipoConsulta === 'cep') {
-                $pergunta = "Para o CEP $cep, forneça as seguintes informações: País, Estado, Cidade e Rua. Responda APENAS em formato JSON válido com as chaves: pais, estado, cidade, rua. Exemplo: {\"pais\": \"Brasil\", \"estado\": \"SP\", \"cidade\": \"São Paulo\", \"rua\": \"Rua das Flores\"}";
+                // Determinar o país baseado no formato do CEP
+                $paisDetectado = '';
+                if (preg_match('/^\d{5}-?\d{3}$/', $cep)) {
+                    $paisDetectado = 'Brasil';
+                } elseif (preg_match('/^\d{5}$/', $cep)) {
+                    $paisDetectado = 'Estados Unidos';
+                }
+                
+                if ($paisDetectado === 'Brasil') {
+                    $pergunta = "O CEP $cep é de onde no Brasil? Forneça as seguintes informações: País, Estado (sigla de 2 letras), Cidade e Rua. Responda APENAS em formato JSON válido com as chaves: pais, estado, cidade, rua. Exemplo: {\"pais\": \"Brasil\", \"estado\": \"SP\", \"cidade\": \"São Paulo\", \"rua\": \"Rua das Flores\"}";
+                } elseif ($paisDetectado === 'Estados Unidos') {
+                    $pergunta = "O CEP $cep é de qual estado e cidade nos Estados Unidos? Forneça as seguintes informações: País, Estado (sigla de 2 letras), Cidade e Rua. Responda APENAS em formato JSON válido com as chaves: pais, estado, cidade, rua. Exemplo: {\"pais\": \"Estados Unidos\", \"estado\": \"FL\", \"cidade\": \"Port St. Lucie\", \"rua\": \"Main Street\"}";
+                } else {
+                    $pergunta = "Para o CEP $cep, forneça as seguintes informações: País, Estado (sigla de 2 letras), Cidade e Rua. Responda APENAS em formato JSON válido com as chaves: pais, estado, cidade, rua. Exemplo: {\"pais\": \"Brasil\", \"estado\": \"SP\", \"cidade\": \"São Paulo\", \"rua\": \"Rua das Flores\"}";
+                }
             } else {
                 $pergunta = "Para o endereço: $enderecoCompleto, forneça o CEP correspondente. Responda APENAS com o CEP no formato 00000-000.";
             }
