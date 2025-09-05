@@ -38,11 +38,11 @@
                             <div class="card-body">
                                 <div class="form-floating mb-3">
                                     <input type="text" class="form-control" id="origem" name="origem" 
-                                           placeholder="00000-000" required pattern="[0-9]{5}-[0-9]{3}">
-                                    <label for="origem">CEP de Origem (Brasil)</label>
+                                           placeholder="00000" required>
+                                    <label for="origem">CEP de Origem</label>
                                 </div>
                                 <div class="cep-helper">
-                                    <small><i class="fas fa-info-circle"></i> Digite o CEP no formato: 00000-000</small>
+                                    <small><i class="fas fa-info-circle"></i> Digite o CEP de origem</small>
                                 </div>
                             </div>
                         </div>
