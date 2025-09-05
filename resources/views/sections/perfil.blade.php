@@ -375,6 +375,329 @@
                             padding: 1rem;
                         }
                     }
+                    
+                    /* Estilos para o modal de tracking */
+                    .modal-xl {
+                        max-width: 1200px;
+                    }
+                    
+                    /* Estilos para responsividade da timeline no modal */
+                    .timeline-container {
+                        position: relative;
+                        padding: 20px 0;
+                        background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
+                        border-radius: 15px;
+                        box-shadow: 0 5px 25px rgba(0, 0, 0, 0.05);
+                        margin-top: 20px;
+                    }
+                    
+                    .timeline {
+                        list-style: none;
+                        padding: 0;
+                        position: relative;
+                        margin: 0;
+                    }
+                    
+                    .timeline:before {
+                        content: "";
+                        position: absolute;
+                        top: 0;
+                        bottom: 0;
+                        left: 25px;
+                        width: 4px;
+                        background: linear-gradient(to bottom, 
+                            rgba(0,123,255,0.4), 
+                            rgba(99, 73, 158, 0.4), 
+                            rgba(40, 167, 69, 0.4),
+                            rgba(255, 193, 7, 0.4),
+                            rgba(23, 162, 184, 0.4));
+                        border-radius: 4px;
+                        box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+                        animation: timelineGlow 3s ease-in-out infinite alternate;
+                    }
+                    
+                    @keyframes timelineGlow {
+                        0% { box-shadow: 0 0 10px rgba(0, 0, 0, 0.1); }
+                        100% { box-shadow: 0 0 20px rgba(99, 73, 158, 0.3); }
+                    }
+                    
+                    .timeline-item {
+                        position: relative;
+                        padding-left: 60px;
+                        margin-bottom: 35px;
+                        opacity: 0;
+                        transform: translateX(-20px);
+                        animation: slideInLeft 0.6s ease-out forwards;
+                    }
+                    
+                    @keyframes slideInLeft {
+                        to {
+                            opacity: 1;
+                            transform: translateX(0);
+                        }
+                    }
+                    
+                    .timeline-badge {
+                        position: absolute;
+                        left: 0;
+                        top: 0;
+                        width: 50px;
+                        height: 50px;
+                        border-radius: 50%;
+                        text-align: center;
+                        line-height: 50px;
+                        color: white;
+                        box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+                        transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+                        z-index: 2;
+                        border: 3px solid white;
+                    }
+                    
+                    .timeline-item:hover .timeline-badge {
+                        transform: scale(1.15) rotate(5deg);
+                        box-shadow: 0 12px 35px rgba(0, 0, 0, 0.25);
+                    }
+                    
+                    .timeline-badge i {
+                        font-size: 1.2rem;
+                        line-height: inherit;
+                        transition: all 0.3s ease;
+                    }
+                    
+                    .timeline-item:hover .timeline-badge i {
+                        transform: scale(1.1);
+                    }
+                    
+                    .timeline-panel {
+                        padding: 25px;
+                        background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
+                        border-radius: 15px;
+                        box-shadow: 0 8px 30px rgba(0, 0, 0, 0.08);
+                        transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+                        border-left: 5px solid transparent;
+                        position: relative;
+                        backdrop-filter: blur(10px);
+                        border: 1px solid rgba(255, 255, 255, 0.2);
+                    }
+                    
+                    .timeline-panel:before {
+                        content: "";
+                        position: absolute;
+                        top: 25px;
+                        left: -12px;
+                        width: 0;
+                        height: 0;
+                        border-top: 8px solid transparent;
+                        border-bottom: 8px solid transparent;
+                        border-right: 12px solid #ffffff;
+                        z-index: 1;
+                        filter: drop-shadow(-2px 0 3px rgba(0, 0, 0, 0.1));
+                    }
+                    
+                    .timeline-item:hover .timeline-panel {
+                        transform: translateY(-8px) translateX(5px);
+                        box-shadow: 0 15px 40px rgba(0, 0, 0, 0.12);
+                        background: linear-gradient(135deg, #ffffff 0%, #f0f8ff 100%);
+                    }
+                    
+                    /* Cores personalizadas por tipo de evento com gradientes */
+                    .timeline-item .bg-success {
+                        background: linear-gradient(135deg, #28a745, #20c997, #17a2b8);
+                        animation: successPulse 2s ease-in-out infinite;
+                    }
+                    
+                    .timeline-item .bg-primary {
+                        background: linear-gradient(135deg, #007bff, #1e88e5, #3f51b5);
+                    }
+                    
+                    .timeline-item .bg-info {
+                        background: linear-gradient(135deg, #17a2b8, #00b8d4, #00acc1);
+                    }
+                    
+                    .timeline-item .bg-warning {
+                        background: linear-gradient(135deg, #ffc107, #ffb300, #ff8f00);
+                    }
+                    
+                    .timeline-item .bg-secondary {
+                        background: linear-gradient(135deg, #6c757d, #546e7a, #455a64);
+                    }
+                    
+                    @keyframes successPulse {
+                        0%, 100% { transform: scale(1); }
+                        50% { transform: scale(1.05); }
+                    }
+                    
+                    .timeline-title {
+                        margin-top: 0;
+                        font-size: 1.2rem;
+                        font-weight: 700;
+                        color: #2c3e50;
+                        margin-bottom: 8px;
+                        line-height: 1.3;
+                    }
+                    
+                    /* Loader moderno para o modal */
+                    .loading-container {
+                        display: flex;
+                        flex-direction: column;
+                        align-items: center;
+                        gap: 20px;
+                    }
+                    
+                    .loading-spinner {
+                        position: relative;
+                        width: 80px;
+                        height: 80px;
+                    }
+                    
+                    .spinner-ring {
+                        position: absolute;
+                        width: 100%;
+                        height: 100%;
+                        border: 3px solid transparent;
+                        border-radius: 50%;
+                        animation: spin 2s linear infinite;
+                    }
+                    
+                    .spinner-ring:nth-child(1) {
+                        border-top-color: #63499E;
+                        animation-delay: 0s;
+                    }
+                    
+                    .spinner-ring:nth-child(2) {
+                        border-right-color: #007bff;
+                        animation-delay: 0.3s;
+                        width: 60px;
+                        height: 60px;
+                        top: 10px;
+                        left: 10px;
+                    }
+                    
+                    .spinner-ring:nth-child(3) {
+                        border-bottom-color: #28a745;
+                        animation-delay: 0.6s;
+                        width: 40px;
+                        height: 40px;
+                        top: 20px;
+                        left: 20px;
+                    }
+                    
+                    @keyframes spin {
+                        0% { transform: rotate(0deg); }
+                        100% { transform: rotate(360deg); }
+                    }
+                    
+                    .loading-text {
+                        text-align: center;
+                        color: #2c3e50;
+                        font-weight: 600;
+                    }
+                    
+                    .loading-dots {
+                        display: inline-block;
+                        position: relative;
+                    }
+                    
+                    .loading-dots::after {
+                        content: '';
+                        animation: dots 1.5s infinite;
+                    }
+                    
+                    @keyframes dots {
+                        0%, 20% { content: ''; }
+                        40% { content: '.'; }
+                        60% { content: '..'; }
+                        80%, 100% { content: '...'; }
+                    }
+                    
+                    .loading-progress {
+                        width: 200px;
+                        height: 4px;
+                        background: rgba(99, 73, 158, 0.1);
+                        border-radius: 2px;
+                        margin-top: 15px;
+                        overflow: hidden;
+                        position: relative;
+                    }
+                    
+                    .progress-bar {
+                        height: 100%;
+                        background: linear-gradient(90deg, #63499E, #007bff, #28a745);
+                        border-radius: 2px;
+                        animation: progress 2s ease-in-out infinite;
+                        position: relative;
+                    }
+                    
+                    .progress-bar::after {
+                        content: '';
+                        position: absolute;
+                        top: 0;
+                        left: 0;
+                        right: 0;
+                        bottom: 0;
+                        background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.4), transparent);
+                        animation: shimmer 1.5s infinite;
+                    }
+                    
+                    @keyframes progress {
+                        0% { width: 0%; }
+                        50% { width: 70%; }
+                        100% { width: 100%; }
+                    }
+                    
+                    @keyframes shimmer {
+                        0% { transform: translateX(-100%); }
+                        100% { transform: translateX(100%); }
+                    }
+                    
+                    /* Responsividade para mobile no modal */
+                    @media (max-width: 767px) {
+                        .modal-xl {
+                            max-width: 95%;
+                            margin: 0.5rem;
+                        }
+                        
+                        .timeline:before {
+                            left: 35px;
+                        }
+                        
+                        .timeline-badge {
+                            left: 35px !important;
+                        }
+                        
+                        .timeline-panel {
+                            width: calc(100% - 70px) !important;
+                            margin-left: 70px !important;
+                            padding: 20px;
+                        }
+                        
+                        .timeline-item {
+                            padding-left: 0 !important;
+                        }
+                        
+                        .loading-spinner {
+                            width: 60px;
+                            height: 60px;
+                        }
+                        
+                        .spinner-ring:nth-child(2) {
+                            width: 45px;
+                            height: 45px;
+                            top: 7.5px;
+                            left: 7.5px;
+                        }
+                        
+                        .spinner-ring:nth-child(3) {
+                            width: 30px;
+                            height: 30px;
+                            top: 15px;
+                            left: 15px;
+                        }
+                        
+                        .loading-progress {
+                            width: 150px;
+                        }
+                    }
                 </style>
             </div>
         </div>
@@ -916,6 +1239,108 @@
     </div>
 </div>
 
+<!-- Modal para exibir tracking do envio -->
+<div class="modal fade" id="modalTrackingEnvio" tabindex="-1" aria-labelledby="modalTrackingEnvioLabel" aria-hidden="true">
+    <div class="modal-dialog modal-xl">
+        <div class="modal-content border-0 shadow-lg" style="border-radius: 20px;">
+            <div class="modal-header border-0" style="background: linear-gradient(135deg, #6f42c1 0%, #8b5cb0 100%); border-radius: 20px 20px 0 0;">
+                <h5 class="modal-title text-white fw-bold" id="modalTrackingEnvioLabel">
+                    <i class="fas fa-map-marker-alt me-2"></i> Rastreamento de Envio
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body p-4">
+                <!-- Loader -->
+                <div class="d-flex justify-content-center mt-4" id="modal-tracking-loader">
+                    <div class="loading-container">
+                        <div class="loading-spinner">
+                            <div class="spinner-ring"></div>
+                            <div class="spinner-ring"></div>
+                            <div class="spinner-ring"></div>
+                        </div>
+                        <div class="loading-text">
+                            <span class="loading-dots">Consultando informações de rastreamento</span>
+                            <div class="loading-progress">
+                                <div class="progress-bar"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Mensagens de sucesso/erro -->
+                <div id="modal-tracking-success" class="alert alert-success mt-4" style="display: none;">
+                    <i class="fas fa-check-circle me-2"></i> Consulta realizada com sucesso
+                </div>
+                
+                <div id="modal-tracking-error" class="alert alert-danger mt-4" style="display: none;">
+                    <i class="fas fa-exclamation-triangle me-2"></i> <span id="modal-tracking-error-message"></span>
+                </div>
+                
+                <!-- Resultado do rastreamento -->
+                <div id="modal-tracking-resultado" style="display: none;">
+                    <div class="card mb-4 shadow-lg border-0">
+                        <div class="card-header bg-light d-flex justify-content-between align-items-center">
+                            <h5 class="mb-0"><i class="fas fa-box me-2"></i> <span id="modal-rastreamento-codigo"></span></h5>
+                            <div>
+                                <span class="badge bg-primary me-2" id="modal-rastreamento-servico"></span>
+                                <button id="modal-btn-solicitar-comprovante" class="btn btn-sm btn-outline-primary ms-2" style="display: none;" title="Solicitar comprovante de entrega assinado">
+                                    <i class="fas fa-file-signature"></i> Comprovante de Entrega
+                                </button>
+                            </div>
+                        </div>
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-md-6 col-sm-12 mb-md-0 mb-3">
+                                    <div class="info-grupo p-3 rounded bg-light mb-2">
+                                        <p class="mb-2"><strong><i class="fas fa-calendar-alt me-2 text-muted"></i>Data de Postagem:</strong> <span id="modal-data-postagem">-</span></p>
+                                        <p class="mb-2"><strong><i class="fas fa-map-marker-alt me-2 text-muted"></i>Origem:</strong> <span id="modal-origem-envio">-</span></p>
+                                        <p class="mb-2"><strong><i class="fas fa-map-pin me-2 text-muted"></i>Destino:</strong> <span id="modal-destino-envio">-</span></p>
+                                        <p class="mb-0"><strong><i class="fas fa-clock me-2 text-muted"></i>Entrega Prevista:</strong> <span id="modal-entrega-prevista">-</span></p>
+                                    </div>
+                                </div>
+                                <div class="col-md-6 col-sm-12">
+                                    <div id="modal-status-atual-container" class="status-atual text-center p-3 rounded shadow-sm" style="background-color: rgba(99, 73, 158, 0.1);">
+                                        <p class="mb-1 text-muted"><i class="fas fa-info-circle me-1"></i>Status Atual</p>
+                                        <h4 class="mb-0" id="modal-status-atual" style="color: #63499E">-</h4>
+                                        <p class="mt-2 mb-0 small" id="modal-status-atualizacao">Atualizado em: -</p>
+                                    </div>
+                                    
+                                    <div id="modal-status-atraso-container" class="mt-3 status-atraso text-center p-3 rounded shadow-sm" style="background-color: rgba(220, 53, 69, 0.1); display: none;">
+                                        <p class="mb-1 text-muted"><i class="fas fa-exclamation-circle me-1"></i>Atraso Identificado</p>
+                                        <p class="mb-0 text-danger" id="modal-status-atraso-detalhes"></p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="d-flex justify-content-between align-items-center mb-3 mt-5">
+                        <h5 class="mb-0"><i class="fas fa-history me-2"></i>Histórico de Rastreamento</h5>
+                        <button id="modal-toggle-timeline" class="btn btn-outline-primary btn-sm" type="button">
+                            <i class="fas fa-chevron-down me-1"></i>Mostrar Trackings
+                        </button>
+                    </div>
+                    
+                    <div class="timeline-container" id="modal-timeline-container" style="display: none;">
+                        <ul class="timeline" id="modal-rastreamento-timeline">
+                            <!-- Eventos de rastreamento serão inseridos aqui dinamicamente -->
+                        </ul>
+                    </div>
+                    
+                    <div id="modal-rastreamento-simulado-alert" class="alert alert-warning mt-4 shadow-sm" style="display: none;">
+                        <i class="fas fa-info-circle me-2"></i> <span id="modal-rastreamento-simulado-message"></span>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer border-0 p-4">
+                <button type="button" class="btn btn-secondary btn-lg px-4" data-bs-dismiss="modal">
+                    <i class="fas fa-times me-2"></i> Fechar
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
 @section('scripts')
 <script>
     $(document).ready(function() {
@@ -926,7 +1351,350 @@
         // Adicionar evento aos botões de link de seção
         $('.section-link').on('click', function() {
             const section = $(this).data('section');
-            $('.menu-item[data-section="' + section + '"]').click();
+            const trackingNumber = $(this).data('tracking');
+            
+            if (section === 'rastreamento' && trackingNumber) {
+                // Fazer requisição de rastreamento diretamente
+                fazerRastreamento(trackingNumber);
+            } else {
+                // Comportamento padrão - mudar de seção
+                $('.menu-item[data-section="' + section + '"]').click();
+            }
+        });
+        
+        // Função para fazer rastreamento
+        function fazerRastreamento(trackingNumber) {
+            // Abrir o modal
+            const modal = new bootstrap.Modal(document.getElementById('modalTrackingEnvio'));
+            modal.show();
+            
+            // Limpar e preparar o modal
+            limparModalTracking();
+            
+            // Mostrar loader
+            $('#modal-tracking-loader').show();
+            
+            // Fazer a requisição AJAX
+            $.ajax({
+                url: '{{ route("api.rastreamento.buscar") }}',
+                method: 'POST',
+                data: {
+                    _token: '{{ csrf_token() }}',
+                    codigo_rastreamento: trackingNumber,
+                    forcarSimulacao: false
+                },
+                dataType: 'json',
+                success: function(response) {
+                    // Ocultar loader
+                    $('#modal-tracking-loader').hide();
+                    
+                    if (response.success) {
+                        // Mostrar mensagem de sucesso
+                        $('#modal-tracking-success').show();
+                        
+                        // Preencher dados do resultado no modal
+                        mostrarResultadoRastreamentoModal(response);
+                    } else {
+                        // Mostrar mensagem de erro
+                        $('#modal-tracking-error').show();
+                        $('#modal-tracking-error-message').text(response.message || 'Não foi possível obter informações de rastreamento.');
+                    }
+                },
+                error: function(xhr) {
+                    // Ocultar loader
+                    $('#modal-tracking-loader').hide();
+                    
+                    let errorMsg = 'Erro ao processar a solicitação.';
+                    if (xhr.responseJSON && xhr.responseJSON.message) {
+                        errorMsg = xhr.responseJSON.message;
+                    }
+                    
+                    $('#modal-tracking-error').show();
+                    $('#modal-tracking-error-message').text(errorMsg);
+                }
+            });
+        }
+        
+        // Função para limpar o modal
+        function limparModalTracking() {
+            $('#modal-tracking-loader').hide();
+            $('#modal-tracking-success').hide();
+            $('#modal-tracking-error').hide();
+            $('#modal-tracking-resultado').hide();
+        }
+        
+        // Função para mostrar resultado do rastreamento no modal
+        function mostrarResultadoRastreamentoModal(response) {
+            // Preencher dados do resultado no modal
+            $('#modal-rastreamento-codigo').text(response.codigo || '-');
+            $('#modal-origem-envio').text(response.origem || '-');
+            $('#modal-destino-envio').text(response.destino || '-');
+            $('#modal-data-postagem').text(formatarData(response.dataPostagem) || '-');
+            $('#modal-entrega-prevista').text(formatarData(response.dataEntregaPrevista) || '-');
+            $('#modal-status-atual').text(response.status || '-');
+            $('#modal-rastreamento-servico').text(response.servicoDescricao || 'FedEx');
+            
+            // Atualizar a última atualização
+            if (response.ultimaAtualizacao) {
+                $('#modal-status-atualizacao').text('Atualizado em: ' + formatarDataHora(response.ultimaAtualizacao));
+            } else {
+                $('#modal-status-atualizacao').text('');
+            }
+            
+            // Verificar se há atraso
+            if (response.temAtraso) {
+                $('#modal-status-atraso-container').show();
+                $('#modal-status-atraso-detalhes').text(response.detalhesAtraso || 'Há um atraso na entrega');
+            } else {
+                $('#modal-status-atraso-container').hide();
+            }
+            
+            // Verificar se está entregue
+            if (response.entregue) {
+                $('#modal-status-atual-container').css('background-color', 'rgba(40, 167, 69, 0.1)');
+                $('#modal-status-atual').css('color', '#28a745');
+                $('#modal-btn-solicitar-comprovante').show();
+            } else {
+                $('#modal-status-atual-container').css('background-color', 'rgba(99, 73, 158, 0.1)');
+                $('#modal-status-atual').css('color', '#63499E');
+                $('#modal-btn-solicitar-comprovante').hide();
+            }
+            
+            // Preencher a timeline no modal
+            preencherTimelineModal(response.eventos);
+            
+            // Verificar se é simulado
+            if (response.simulado) {
+                $('#modal-rastreamento-simulado-alert').show();
+                $('#modal-rastreamento-simulado-message').text(response.mensagem || 'Atenção: Estes dados são simulados para demonstração.');
+            } else {
+                $('#modal-rastreamento-simulado-alert').hide();
+            }
+            
+            // Exibir resultados
+            $('#modal-tracking-resultado').show();
+        }
+        
+        // Função para mostrar resultado do rastreamento
+        function mostrarResultadoRastreamento(response) {
+            // Preencher dados do resultado
+            $('#rastreamento-codigo').text(response.codigo || '-');
+            $('#origem-envio').text(response.origem || '-');
+            $('#destino-envio').text(response.destino || '-');
+            $('#data-postagem').text(formatarData(response.dataPostagem) || '-');
+            $('#entrega-prevista').text(formatarData(response.dataEntregaPrevista) || '-');
+            $('#status-atual').text(response.status || '-');
+            $('#rastreamento-servico').text(response.servicoDescricao || 'FedEx');
+            
+            // Atualizar a última atualização
+            if (response.ultimaAtualizacao) {
+                $('#status-atualizacao').text('Atualizado em: ' + formatarDataHora(response.ultimaAtualizacao));
+            } else {
+                $('#status-atualizacao').text('');
+            }
+            
+            // Verificar se há atraso
+            if (response.temAtraso) {
+                $('#status-atraso-container').show();
+                $('#status-atraso-detalhes').text(response.detalhesAtraso || 'Há um atraso na entrega');
+            } else {
+                $('#status-atraso-container').hide();
+            }
+            
+            // Verificar se está entregue
+            if (response.entregue) {
+                $('#status-atual-container').css('background-color', 'rgba(40, 167, 69, 0.1)');
+                $('#status-atual').css('color', '#28a745');
+                $('#btn-solicitar-comprovante').show();
+            } else {
+                $('#status-atual-container').css('background-color', 'rgba(99, 73, 158, 0.1)');
+                $('#status-atual').css('color', '#63499E');
+                $('#btn-solicitar-comprovante').hide();
+            }
+            
+            // Preencher a timeline
+            preencherTimeline(response.eventos);
+            
+            // Verificar se é simulado
+            if (response.simulado) {
+                $('#rastreamento-simulado-alert').show();
+                $('#rastreamento-simulado-message').text(response.mensagem || 'Atenção: Estes dados são simulados para demonstração.');
+            } else {
+                $('#rastreamento-simulado-alert').hide();
+            }
+            
+            // Exibir resultados
+            $('#rastreamento-resultado').show();
+            
+            // Scroll para os resultados
+            $('html, body').animate({
+                scrollTop: $('#rastreamento-resultado').offset().top - 100
+            }, 800);
+        }
+        
+        // Função para formatar data
+        function formatarData(dataString) {
+            if (!dataString) return '';
+            try {
+                const partes = dataString.split('-');
+                if (partes.length === 3) {
+                    return `${partes[2]}/${partes[1]}/${partes[0]}`;
+                }
+                return dataString;
+            } catch (e) {
+                return dataString;
+            }
+        }
+        
+        // Função para formatar data e hora
+        function formatarDataHora(data, hora) {
+            if (!data) return '';
+            let dataFormatada = formatarData(data);
+            if (hora) {
+                try {
+                    const partesHora = hora.split(':');
+                    if (partesHora.length >= 2) {
+                        return `${dataFormatada} ${partesHora[0]}:${partesHora[1]}`;
+                    }
+                    return `${dataFormatada} ${hora}`;
+                } catch (e) {
+                    return `${dataFormatada} ${hora}`;
+                }
+            }
+            return dataFormatada;
+        }
+        
+        // Função para preencher timeline
+        function preencherTimeline(eventos) {
+            const timeline = $('#rastreamento-timeline');
+            timeline.empty();
+            
+            if (!eventos || eventos.length === 0) {
+                timeline.append('<li class="text-center text-muted p-4">Nenhum evento de rastreamento disponível.</li>');
+                return;
+            }
+            
+            $.each(eventos, function(index, evento) {
+                let icone = 'box';
+                let corClasse = 'bg-secondary';
+                
+                if (evento.status) {
+                    const status = evento.status.toLowerCase();
+                    if (status.includes('entreg') || status.includes('ready for recipient')) {
+                        icone = 'check-circle';
+                        corClasse = 'bg-success';
+                    } else if (status.includes('rota') || status.includes('transit')) {
+                        icone = 'truck';
+                        corClasse = 'bg-primary';
+                    } else if (status.includes('chegada') || status.includes('arrived')) {
+                        icone = 'plane-arrival';
+                        corClasse = 'bg-info';
+                    } else if (status.includes('saída') || status.includes('departed')) {
+                        icone = 'plane-departure';
+                        corClasse = 'bg-primary';
+                    } else if (status.includes('atraso') || status.includes('exceção')) {
+                        icone = 'exclamation-triangle';
+                        corClasse = 'bg-warning';
+                    }
+                }
+                
+                const dataHoraFormatada = formatarDataHora(evento.data, evento.hora);
+                
+                const timelineItem = $(`
+                    <li class="timeline-item">
+                        <div class="timeline-badge ${corClasse}"><i class="fas fa-${icone}"></i></div>
+                        <div class="timeline-panel">
+                            <div class="timeline-heading">
+                                <h6 class="timeline-title">${evento.status || 'Evento'}</h6>
+                                <p class="mb-0"><small class="text-muted"><i class="fas fa-clock"></i> ${dataHoraFormatada}</small></p>
+                            </div>
+                            <div class="timeline-body">
+                                ${evento.descricao ? `<p class="mb-2">${evento.descricao}</p>` : ''}
+                                ${evento.local ? `<p class="mb-0"><i class="fas fa-map-marker-alt me-2"></i>${evento.local}</p>` : ''}
+                            </div>
+                        </div>
+                    </li>
+                `);
+                
+                timeline.append(timelineItem);
+            });
+        }
+        
+        // Função para preencher timeline no modal
+        function preencherTimelineModal(eventos) {
+            const timeline = $('#modal-rastreamento-timeline');
+            timeline.empty();
+            
+            if (!eventos || eventos.length === 0) {
+                timeline.append('<li class="text-center text-muted p-4">Nenhum evento de rastreamento disponível.</li>');
+                return;
+            }
+            
+            $.each(eventos, function(index, evento) {
+                let icone = 'box';
+                let corClasse = 'bg-secondary';
+                
+                if (evento.status) {
+                    const status = evento.status.toLowerCase();
+                    if (status.includes('entreg') || status.includes('ready for recipient')) {
+                        icone = 'check-circle';
+                        corClasse = 'bg-success';
+                    } else if (status.includes('rota') || status.includes('transit')) {
+                        icone = 'truck';
+                        corClasse = 'bg-primary';
+                    } else if (status.includes('chegada') || status.includes('arrived')) {
+                        icone = 'plane-arrival';
+                        corClasse = 'bg-info';
+                    } else if (status.includes('saída') || status.includes('departed')) {
+                        icone = 'plane-departure';
+                        corClasse = 'bg-primary';
+                    } else if (status.includes('atraso') || status.includes('exceção')) {
+                        icone = 'exclamation-triangle';
+                        corClasse = 'bg-warning';
+                    }
+                }
+                
+                const dataHoraFormatada = formatarDataHora(evento.data, evento.hora);
+                
+                const timelineItem = $(`
+                    <li class="timeline-item">
+                        <div class="timeline-badge ${corClasse}"><i class="fas fa-${icone}"></i></div>
+                        <div class="timeline-panel">
+                            <div class="timeline-heading">
+                                <h6 class="timeline-title">${evento.status || 'Evento'}</h6>
+                                <p class="mb-0"><small class="text-muted"><i class="fas fa-clock"></i> ${dataHoraFormatada}</small></p>
+                            </div>
+                            <div class="timeline-body">
+                                ${evento.descricao ? `<p class="mb-2">${evento.descricao}</p>` : ''}
+                                ${evento.local ? `<p class="mb-0"><i class="fas fa-map-marker-alt me-2"></i>${evento.local}</p>` : ''}
+                            </div>
+                        </div>
+                    </li>
+                `);
+                
+                timeline.append(timelineItem);
+            });
+        }
+        
+        // Controle do toggle da timeline no modal
+        $('#modal-toggle-timeline').on('click', function() {
+            const timelineContainer = $('#modal-timeline-container');
+            const button = $(this);
+            const icon = button.find('i');
+            
+            if (timelineContainer.is(':visible')) {
+                // Recolher timeline
+                timelineContainer.slideUp(400, function() {
+                    icon.removeClass('fa-chevron-up').addClass('fa-chevron-down');
+                    button.html('<i class="fas fa-chevron-down me-1"></i>Mostrar Trackings');
+                });
+            } else {
+                // Expandir timeline
+                timelineContainer.slideDown(400, function() {
+                    icon.removeClass('fa-chevron-down').addClass('fa-chevron-up');
+                    button.html('<i class="fas fa-chevron-up me-1"></i>Ocultar Trackings');
+                });
+            }
         });
         
         // Teste para verificar se o botão está funcionando
