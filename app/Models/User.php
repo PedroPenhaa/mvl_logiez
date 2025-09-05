@@ -30,6 +30,8 @@ class User extends Authenticatable
         'state',
         'postal_code',
         'country',
+        'provider',
+        'provider_id',
     ];
 
     /**

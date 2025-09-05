@@ -14,9 +14,9 @@ return [
 
     'providers' => [
         'google' => [
-            'client_id' => env('GOOGLE_CLIENT_ID'),
-            'client_secret' => env('GOOGLE_CLIENT_SECRET'),
-            'redirect' => env('APP_URL') . env('GOOGLE_REDIRECT_URI', '/auth/google/callback'),
+            'client_id' => '1070057278923-p5telmjqd2hsdco126tjfc7d9kp7fm2o.apps.googleusercontent.com',
+            'client_secret' => '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',
+            'redirect' => 'http://localhost:8080/auth/google/callback',
         ],
 
         'apple' => [

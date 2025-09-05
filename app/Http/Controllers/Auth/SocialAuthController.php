@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
+use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Http;
@@ -19,8 +20,8 @@ class SocialAuthController extends Controller
     public function redirect($provider)
     {
         if ($provider === 'google') {
-            $clientId = env('GOOGLE_CLIENT_ID');
-            $redirectUri = env('APP_URL') . env('GOOGLE_REDIRECT_URI');
+            $clientId = '1070057278923-p5telmjqd2hsdco126tjfc7d9kp7fm2o.apps.googleusercontent.com';
+            $redirectUri = 'http://localhost:8080/auth/google/callback';
             
             $params = [
                 'client_id' => $clientId,
@@ -60,9 +61,9 @@ class SocialAuthController extends Controller
                         ->with('error', 'Nenhum código de autorização recebido');
                 }
                 
-                $clientId = env('GOOGLE_CLIENT_ID');
-                $clientSecret = env('GOOGLE_CLIENT_SECRET');
-                $redirectUri = env('APP_URL') . env('GOOGLE_REDIRECT_URI');
+                $clientId = '1070057278923-p5telmjqd2hsdco126tjfc7d9kp7fm2o.apps.googleusercontent.com';
+                $clientSecret = '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';
+                $redirectUri = 'http://localhost:8080/auth/google/callback';
                 
                 // Troca o código de autorização por um token de acesso
                 $response = Http::post('https://oauth2.googleapis.com/token', [
@@ -179,25 +180,27 @@ class SocialAuthController extends Controller
             'google_name' => 'required|string',
         ]);
         
-        // Aqui você pode salvar os dados no banco de dados
-        // Exemplo de código para futuro uso:
-        /*
+        // Criar ou encontrar o usuário no banco de dados
         $user = User::firstOrCreate(
             ['email' => $request->google_email],
             [
                 'name' => $request->google_name,
                 'provider_id' => $request->google_id,
                 'provider' => 'google',
-                'cpf' => preg_replace('/[^0-9]/', '', $request->cpf), // Remove a máscara
-                'phone' => $request->phone ? preg_replace('/[^0-9]/', '', $request->phone) : null,
-                'birth_date' => $request->birth_date,
-                'address' => $request->address,
+                'password' => bcrypt('google_oauth_' . $request->google_id), // Senha temporária
             ]
         );
         
+        // Atualizar dados do perfil se necessário
+        if ($user->wasRecentlyCreated || !$user->provider_id) {
+            $user->update([
+                'provider_id' => $request->google_id,
+                'provider' => 'google',
+            ]);
+        }
+        
         // Login do usuário
         Auth::login($user);
-        */
         
         // Por enquanto, apenas exibimos os dados completos
         $userData = [
