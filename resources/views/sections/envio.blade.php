@@ -4572,17 +4572,26 @@
         // Inicializar campos de telefone com máscara
         $('#origem_telefone, #destino_telefone').on('input', function() {
             let value = $(this).val().replace(/\D/g, '');
-            if ($(this).attr('id') === 'origem_telefone') {
-                // Formato brasileiro: +55 11 98765-4321
+            const campoId = $(this).attr('id');
+            const prefixo = campoId.split('_')[0]; // origem ou destino
+            const paisSelecionado = $(`#${prefixo}_pais`).val();
+            
+            // Se o país for Brasil, sempre usar +55
+            if (paisSelecionado === 'BR') {
+                // Formato brasileiro: +55 35 99902-8971
+                // Remover o +55 se já estiver presente para evitar duplicação
+                if (value.startsWith('55')) {
+                    value = value.substring(2);
+                }
+                
                 if (value.length <= 2) {
-                    $(this).val('+' + value);
+                    $(this).val('+55 ' + value);
                 } else if (value.length <= 4) {
-                    $(this).val('+' + value.substring(0, 2) + ' ' + value.substring(2));
-                } else if (value.length <= 8) {
-                    $(this).val('+' + value.substring(0, 2) + ' ' + value.substring(2, 4) + ' ' + value.substring(4));
+                    $(this).val('+55 ' + value.substring(0, 2) + ' ' + value.substring(2));
+                } else if (value.length <= 9) {
+                    $(this).val('+55 ' + value.substring(0, 2) + ' ' + value.substring(2, 7) + '-' + value.substring(7, 11));
                 } else {
-                    $(this).val('+' + value.substring(0, 2) + ' ' + value.substring(2, 4) + ' ' +
-                        value.substring(4, 9) + '-' + value.substring(9, 13));
+                    $(this).val('+55 ' + value.substring(0, 2) + ' ' + value.substring(2, 7) + '-' + value.substring(7, 11));
                 }
             } else {
                 // Formato americano: +1 555 123-4567
@@ -4595,6 +4604,31 @@
                 } else {
                     $(this).val('+' + value.substring(0, 1) + ' ' + value.substring(1, 4) + ' ' +
                         value.substring(4, 7) + '-' + value.substring(7, 11));
+                }
+            }
+        });
+
+        // Aplicar +55 automaticamente quando país for alterado para Brasil
+        $('.pais-select').on('change', function() {
+            const prefixo = $(this).attr('id').split('_')[0]; // origem ou destino
+            const paisSelecionado = $(this).val();
+            const campoTelefone = $(`#${prefixo}_telefone`);
+            
+            if (paisSelecionado === 'BR') {
+                // Se o campo de telefone não começar com +55, adicionar
+                let valorAtual = campoTelefone.val();
+                if (!valorAtual.startsWith('+55')) {
+                    // Remover qualquer formatação existente e adicionar +55
+                    let numeros = valorAtual.replace(/\D/g, '');
+                    // Remover o 55 se já estiver presente para evitar duplicação
+                    if (numeros.startsWith('55')) {
+                        numeros = numeros.substring(2);
+                    }
+                    if (numeros.length > 0) {
+                        campoTelefone.val('+55 ' + numeros);
+                    } else {
+                        campoTelefone.val('+55 ');
+                    }
                 }
             }
         });
