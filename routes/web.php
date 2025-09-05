@@ -245,9 +245,9 @@ Route::get('/exportar-cotacao-pdf', function (Illuminate\Http\Request $request, 
             ];
 
             $resultado = [
-                'pesoCubico' => 0.8,
-                'pesoReal' => 5,
-                'pesoUtilizado' => 5,
+                'pesoCubico' => ($dados['altura'] * $dados['largura'] * $dados['comprimento']) / 6000,
+                'pesoReal' => $dados['peso'],
+                'pesoUtilizado' => $pesoUtilizado,
                 'cotacoesFedEx' => $cotacoes,
                 'dataConsulta' => '2025-08-29 11:56:09',
                 'simulado' => true,
