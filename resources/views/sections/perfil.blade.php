@@ -751,9 +751,9 @@
                             <div class="col-sm-6 col-12">
                                 <div class="info-item p-3 rounded-3" style="background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%); border: 1px solid rgba(0,0,0,0.05);">
                                     <label class="text-muted small fw-semibold mb-1">
-                                        <i class="fas fa-id-card me-1"></i>CPF
+                                        <i class="fas fa-id-card me-1"></i><span class="perfil-documento-tipo">{{ isset($usuario['profile_type']) && $usuario['profile_type'] == 'business' ? 'CNPJ' : 'CPF' }}</span>
                                     </label>
-                                    <div class="fw-semibold text-dark perfil-cpf">{{ $usuario['cpf'] }}</div>
+                                    <div class="fw-semibold text-dark perfil-documento">{{ $usuario['cpf'] }}</div>
                                 </div>
                             </div>
                             <div class="col-sm-6 col-12">
@@ -888,8 +888,8 @@
                 </h6>
                 <div class="info-grid">
                     <div class="info-row">
-                        <span class="info-label">CPF</span>
-                        <span class="info-value perfil-cpf">{{ $usuario['cpf'] }}</span>
+                        <span class="info-label"><span class="perfil-documento-tipo">{{ isset($usuario['profile_type']) && $usuario['profile_type'] == 'business' ? 'CNPJ' : 'CPF' }}</span></span>
+                        <span class="info-value perfil-documento">{{ $usuario['cpf'] }}</span>
                     </div>
                     <div class="info-row">
                         <span class="info-label">Telefone</span>
@@ -1142,13 +1142,25 @@
                                 </div>
                             </div>
                             <div class="col-md-6">
-                                <label for="cpf" class="form-label fw-semibold">CPF</label>
+                                <label for="tipo_documento" class="form-label fw-semibold">Tipo de Documento</label>
                                 <div class="input-group">
                                     <span class="input-group-text bg-light border-end-0">
                                         <i class="fas fa-id-card text-muted"></i>
                                     </span>
-                                    <input type="text" class="form-control border-start-0" id="cpf" name="cpf" value="{{ $usuario['cpf'] }}" required placeholder="Ex: 123.456.789-00">
-                        </div>
+                                    <select class="form-select border-start-0" id="tipo_documento" name="tipo_documento" required>
+                                        <option value="individual" {{ isset($usuario['profile_type']) && $usuario['profile_type'] == 'business' ? '' : 'selected' }}>CPF</option>
+                                        <option value="business" {{ isset($usuario['profile_type']) && $usuario['profile_type'] == 'business' ? 'selected' : '' }}>CNPJ</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="documento" class="form-label fw-semibold"><span id="label-documento">CPF</span></label>
+                                <div class="input-group">
+                                    <span class="input-group-text bg-light border-end-0">
+                                        <i class="fas fa-id-card text-muted"></i>
+                                    </span>
+                                    <input type="text" class="form-control border-start-0" id="documento" name="documento" value="{{ $usuario['cpf'] }}" required placeholder="Ex: 123.456.789-00">
+                                </div>
                             </div>
                             <div class="col-md-6">
                                 <label for="telefone" class="form-label fw-semibold">Telefone</label>
@@ -1729,7 +1741,8 @@
                         // Atualizar dados de visualização com os valores retornados
                         $('.perfil-nome').text(response.usuario.nome);
                         $('.perfil-email').text(response.usuario.email);
-                        $('.perfil-cpf').text(response.usuario.cpf);
+                        $('.perfil-documento').text(response.usuario.documento);
+                        $('.perfil-documento-tipo').text(response.usuario.profile_type == 'business' ? 'CNPJ' : 'CPF');
                         $('.perfil-telefone').text(response.usuario.telefone);
                         $('.perfil-rua').text(response.usuario.rua);
                         $('.perfil-numero').text(response.usuario.numero);
@@ -1845,10 +1858,37 @@
         }
         
         function aplicarMascaras() {
-            $('#cpf').mask('000.000.000-00', {reverse: true});
+            // Aplicar máscara baseada no tipo de documento selecionado
+            const tipoDocumento = $('#tipo_documento').val();
+            if (tipoDocumento === 'business') {
+                $('#documento').mask('00.000.000/0000-00', {reverse: true});
+            } else {
+                $('#documento').mask('000.000.000-00', {reverse: true});
+            }
+            
             $('#telefone').mask('(00) 00000-0000');
             $('#cep').mask('00000-000');
         }
+        
+        // Controlar mudança do tipo de documento
+        $('#tipo_documento').on('change', function() {
+            const tipo = $(this).val();
+            const label = $('#label-documento');
+            const input = $('#documento');
+            
+            if (tipo === 'business') {
+                label.text('CNPJ');
+                input.attr('placeholder', 'Ex: 12.345.678/0001-90');
+                input.mask('00.000.000/0000-00', {reverse: true});
+            } else {
+                label.text('CPF');
+                input.attr('placeholder', 'Ex: 123.456.789-00');
+                input.mask('000.000.000-00', {reverse: true});
+            }
+            
+            // Limpar o campo quando mudar o tipo
+            input.val('');
+        });
     });
 </script>
 @endsection

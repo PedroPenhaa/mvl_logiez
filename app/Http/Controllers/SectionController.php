@@ -178,6 +178,8 @@ class SectionController extends Controller
             'nome' => $user->name,
             'email' => $user->email,
             'cpf' => $cpf,
+            'documento' => $cpf, // Para compatibilidade
+            'profile_type' => $user->profile_type ?? 'individual',
             'telefone' => $user->phone ?? 'Não informado',
             'rua' => $rua,
             'numero' => $numero,
@@ -1394,7 +1396,8 @@ class SectionController extends Controller
         $request->validate([
             'nome' => 'required|string|max:255',
             'email' => 'required|email|max:255',
-            'cpf' => 'required|string|max:14',
+            'tipo_documento' => 'required|in:individual,business',
+            'documento' => 'required|string|max:20',
             'telefone' => 'required|string|max:20',
             'rua' => 'required|string|max:255',
             'numero' => 'required|string|max:20',
@@ -1420,7 +1423,8 @@ class SectionController extends Controller
             if ($user instanceof \App\Models\User) {
                 $user->name = $request->nome;
                 $user->email = $request->email;
-                $user->document_number = $request->cpf; // CPF
+                $user->profile_type = $request->tipo_documento; // individual ou business
+                $user->document_number = $request->documento; // CPF ou CNPJ
                 $user->phone = $request->telefone; // Telefone
                 $user->address = $request->rua; // Rua
                 $user->address_number = $request->numero; // Número
@@ -1435,6 +1439,7 @@ class SectionController extends Controller
                     'user_id' => $user->id,
                     'name' => $user->name,
                     'email' => $user->email,
+                    'profile_type' => $user->profile_type,
                     'document_number' => $user->document_number,
                     'phone' => $user->phone,
                     'address' => $user->address,
@@ -1497,7 +1502,9 @@ class SectionController extends Controller
             $userData = [
                 'nome' => $user->name,
                 'email' => $user->email,
-                'cpf' => $request->cpf,
+                'cpf' => $request->documento, // Para compatibilidade
+                'documento' => $request->documento,
+                'profile_type' => $request->tipo_documento,
                 'telefone' => $userProfile->phone,
                 'rua' => $request->rua,
                 'numero' => $request->numero,
