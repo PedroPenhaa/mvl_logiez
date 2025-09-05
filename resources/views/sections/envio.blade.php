@@ -4828,10 +4828,10 @@
             const dadosCotacao = {
                 origem: $('#origem_cep').val(),
                 destino: $('#destino_cep').val(),
-                altura: parseFloat($('#altura').val()),
-                largura: parseFloat($('#largura').val()),
-                comprimento: parseFloat($('#comprimento').val()),
-                peso: parseFloat($('#peso_caixa').val()),
+                altura: parseFloat($('#altura-hidden').val()),
+                largura: parseFloat($('#largura-hidden').val()),
+                comprimento: parseFloat($('#comprimento-hidden').val()),
+                peso: pesoTotal, // Usar o peso total (produtos + caixas)
                 _token: $('meta[name="csrf-token"]').attr('content')
             };
             

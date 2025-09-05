@@ -120,6 +120,12 @@ class FedexService
      */
     private function validarEFormatarCodigoPostal($postalCode, $countryCode)
     {
+        // Log da entrada
+        Log::info('🔍 Validando código postal:', [
+            'postalCode_original' => $postalCode,
+            'countryCode' => $countryCode
+        ]);
+
         // Remover caracteres não alfanuméricos
         $postalCode = preg_replace('/[^A-Za-z0-9]/', '', $postalCode);
         
@@ -128,12 +134,21 @@ class FedexService
         
         switch ($countryCode) {
             case 'BR':
-                // CEP brasileiro: 8 dígitos numéricos
-                if (strlen($postalCode) === 8 && ctype_digit($postalCode)) {
-                    return $postalCode;
+                // CEP brasileiro: SEMPRE usar apenas os primeiros 5 dígitos para FedEx
+                if (strlen($postalCode) >= 5 && ctype_digit($postalCode)) {
+                    $cepFormatado = substr($postalCode, 0, 5);
+                    Log::info('✅ CEP brasileiro formatado:', [
+                        'cep_original' => $postalCode,
+                        'cep_formatado' => $cepFormatado
+                    ]);
+                    return $cepFormatado;
                 }
-                // Se não estiver no formato correto, retornar um CEP válido de exemplo
-                return '01310200'; // CEP válido de São Paulo
+                // Se não tiver pelo menos 5 dígitos, retornar um CEP válido de exemplo
+                Log::warning('⚠️ CEP brasileiro inválido, usando padrão:', [
+                    'cep_original' => $postalCode,
+                    'cep_padrao' => '01310'
+                ]);
+                return '01310'; // CEP válido de São Paulo (apenas 5 dígitos)
                 
             case 'US':
                 // ZIP code americano: 5 dígitos ou 5+4 dígitos
@@ -177,6 +192,71 @@ class FedexService
     }
 
     /**
+     * Validar código postal usando a API de validação da FedEx
+     */
+    private function validarCodigoPostalFedEx($postalCode, $countryCode, $stateCode = null)
+    {
+        try {
+            $accessToken = $this->getAuthToken(true);
+            $validateUrl = $this->apiUrl . '/country/v1/postal/validate';
+            $transactionId = uniqid('logiez_validate_');
+            
+            $validateRequest = [
+                'carrierCode' => 'FDXE',
+                'countryCode' => $countryCode,
+                'stateOrProvinceCode' => $stateCode,
+                'postalCode' => $postalCode,
+                'shipDate' => date('Y-m-d'),
+                'checkForMismatch' => true
+            ];
+            
+          /*  Log::info('🔍 Validando código postal na FedEx:', [
+                'postalCode' => $postalCode,
+                'countryCode' => $countryCode,
+                'stateCode' => $stateCode,
+                'url' => $validateUrl
+            ]);
+            */
+            
+            $response = Http::withHeaders([
+                'Content-Type' => 'application/json',
+                'Accept' => 'application/json',
+                'Authorization' => 'Bearer ' . $accessToken,
+                'X-locale' => 'en_US',
+                'x-customer-transaction-id' => $transactionId
+            ])->post($validateUrl, $validateRequest);
+            
+           /* Log::info('📥 Resposta da validação de código postal:', [
+                'http_code' => $response->status(),
+                'response_body' => $response->body()
+            ]);
+            */
+            
+            if ($response->successful()) {
+                $data = $response->json();
+                if (isset($data['output']['cleanedPostalCode'])) {
+                    return [
+                        'valid' => true,
+                        'cleanedPostalCode' => $data['output']['cleanedPostalCode'],
+                        'city' => $data['output']['cityFirstInitials'] ?? null,
+                        'stateOrProvinceCode' => $data['output']['stateOrProvinceCode'] ?? $stateCode
+                    ];
+                }
+            }
+            
+            return ['valid' => false, 'error' => 'Código postal inválido'];
+            
+        } catch (\Exception $e) {
+           /* Log::warning('⚠️ Erro na validação de código postal:', [
+                'error' => $e->getMessage(),
+                'postalCode' => $postalCode,
+                'countryCode' => $countryCode
+            ]);*/
+            return ['valid' => false, 'error' => $e->getMessage()];
+        }
+    }
+
+    /**
      * Calcular cotação de frete
      * 
      * @param string|array $origem CEP ou array com dados de origem
@@ -191,6 +271,16 @@ class FedexService
     public function calcularCotacao($origem, $destino, $altura, $largura, $comprimento, $peso, $forcarSimulacao = false)
     {
         try {
+            // Log dos dados recebidos
+          /*  Log::info('🚀 Iniciando cotação FedEx:', [
+                'origem_original' => $origem,
+                'destino_original' => $destino,
+                'altura' => $altura,
+                'largura' => $largura,
+                'comprimento' => $comprimento,
+                'peso' => $peso
+            ]);
+*/
             // Obter token de autenticação
             $accessToken = $this->getAuthToken(true); // Forçar novo token
     
@@ -209,9 +299,51 @@ class FedexService
             $countryCodeOrigem = is_array($origem) ? ($origem['countryCode'] ?? 'BR') : 'BR';
             $countryCodeDestino = is_array($destino) ? ($destino['countryCode'] ?? 'US') : 'US';
     
+            // Log antes da formatação
+           /* Log::info('📮 Códigos postais antes da formatação:', [
+                'postalCodeOrigem' => $postalCodeOrigem,
+                'postalCodeDestino' => $postalCodeDestino,
+                'countryCodeOrigem' => $countryCodeOrigem,
+                'countryCodeDestino' => $countryCodeDestino
+            ]);*/
+    
             // Validar e formatar códigos postais de acordo com o país
             $postalCodeOrigem = $this->validarEFormatarCodigoPostal($postalCodeOrigem, $countryCodeOrigem);
             $postalCodeDestino = $this->validarEFormatarCodigoPostal($postalCodeDestino, $countryCodeDestino);
+            
+            // Log após a formatação
+          /*      Log::info('📮 Códigos postais após formatação:', [
+                'postalCodeOrigem_formatado' => $postalCodeOrigem,
+                'postalCodeDestino_formatado' => $postalCodeDestino
+            ]);*/
+            
+            // VALIDAÇÃO DE CÓDIGO POSTAL ANTES DA COTAÇÃO
+            $validacaoOrigem = $this->validarCodigoPostalFedEx($postalCodeOrigem, $countryCodeOrigem, 'SP');
+            if (!$validacaoOrigem['valid']) {
+                return [
+                    'success' => false,
+                    'mensagem' => 'CEP de origem inválido: ' . $postalCodeOrigem . '. Por favor, insira um CEP válido.',
+                    'error_code' => 'invalid_origin_postal_code'
+                ];
+            }
+            
+            $validacaoDestino = $this->validarCodigoPostalFedEx($postalCodeDestino, $countryCodeDestino, 'FL');
+            if (!$validacaoDestino['valid']) {
+                return [
+                    'success' => false,
+                    'mensagem' => 'CEP de destino inválido: ' . $postalCodeDestino . '. Por favor, insira um CEP válido.',
+                    'error_code' => 'invalid_destination_postal_code'
+                ];
+            }
+            
+            // Usar códigos postais validados
+            $postalCodeOrigem = $validacaoOrigem['cleanedPostalCode'];
+            $postalCodeDestino = $validacaoDestino['cleanedPostalCode'];
+            
+           /* Log::info('✅ Códigos postais validados:', [
+                'postalCodeOrigem_validado' => $postalCodeOrigem,
+                'postalCodeDestino_validado' => $postalCodeDestino
+            ]);*/
     
             $rateRequest = [
                 'accountNumber' => [
@@ -313,6 +445,13 @@ class FedexService
                 'carrierCodes' => ['FDXE', 'FDXG']
             ];
     
+            // Log da requisição completa
+           /* Log::info('📤 Enviando requisição para FedEx API:', [
+                'url' => $rateUrl,
+                'transaction_id' => $transactionId,
+                'payload' => json_encode($rateRequest, JSON_PRETTY_PRINT)
+            ]);*/
+
             // Fazer a requisição
             $response = Http::withHeaders([
                 'Content-Type' => 'application/json',
@@ -322,8 +461,20 @@ class FedexService
                 'x-customer-transaction-id' => $transactionId
             ])->post($rateUrl, $rateRequest);
 
+            // Log da resposta
+           /* Log::info('📥 Resposta da FedEx API:', [
+                'http_code' => $response->status(),
+                'response_body' => $response->body(),
+                'success' => $response->successful()
+            ]);*/
+
             if ($response->failed()) {
                 $errorMessage = 'Falha na cotação. Código HTTP: ' . $response->status() . "\n" . $response->body();
+               /* Log::error('❌ Erro na requisição FedEx:', [
+                    'error_message' => $errorMessage,
+                    'http_code' => $response->status(),
+                    'response_body' => $response->body()
+                ]);*/
                 throw new \Exception($errorMessage);
             }
     
@@ -386,11 +537,32 @@ class FedexService
                 'dataConsulta' => date('Y-m-d H:i:s')
             ];
     
+            // Log do resultado final
+           /* Log::info('✅ Cotação calculada com sucesso:', [
+                'cotacoes_encontradas' => count($cotacoes),
+                'peso_cubico' => $resultado['pesoCubico'],
+                'peso_real' => $resultado['pesoReal'],
+                'peso_utilizado' => $resultado['pesoUtilizado']
+            ]);*/
+    
             return $resultado;
     
         } catch (\Exception $e) {
-            // Em caso de erro, retornar simulação como fallback
-            return $this->simularCotacao($origem, $destino, $altura, $largura, $comprimento, $peso);
+            // Log do erro
+           /* Log::error('❌ Erro ao calcular cotação FedEx:', [
+                'error_message' => $e->getMessage(),
+                'error_file' => $e->getFile(),
+                'error_line' => $e->getLine(),
+                'origem' => $origem,
+                'destino' => $destino
+            ]);*/   
+            
+            // Em caso de erro, retornar erro real em vez de simulação
+            return [
+                'success' => false,
+                'mensagem' => 'Erro ao obter cotação da FedEx: ' . $e->getMessage(),
+                'error_code' => 'fedex_api_error'
+            ];
         }
     }
 
