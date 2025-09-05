@@ -322,7 +322,7 @@ class FedexService
             if (!$validacaoOrigem['valid']) {
                 return [
                     'success' => false,
-                    'mensagem' => 'CEP de origem inválido: ' . $postalCodeOrigem . '. Por favor, insira um CEP válido.',
+                    'mensagem' => 'O CEP de origem informado não é válido para envios internacionais. Por favor, verifique e insira um CEP válido do Brasil.',
                     'error_code' => 'invalid_origin_postal_code'
                 ];
             }
@@ -331,7 +331,7 @@ class FedexService
             if (!$validacaoDestino['valid']) {
                 return [
                     'success' => false,
-                    'mensagem' => 'CEP de destino inválido: ' . $postalCodeDestino . '. Por favor, insira um CEP válido.',
+                    'mensagem' => 'O código postal de destino informado não é válido. Por favor, verifique e insira um código postal válido.',
                     'error_code' => 'invalid_destination_postal_code'
                 ];
             }
@@ -560,7 +560,7 @@ class FedexService
             // Em caso de erro, retornar erro real em vez de simulação
             return [
                 'success' => false,
-                'mensagem' => 'Erro ao obter cotação da FedEx: ' . $e->getMessage(),
+                'mensagem' => 'Não foi possível calcular a cotação no momento. Verifique se os dados informados estão corretos e tente novamente.',
                 'error_code' => 'fedex_api_error'
             ];
         }

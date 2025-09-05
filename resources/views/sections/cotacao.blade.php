@@ -212,12 +212,20 @@ $(document).ready(function() {
         }
         
         if (response.success === false) {
-            // Mostrar mensagem de erro
+            // Mostrar mensagem de erro específica
+            var errorMessage = response.mensagem || 'O serviço da FedEx está temporariamente indisponível. Por favor, tente novamente mais tarde.';
+            var errorTitle = 'Erro na Cotação';
+            
+            // Verificar se é erro de CEP inválido
+            if (response.error_code === 'invalid_origin_postal_code' || response.error_code === 'invalid_destination_postal_code') {
+                errorTitle = 'CEP Inválido';
+            }
+            
             var html = '<div class="card shadow">';
-            html += '<div class="card-header bg-danger text-white"><h4 class="mb-0">Serviço Indisponível</h4></div>';
+            html += '<div class="card-header bg-danger text-white"><h4 class="mb-0">' + errorTitle + '</h4></div>';
             html += '<div class="card-body">';
             html += '<div class="alert alert-danger">';
-            html += '<i class="fas fa-exclamation-circle me-2"></i> O serviço da FedEx está temporariamente indisponível. Por favor, tente novamente mais tarde.';
+            html += '<i class="fas fa-exclamation-circle me-2"></i> ' + errorMessage;
             html += '</div>';
             html += '</div></div>';
             
@@ -522,11 +530,25 @@ $(document).ready(function() {
     
     // Função para exibir erro
     function exibirErro(xhr) {
+        var errorMessage = 'O serviço da FedEx está temporariamente indisponível. Por favor, tente novamente mais tarde.';
+        var errorTitle = 'Serviço Indisponível';
+        
+        // Tentar extrair mensagem específica da resposta
+        if (xhr.responseJSON && xhr.responseJSON.message) {
+            errorMessage = xhr.responseJSON.message;
+            errorTitle = 'Erro na Cotação';
+            
+            // Verificar se é erro de CEP inválido
+            if (xhr.responseJSON.error_code === 'invalid_origin_postal_code' || xhr.responseJSON.error_code === 'invalid_destination_postal_code') {
+                errorTitle = 'CEP Inválido';
+            }
+        }
+        
         var html = '<div class="card shadow">';
-        html += '<div class="card-header bg-danger text-white"><h4 class="mb-0">Serviço Indisponível</h4></div>';
+        html += '<div class="card-header bg-danger text-white"><h4 class="mb-0">' + errorTitle + '</h4></div>';
         html += '<div class="card-body">';
         html += '<div class="alert alert-danger">';
-        html += '<i class="fas fa-exclamation-circle me-2"></i> O serviço da FedEx está temporariamente indisponível. Por favor, tente novamente mais tarde.';
+        html += '<i class="fas fa-exclamation-circle me-2"></i> ' + errorMessage;
         html += '</div>';
         html += '</div></div>';
         
