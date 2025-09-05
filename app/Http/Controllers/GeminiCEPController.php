@@ -20,7 +20,8 @@ class GeminiCEPController extends Controller
                 'endereco' => 'nullable|string',
                 'pais' => 'nullable|string',
                 'estado' => 'nullable|string',
-                'cidade' => 'nullable|string'
+                'cidade' => 'nullable|string',
+                'pais_selecionado' => 'nullable|string'
             ]);
 
             $cep = $request->input('cep');
@@ -28,6 +29,7 @@ class GeminiCEPController extends Controller
             $pais = $request->input('pais');
             $estado = $request->input('estado');
             $cidade = $request->input('cidade');
+            $paisSelecionado = $request->input('pais_selecionado');
 
             // Se não tem CEP mas tem endereço completo, montar o endereço
             if (empty($cep) && !empty($endereco)) {
@@ -72,18 +74,31 @@ class GeminiCEPController extends Controller
             
             // Preparar a pergunta baseada no tipo de consulta
             if ($tipoConsulta === 'cep') {
-                // Determinar o país baseado no formato do CEP
+                // Usar o país selecionado pelo usuário em vez de detectar automaticamente
                 $paisDetectado = '';
-                if (preg_match('/^\d{5}-?\d{3}$/', $cep)) {
-                    $paisDetectado = 'Brasil';
-                } elseif (preg_match('/^\d{5}$/', $cep)) {
-                    $paisDetectado = 'Estados Unidos';
+                Log::info('País selecionado recebido:', ['pais_selecionado' => $paisSelecionado]);
+                if (!empty($paisSelecionado)) {
+                    if (stripos($paisSelecionado, 'Brasil') !== false) {
+                        $paisDetectado = 'Brasil';
+                    } elseif (stripos($paisSelecionado, 'Estados Unidos') !== false || stripos($paisSelecionado, 'United States') !== false) {
+                        $paisDetectado = 'Estados Unidos';
+                    }
+                }
+                Log::info('País detectado:', ['pais_detectado' => $paisDetectado]);
+                
+                // Se não conseguiu detectar pelo país selecionado, tentar pelo formato do CEP
+                if (empty($paisDetectado)) {
+                    if (preg_match('/^\d{5}-?\d{3}$/', $cep)) {
+                        $paisDetectado = 'Brasil';
+                    } elseif (preg_match('/^\d{5}$/', $cep)) {
+                        $paisDetectado = 'Estados Unidos';
+                    }
                 }
                 
                 if ($paisDetectado === 'Brasil') {
-                    $pergunta = "O CEP $cep é de onde no Brasil? Forneça as seguintes informações: País, Estado (sigla de 2 letras), Cidade e Rua. Responda APENAS em formato JSON válido com as chaves: pais, estado, cidade, rua. Exemplo: {\"pais\": \"Brasil\", \"estado\": \"SP\", \"cidade\": \"São Paulo\", \"rua\": \"Rua das Flores\"}";
+                    $pergunta = "No Brasil, o CEP $cep é de qual estado e cidade? Me retorne exatamente apenas o nome do estado e o nome da cidade";
                 } elseif ($paisDetectado === 'Estados Unidos') {
-                    $pergunta = "O CEP $cep é de qual estado e cidade nos Estados Unidos? Forneça as seguintes informações: País, Estado (sigla de 2 letras), Cidade e Rua. Responda APENAS em formato JSON válido com as chaves: pais, estado, cidade, rua. Exemplo: {\"pais\": \"Estados Unidos\", \"estado\": \"FL\", \"cidade\": \"Port St. Lucie\", \"rua\": \"Main Street\"}";
+                    $pergunta = "Nos Estados Unidos, o CEP $cep é de qual estado e cidade? Me retorne exatamente apenas o nome do estado e o nome da cidade";
                 } else {
                     $pergunta = "Para o CEP $cep, forneça as seguintes informações: País, Estado (sigla de 2 letras), Cidade e Rua. Responda APENAS em formato JSON válido com as chaves: pais, estado, cidade, rua. Exemplo: {\"pais\": \"Brasil\", \"estado\": \"SP\", \"cidade\": \"São Paulo\", \"rua\": \"Rua das Flores\"}";
                 }
@@ -113,9 +128,63 @@ class GeminiCEPController extends Controller
                 // Extrair a resposta do Gemini
                 if (isset($data['candidates'][0]['content']['parts'][0]['text'])) {
                     $result = $data['candidates'][0]['content']['parts'][0]['text'];
+                    Log::info('Resposta bruta do Gemini:', ['result' => $result, 'cep' => $cep, 'pais_selecionado' => $paisSelecionado]);
                     
                     if ($tipoConsulta === 'cep') {
-                        // Tentar extrair JSON da resposta
+                        // Determinar o país baseado no formato do CEP
+                        $paisDetectado = '';
+                        if (preg_match('/^\d{5}-?\d{3}$/', $cep)) {
+                            $paisDetectado = 'Brasil';
+                        } elseif (preg_match('/^\d{5}$/', $cep)) {
+                            $paisDetectado = 'Estados Unidos';
+                        }
+                        
+                        // Para Brasil e Estados Unidos, processar resposta simples (estado e cidade)
+                        if ($paisDetectado === 'Brasil' || $paisDetectado === 'Estados Unidos') {
+                            $estado = '';
+                            $cidade = '';
+                            
+                            Log::info('Processando resposta:', ['result' => $result]);
+                            
+                            // SIMPLES: Dividir por vírgula - PRIMEIRO é ESTADO, SEGUNDO é CIDADE
+                            $parts = explode(',', $result);
+                            if (count($parts) >= 2) {
+                                $estado = trim($parts[0]);
+                                $cidade = trim($parts[1]);
+                                Log::info('Extraído por vírgula:', ['estado' => $estado, 'cidade' => $cidade]);
+                            } else {
+                                // Se não tem vírgula, tentar por quebra de linha
+                                $lines = explode("\n", $result);
+                                foreach ($lines as $line) {
+                                    $line = trim($line);
+                                    if (stripos($line, 'estado') !== false) {
+                                        $estado = preg_replace('/estado[:\s]*/i', '', $line);
+                                        $estado = trim($estado);
+                                    }
+                                    if (stripos($line, 'cidade') !== false) {
+                                        $cidade = preg_replace('/cidade[:\s]*/i', '', $line);
+                                        $cidade = trim($cidade);
+                                    }
+                                }
+                                Log::info('Extraído por linha:', ['cidade' => $cidade, 'estado' => $estado]);
+                            }
+                            
+                            $responseData = [
+                                'success' => true,
+                                'tipo' => 'cep',
+                                'data' => [
+                                    'pais' => $paisDetectado,
+                                    'estado' => $estado,
+                                    'cidade' => $cidade,
+                                    'rua' => ''
+                                ],
+                                'raw_response' => $result
+                            ];
+                            Log::info('Resposta final para CEP:', $responseData);
+                            return response()->json($responseData);
+                        }
+                        
+                        // Para outros países, tentar extrair JSON da resposta
                         $jsonMatch = preg_match('/\{.*\}/s', $result, $matches);
                         if ($jsonMatch) {
                             $jsonData = json_decode($matches[0], true);

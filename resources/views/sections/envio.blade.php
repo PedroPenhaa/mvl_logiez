@@ -3416,7 +3416,8 @@
                 $('#altura-hidden').val(caixas[0].altura);
                 $('#largura-hidden').val(caixas[0].largura);
                 $('#comprimento-hidden').val(caixas[0].comprimento);
-                $('#peso-caixa-hidden').val(caixas[0].peso);
+                // Usar o peso total (produtos + todas as caixas) em vez do peso de apenas uma caixa
+                $('#peso-caixa-hidden').val(pesoTotal);
             }
 
             // Mostrar ou esconder o resumo de produtos
@@ -3967,16 +3968,21 @@
 
             // Mostrar indicador de carregamento
             $(`#${prefixo}_endereco`).val('Consultando IA...');
-            $(`#${prefixo}_pais`).val('');
+            // NÃO limpar o país - preservar o país já selecionado
             $(`#${prefixo}_estado`).val('');
             $(`#${prefixo}_cidade`).val('');
 
+            // Obter o país já selecionado
+            const paisSelecionado = $(`#${prefixo}_pais option:selected`).text();
+            console.log('País selecionado para', prefixo, ':', paisSelecionado);
+            
             // Consultar CEP via Gemini
             $.ajax({
                 url: '/api/consulta-gemini-cep',
                 method: 'POST',
                 data: JSON.stringify({
-                    cep: cep
+                    cep: cep,
+                    pais_selecionado: paisSelecionado
                 }),
                 contentType: 'application/json',
                 headers: {
@@ -3984,60 +3990,143 @@
                 }
             })
             .done(function(response) {
+                console.log('Resposta do Gemini para', prefixo, ':', response);
                 if (response.success && response.data) {
                     const data = response.data;
+                    console.log('Dados processados para', prefixo, ':', data);
                     
-                    // Preencher o endereço
-                    if (data.rua) {
-                        $(`#${prefixo}_endereco`).val(data.rua);
-                    }
+                    // Limpar o campo endereço e mostrar "Não informado"
+                    $(`#${prefixo}_endereco`).val('Não informado');
                     
-                    // Preencher país
-                    if (data.pais) {
-                        const paisEncontrado = paises.find(pais => 
-                            pais.nome.toLowerCase().includes(data.pais.toLowerCase()) ||
-                            data.pais.toLowerCase().includes(pais.nome.toLowerCase())
+                    // Usar o país já selecionado (não alterar)
+                    const paisAtual = $(`#${prefixo}_pais`).val();
+                    
+                    // Preencher estado
+                    if (data.estado && estados[paisAtual]) {
+                        // Mapear nomes completos para siglas
+                        const mapeamentoEstados = {
+                            'BR': {
+                                'São Paulo': 'SP',
+                                'Rio de Janeiro': 'RJ',
+                                'Minas Gerais': 'MG',
+                                'Bahia': 'BA',
+                                'Paraná': 'PR',
+                                'Rio Grande do Sul': 'RS',
+                                'Pernambuco': 'PE',
+                                'Ceará': 'CE',
+                                'Pará': 'PA',
+                                'Santa Catarina': 'SC',
+                                'Goiás': 'GO',
+                                'Maranhão': 'MA',
+                                'Paraíba': 'PB',
+                                'Espírito Santo': 'ES',
+                                'Piauí': 'PI',
+                                'Alagoas': 'AL',
+                                'Tocantins': 'TO',
+                                'Rio Grande do Norte': 'RN',
+                                'Acre': 'AC',
+                                'Amapá': 'AP',
+                                'Amazonas': 'AM',
+                                'Rondônia': 'RO',
+                                'Roraima': 'RR',
+                                'Mato Grosso': 'MT',
+                                'Mato Grosso do Sul': 'MS',
+                                'Distrito Federal': 'DF',
+                                'Sergipe': 'SE'
+                            },
+                            'US': {
+                                'Florida': 'FL',
+                                'Flórida': 'FL',
+                                'California': 'CA',
+                                'New York': 'NY',
+                                'Texas': 'TX',
+                                'Illinois': 'IL',
+                                'Pennsylvania': 'PA',
+                                'Ohio': 'OH',
+                                'Georgia': 'GA',
+                                'North Carolina': 'NC',
+                                'Michigan': 'MI',
+                                'New Jersey': 'NJ',
+                                'Virginia': 'VA',
+                                'Washington': 'WA',
+                                'Arizona': 'AZ',
+                                'Massachusetts': 'MA',
+                                'Tennessee': 'TN',
+                                'Indiana': 'IN',
+                                'Missouri': 'MO',
+                                'Maryland': 'MD',
+                                'Wisconsin': 'WI',
+                                'Colorado': 'CO',
+                                'Minnesota': 'MN',
+                                'South Carolina': 'SC',
+                                'Alabama': 'AL',
+                                'Louisiana': 'LA',
+                                'Kentucky': 'KY',
+                                'Oregon': 'OR',
+                                'Oklahoma': 'OK',
+                                'Connecticut': 'CT',
+                                'Utah': 'UT',
+                                'Iowa': 'IA',
+                                'Nevada': 'NV',
+                                'Arkansas': 'AR',
+                                'Mississippi': 'MS',
+                                'Kansas': 'KS',
+                                'New Mexico': 'NM',
+                                'Nebraska': 'NE',
+                                'West Virginia': 'WV',
+                                'Idaho': 'ID',
+                                'Hawaii': 'HI',
+                                'New Hampshire': 'NH',
+                                'Maine': 'ME',
+                                'Rhode Island': 'RI',
+                                'Montana': 'MT',
+                                'Delaware': 'DE',
+                                'South Dakota': 'SD',
+                                'North Dakota': 'ND',
+                                'Alaska': 'AK',
+                                'Vermont': 'VT',
+                                'Wyoming': 'WY'
+                            }
+                        };
+                        
+                        // Tentar encontrar o estado pelo nome completo ou sigla
+                        let estadoEncontrado = estados[paisAtual].find(estado =>
+                            estado.nome.toLowerCase().includes(data.estado.toLowerCase()) ||
+                            estado.id.toLowerCase() === data.estado.toLowerCase() ||
+                            data.estado.toLowerCase().includes(estado.nome.toLowerCase())
                         );
                         
-                        if (paisEncontrado) {
-                            $(`#${prefixo}_pais`).val(paisEncontrado.id).trigger('change');
+                        // Se não encontrou, tentar pelo mapeamento
+                        if (!estadoEncontrado && mapeamentoEstados[paisAtual] && mapeamentoEstados[paisAtual][data.estado]) {
+                            const siglaEstado = mapeamentoEstados[paisAtual][data.estado];
+                            estadoEncontrado = estados[paisAtual].find(estado => estado.id === siglaEstado);
+                        }
+                        
+                        if (estadoEncontrado) {
+                            $(`#${prefixo}_estado`).val(estadoEncontrado.id).trigger('change');
                             
-                            // Aguardar carregamento dos estados
+                            // Aguardar carregamento das cidades
                             setTimeout(function() {
-                                // Preencher estado
-                                if (data.estado && estados[paisEncontrado.id]) {
-                                    const estadoEncontrado = estados[paisEncontrado.id].find(estado =>
-                                        estado.nome.toLowerCase().includes(data.estado.toLowerCase()) ||
-                                        estado.id.toLowerCase() === data.estado.toLowerCase() ||
-                                        data.estado.toLowerCase().includes(estado.nome.toLowerCase())
-                                    );
-                                    
-                                    if (estadoEncontrado) {
-                                        $(`#${prefixo}_estado`).val(estadoEncontrado.id).trigger('change');
-                                        
-                                        // Aguardar carregamento das cidades
-                                        setTimeout(function() {
-                                            // Preencher cidade
-                                            if (data.cidade) {
-                                                $(`#${prefixo}_cidade`).val(data.cidade);
-                                            }
-                                        }, 800);
-                                    } else {
-                                        $(`#${prefixo}_cidade`).val(data.cidade || '');
-                                    }
-                                } else {
-                                    $(`#${prefixo}_cidade`).val(data.cidade || '');
+                                // Preencher cidade apenas com o nome, sem texto adicional
+                                if (data.cidade) {
+                                    $(`#${prefixo}_cidade`).val(data.cidade);
                                 }
-                            }, 300);
+                            }, 800);
                         } else {
-                            $(`#${prefixo}_cidade`).val(data.cidade || '');
+                            // Preencher cidade mesmo se não encontrar estado
+                            if (data.cidade) {
+                                $(`#${prefixo}_cidade`).val(data.cidade);
+                            }
                         }
                     } else {
-                        $(`#${prefixo}_cidade`).val(data.cidade || '');
+                        // Preencher cidade mesmo se não encontrar estado
+                        if (data.cidade) {
+                            $(`#${prefixo}_cidade`).val(data.cidade);
+                        }
                     }
                 } else {
                     alert('CEP não encontrado. Por favor, digite o endereço manualmente.');
-                    $(`#${prefixo}_endereco`).val('');
+                    $(`#${prefixo}_endereco`).val('Não informado');
                 }
             })
             .fail(function(jqxhr, textStatus, error) {
@@ -4501,7 +4590,16 @@
                     $('#altura-hidden').val(caixas[0].altura);
                     $('#largura-hidden').val(caixas[0].largura);
                     $('#comprimento-hidden').val(caixas[0].comprimento);
-                    $('#peso-caixa-hidden').val(caixas[0].peso);
+                    // Calcular peso total de todas as caixas + produtos
+                    let pesoTotalCaixas = 0;
+                    caixas.forEach(function(caixa) {
+                        pesoTotalCaixas += parseFloat(caixa.peso);
+                    });
+                    let pesoTotalProdutos = 0;
+                    produtos.forEach(function(produto) {
+                        pesoTotalProdutos += produto.peso * produto.quantidade;
+                    });
+                    $('#peso-caixa-hidden').val(pesoTotalProdutos + pesoTotalCaixas);
                 } else {
                     showAlert('Erro ao processar dimensões da caixa. Por favor, tente novamente.', 'danger');
                     return false;
