@@ -325,15 +325,17 @@ Route::get('/exportar-cotacao-pdf', function (Illuminate\Http\Request $request, 
                 .footer {
                     position: fixed;
                     bottom: 0cm; left: 0cm; right: 0cm;
-                    height: 1cm;
-                    background-color: #f4f4f4;
-                    border-top: 1px solid #ccc;
+                    height: 1.2cm;
+                    background-color: #6f42c1;
+                    border-top: 1px solid #6f42c1;
                     font-size: 9px;
-                    color: #555;
+                    color: white;
                     display: flex;
                     align-items: center;
-                    justify-content: space-between;
-                    padding: 0 0.5cm;
+                    justify-content: center;
+                    padding: 0.2cm 0.5cm 0 0.5cm;
+                    text-align: center;
+                    font-weight: bold;
                 }
         
                 /* ===== TITLES ===== */
@@ -343,14 +345,14 @@ Route::get('/exportar-cotacao-pdf', function (Illuminate\Http\Request $request, 
                     font-weight: bold;
                     margin-bottom: 10px;
                     margin-top: 0px;
-                    color: #2c3e50;
+                    color: #6f42c1;
                 }
                 .section-title {
                     font-size: 12px;
                     font-weight: bold;
-                    color: #2c3e50;
+                    color: #6f42c1;
                     margin: 8px 0 5px 0;
-                    border-bottom: 1px solid #2c3e50;
+                    border-bottom: 2px solid #6f42c1;
                     padding-bottom: 3px;
                 }
         
@@ -369,14 +371,14 @@ Route::get('/exportar-cotacao-pdf', function (Illuminate\Http\Request $request, 
                 }
                 .info-label {
                     font-size: 10px;
-                    color: #555;
+                    color: #6c757d;
                     text-transform: uppercase;
                     margin-bottom: 2px;
                 }
                 .info-value {
                     font-size: 11px;
                     font-weight: bold;
-                    color: #222;
+                    color: #495057;
                 }
         
                 /* ===== TABLE ===== */
@@ -387,7 +389,7 @@ Route::get('/exportar-cotacao-pdf', function (Illuminate\Http\Request $request, 
                     font-size: 10px;
                 }
                 th {
-                    background-color: #2c3e50;
+                    background-color: #6f42c1;
                     color: white;
                     padding: 5px;
                     text-align: left;
@@ -401,11 +403,12 @@ Route::get('/exportar-cotacao-pdf', function (Illuminate\Http\Request $request, 
         
                 /* ===== BOXES ===== */
                 .box {
-                    border: 1px solid #ccc;
-                    border-radius: 4px;
+                    border: 2px solid #6f42c1;
+                    border-radius: 8px;
                     padding: 8px;
                     margin-top: 8px;
                     font-size: 10px;
+                    background-color: rgba(111, 66, 193, 0.05);
                 }
                 .highlight {
                     color: #27ae60;
@@ -413,10 +416,10 @@ Route::get('/exportar-cotacao-pdf', function (Illuminate\Http\Request $request, 
                 }
                 .disclaimer {
                     font-size: 9px;
-                    color: #555;
-                    background-color: #fef7e0;
-                    border: 1px solid #f1c40f;
-                    border-radius: 4px;
+                    color: #495057;
+                    background-color: rgba(46, 204, 113, 0.1);
+                    border: 2px solid #27ae60;
+                    border-radius: 8px;
                     padding: 8px;
                     margin-top: 10px;
                 }
@@ -437,8 +440,10 @@ Route::get('/exportar-cotacao-pdf', function (Illuminate\Http\Request $request, 
         
             <!-- FOOTER -->
             <div class="footer">
-                <div>LOGIEZ - Especialistas em envios internacionais</div>
-                <div>www.logiez.com.br</div>
+                <div>
+                    <strong>LOGIEZ - Especialistas em envios internacionais</strong><br>
+                    <strong>www.logiez.com.br</strong>
+                </div>
             </div>
         
             <!-- CONTENT -->
