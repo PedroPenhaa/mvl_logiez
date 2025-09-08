@@ -85,9 +85,9 @@ Route::prefix('api')->name('api.')->group(function () {
         ->name('consulta.gemini')
         ->withoutMiddleware(['web']);
 
-    // Consulta de CEP/Endereço via Gemini (sem CSRF)
-    Route::post('/consulta-gemini-cep', [App\Http\Controllers\GeminiCEPController::class, 'consultar'])
-        ->name('consulta.gemini-cep')
+    // Consulta de CEP/Endereço via Google Maps (sem CSRF)
+    Route::post('/consulta-google-maps-cep', [App\Http\Controllers\GoogleMapsCEPController::class, 'consultar'])
+        ->name('consulta.google-maps-cep')
         ->withoutMiddleware(['web']);
 
     // Rota de teste simples

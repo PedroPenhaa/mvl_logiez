@@ -39,6 +39,7 @@ return array(
     'App\\Http\\Controllers\\EtiquetaController' => $baseDir . '/app/Http/Controllers/EtiquetaController.php',
     'App\\Http\\Controllers\\FedexController' => $baseDir . '/app/Http/Controllers/FedexController.php',
     'App\\Http\\Controllers\\GeminiCEPController' => $baseDir . '/app/Http/Controllers/GeminiCEPController.php',
+    'App\\Http\\Controllers\\GoogleMapsCEPController' => $baseDir . '/app/Http/Controllers/GoogleMapsCEPController.php',
     'App\\Http\\Controllers\\HomeController' => $baseDir . '/app/Http/Controllers/HomeController.php',
     'App\\Http\\Controllers\\PagamentoController' => $baseDir . '/app/Http/Controllers/PagamentoController.php',
     'App\\Http\\Controllers\\PaymentController' => $baseDir . '/app/Http/Controllers/PaymentController.php',

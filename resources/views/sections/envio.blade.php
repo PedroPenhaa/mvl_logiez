@@ -3956,7 +3956,7 @@
             $(`#${prefixo}_cidade`).val('');
         });
 
-        // Função para buscar CEP via API Gemini
+        // Função para buscar CEP via API Google Maps
         function buscarCEP(cep, prefixo) {
             if (cep.length < 5) {
                 alert('CEP inválido. Por favor, digite um CEP válido.');
@@ -3967,7 +3967,7 @@
             cep = cep.replace(/\D/g, '');
 
             // Mostrar indicador de carregamento
-            $(`#${prefixo}_endereco`).val('Consultando IA...');
+            $(`#${prefixo}_endereco`).val('Consultando Google Maps...');
             // NÃO limpar o país - preservar o país já selecionado
             $(`#${prefixo}_estado`).val('');
             $(`#${prefixo}_cidade`).val('');
@@ -3976,9 +3976,9 @@
             const paisSelecionado = $(`#${prefixo}_pais option:selected`).text();
             console.log('País selecionado para', prefixo, ':', paisSelecionado);
             
-            // Consultar CEP via Gemini
+            // Consultar CEP via Google Maps
             $.ajax({
-                url: '/api/consulta-gemini-cep',
+                url: '/google-maps-cep-api.php',
                 method: 'POST',
                 data: JSON.stringify({
                     cep: cep,
@@ -3990,7 +3990,7 @@
                 }
             })
             .done(function(response) {
-                console.log('Resposta do Gemini para', prefixo, ':', response);
+                console.log('Resposta do Google Maps para', prefixo, ':', response);
                 if (response.success && response.data) {
                     const data = response.data;
                     console.log('Dados processados para', prefixo, ':', data);
@@ -3998,131 +3998,40 @@
                     // Limpar o campo endereço e mostrar "Não informado"
                     $(`#${prefixo}_endereco`).val('Não informado');
                     
-                    // Usar o país já selecionado (não alterar)
-                    const paisAtual = $(`#${prefixo}_pais`).val();
-                    
-                    // Preencher estado
-                    if (data.estado && estados[paisAtual]) {
-                        // Mapear nomes completos para siglas
-                        const mapeamentoEstados = {
-                            'BR': {
-                                'São Paulo': 'SP',
-                                'Rio de Janeiro': 'RJ',
-                                'Minas Gerais': 'MG',
-                                'Bahia': 'BA',
-                                'Paraná': 'PR',
-                                'Rio Grande do Sul': 'RS',
-                                'Pernambuco': 'PE',
-                                'Ceará': 'CE',
-                                'Pará': 'PA',
-                                'Santa Catarina': 'SC',
-                                'Goiás': 'GO',
-                                'Maranhão': 'MA',
-                                'Paraíba': 'PB',
-                                'Espírito Santo': 'ES',
-                                'Piauí': 'PI',
-                                'Alagoas': 'AL',
-                                'Tocantins': 'TO',
-                                'Rio Grande do Norte': 'RN',
-                                'Acre': 'AC',
-                                'Amapá': 'AP',
-                                'Amazonas': 'AM',
-                                'Rondônia': 'RO',
-                                'Roraima': 'RR',
-                                'Mato Grosso': 'MT',
-                                'Mato Grosso do Sul': 'MS',
-                                'Distrito Federal': 'DF',
-                                'Sergipe': 'SE'
-                            },
-                            'US': {
-                                'Florida': 'FL',
-                                'Flórida': 'FL',
-                                'California': 'CA',
-                                'New York': 'NY',
-                                'Texas': 'TX',
-                                'Illinois': 'IL',
-                                'Pennsylvania': 'PA',
-                                'Ohio': 'OH',
-                                'Georgia': 'GA',
-                                'North Carolina': 'NC',
-                                'Michigan': 'MI',
-                                'New Jersey': 'NJ',
-                                'Virginia': 'VA',
-                                'Washington': 'WA',
-                                'Arizona': 'AZ',
-                                'Massachusetts': 'MA',
-                                'Tennessee': 'TN',
-                                'Indiana': 'IN',
-                                'Missouri': 'MO',
-                                'Maryland': 'MD',
-                                'Wisconsin': 'WI',
-                                'Colorado': 'CO',
-                                'Minnesota': 'MN',
-                                'South Carolina': 'SC',
-                                'Alabama': 'AL',
-                                'Louisiana': 'LA',
-                                'Kentucky': 'KY',
-                                'Oregon': 'OR',
-                                'Oklahoma': 'OK',
-                                'Connecticut': 'CT',
-                                'Utah': 'UT',
-                                'Iowa': 'IA',
-                                'Nevada': 'NV',
-                                'Arkansas': 'AR',
-                                'Mississippi': 'MS',
-                                'Kansas': 'KS',
-                                'New Mexico': 'NM',
-                                'Nebraska': 'NE',
-                                'West Virginia': 'WV',
-                                'Idaho': 'ID',
-                                'Hawaii': 'HI',
-                                'New Hampshire': 'NH',
-                                'Maine': 'ME',
-                                'Rhode Island': 'RI',
-                                'Montana': 'MT',
-                                'Delaware': 'DE',
-                                'South Dakota': 'SD',
-                                'North Dakota': 'ND',
-                                'Alaska': 'AK',
-                                'Vermont': 'VT',
-                                'Wyoming': 'WY'
-                            }
+                    // Preencher país se retornado pelo Google Maps
+                    if (data.pais) {
+                        // Mapear nomes de países para códigos
+                        const mapeamentoPaises = {
+                            'Brasil': 'BR',
+                            'Brazil': 'BR',
+                            'United States': 'US',
+                            'Estados Unidos': 'US',
+                            'USA': 'US'
                         };
                         
-                        // Tentar encontrar o estado pelo nome completo ou sigla
-                        let estadoEncontrado = estados[paisAtual].find(estado =>
-                            estado.nome.toLowerCase().includes(data.estado.toLowerCase()) ||
-                            estado.id.toLowerCase() === data.estado.toLowerCase() ||
-                            data.estado.toLowerCase().includes(estado.nome.toLowerCase())
-                        );
+                        const codigoPais = mapeamentoPaises[data.pais] || data.pais;
+                        $(`#${prefixo}_pais`).val(codigoPais).trigger('change');
+                    }
+                    
+                    // Preencher estado diretamente com o valor retornado
+                    if (data.estado) {
+                        const estadoSelect = $(`#${prefixo}_estado`);
                         
-                        // Se não encontrou, tentar pelo mapeamento
-                        if (!estadoEncontrado && mapeamentoEstados[paisAtual] && mapeamentoEstados[paisAtual][data.estado]) {
-                            const siglaEstado = mapeamentoEstados[paisAtual][data.estado];
-                            estadoEncontrado = estados[paisAtual].find(estado => estado.id === siglaEstado);
+                        // Verificar se a opção já existe
+                        const opcaoExistente = estadoSelect.find(`option[value="${data.estado}"]`);
+                        
+                        if (opcaoExistente.length === 0) {
+                            // Adicionar nova opção se não existir
+                            estadoSelect.append(`<option value="${data.estado}">${data.estado}</option>`);
                         }
                         
-                        if (estadoEncontrado) {
-                            $(`#${prefixo}_estado`).val(estadoEncontrado.id).trigger('change');
-                            
-                            // Aguardar carregamento das cidades
-                            setTimeout(function() {
-                                // Preencher cidade apenas com o nome, sem texto adicional
-                                if (data.cidade) {
-                                    $(`#${prefixo}_cidade`).val(data.cidade);
-                                }
-                            }, 800);
-                        } else {
-                            // Preencher cidade mesmo se não encontrar estado
-                            if (data.cidade) {
-                                $(`#${prefixo}_cidade`).val(data.cidade);
-                            }
-                        }
-                    } else {
-                        // Preencher cidade mesmo se não encontrar estado
-                        if (data.cidade) {
-                            $(`#${prefixo}_cidade`).val(data.cidade);
-                        }
+                        // Selecionar o estado
+                        estadoSelect.val(data.estado);
+                    }
+                    
+                    // Preencher cidade diretamente com o valor retornado
+                    if (data.cidade) {
+                        $(`#${prefixo}_cidade`).val(data.cidade);
                     }
                 } else {
                     alert('CEP não encontrado. Por favor, digite o endereço manualmente.');
