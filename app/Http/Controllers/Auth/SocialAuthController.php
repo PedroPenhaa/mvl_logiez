@@ -157,29 +157,20 @@ class SocialAuthController extends Controller
                     
                     // Verificar se o login foi bem-sucedido antes de redirecionar
                     if (Auth::check()) {
-                        \Log::info('Google OAuth - Redirecionando para dashboard com sucesso');
+                        \Log::info('Google OAuth - Usuário autenticado com sucesso: ' . Auth::user()->email);
+                        \Log::info('Google OAuth - ID da sessão: ' . session()->getId());
+                        \Log::info('Google OAuth - Dados da sessão: ' . json_encode(session()->all()));
                         
                         // Forçar commit da sessão
                         session()->save();
                         
-                        // Armazenar dados do usuário na sessão para garantir autenticação
-                        session(['user_id' => $user->id, 'user_email' => $user->email, 'user_name' => $user->name]);
+                        // Redirecionar diretamente para o dashboard
+                        \Log::info('Google OAuth - Redirecionando para dashboard');
                         
-                        // Redirecionar com JavaScript para garantir que funcione
-                        $dashboardUrl = config('app.url') . '/dashboard';
-                        \Log::info('Google OAuth - Redirecionando para: ' . $dashboardUrl);
-                        
-                        try {
-                            return response()->view('auth.redirect', [
-                                'url' => $dashboardUrl,
-                                'message' => 'Login realizado com sucesso! Bem-vindo de volta, ' . $user->name . '!'
-                            ]);
-                        } catch (\Exception $e) {
-                            \Log::error('Google OAuth - Erro ao renderizar view de redirecionamento: ' . $e->getMessage());
-                            return redirect($dashboardUrl)->with('success', 'Login realizado com sucesso! Bem-vindo de volta, ' . $user->name . '!');
-                        }
+                        return redirect()->route('dashboard')->with('success', 'Login realizado com sucesso! Bem-vindo de volta, ' . $user->name . '!');
                     } else {
                         \Log::error('Google OAuth - Falha na autenticação após login');
+                        \Log::error('Google OAuth - Auth::check() retornou false');
                         return redirect()->route('login')->with('error', 'Erro na autenticação. Tente novamente.');
                     }
                 } else {
@@ -208,29 +199,20 @@ class SocialAuthController extends Controller
                         
                         // Verificar se o login foi bem-sucedido antes de redirecionar
                         if (Auth::check()) {
-                            \Log::info('Google OAuth - Redirecionando novo usuário para dashboard com sucesso');
+                            \Log::info('Google OAuth - Novo usuário autenticado com sucesso: ' . Auth::user()->email);
+                            \Log::info('Google OAuth - ID da sessão: ' . session()->getId());
+                            \Log::info('Google OAuth - Dados da sessão: ' . json_encode(session()->all()));
                             
                             // Forçar commit da sessão
                             session()->save();
                             
-                            // Armazenar dados do usuário na sessão para garantir autenticação
-                            session(['user_id' => $user->id, 'user_email' => $user->email, 'user_name' => $user->name]);
+                            // Redirecionar diretamente para o dashboard
+                            \Log::info('Google OAuth - Redirecionando novo usuário para dashboard');
                             
-                            // Redirecionar com JavaScript para garantir que funcione
-                            $dashboardUrl = config('app.url') . '/dashboard';
-                            \Log::info('Google OAuth - Redirecionando novo usuário para: ' . $dashboardUrl);
-                            
-                            try {
-                                return response()->view('auth.redirect', [
-                                    'url' => $dashboardUrl,
-                                    'message' => 'Conta criada e login realizado com sucesso! Bem-vindo, ' . $user->name . '!'
-                                ]);
-                            } catch (\Exception $e) {
-                                \Log::error('Google OAuth - Erro ao renderizar view de redirecionamento: ' . $e->getMessage());
-                                return redirect($dashboardUrl)->with('success', 'Conta criada e login realizado com sucesso! Bem-vindo, ' . $user->name . '!');
-                            }
+                            return redirect()->route('dashboard')->with('success', 'Conta criada e login realizado com sucesso! Bem-vindo, ' . $user->name . '!');
                         } else {
                             \Log::error('Google OAuth - Falha na autenticação após criação de usuário');
+                            \Log::error('Google OAuth - Auth::check() retornou false');
                             return redirect()->route('login')->with('error', 'Erro na autenticação. Tente novamente.');
                         }
                     } catch (\Exception $e) {
