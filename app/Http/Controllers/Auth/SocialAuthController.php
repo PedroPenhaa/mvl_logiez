@@ -20,8 +20,8 @@ class SocialAuthController extends Controller
     public function redirect($provider)
     {
         if ($provider === 'google') {
-            $clientId = '1070057278923-p5telmjqd2hsdco126tjfc7d9kp7fm2o.apps.googleusercontent.com';
-            $redirectUri = 'http://localhost:8080/auth/google/callback';
+            $clientId = config('services.google.client_id');
+            $redirectUri = config('services.google.redirect');
             
             $params = [
                 'client_id' => $clientId,
@@ -61,9 +61,9 @@ class SocialAuthController extends Controller
                         ->with('error', 'Nenhum código de autorização recebido');
                 }
                 
-                $clientId = '1070057278923-p5telmjqd2hsdco126tjfc7d9kp7fm2o.apps.googleusercontent.com';
-                $clientSecret = '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';
-                $redirectUri = 'http://localhost:8080/auth/google/callback';
+                $clientId = config('services.google.client_id');
+                $clientSecret = config('services.google.client_secret');
+                $redirectUri = config('services.google.redirect');
                 
                 // Troca o código de autorização por um token de acesso
                 $response = Http::post('https://oauth2.googleapis.com/token', [
@@ -128,11 +128,31 @@ class SocialAuthController extends Controller
                     ]
                 ];
                 
-                // Armazenamos temporariamente na sessão
-                session(['social_user_data' => $userData]);
-                session(['authenticated' => true]);
+                // Verificar se o usuário já existe no banco
+                $user = User::where('email', $googleUser['email'])->first();
                 
-                return redirect()->route('social.userData');
+                if ($user) {
+                    // Usuário já existe - apenas fazer login
+                    Auth::login($user);
+                    
+                    return redirect()->route('dashboard')
+                        ->with('success', 'Login realizado com sucesso! Bem-vindo de volta, ' . $user->name . '!');
+                } else {
+                    // Usuário não existe - criar novo usuário
+                    $user = User::create([
+                        'name' => $googleUser['name'],
+                        'email' => $googleUser['email'],
+                        'provider_id' => $googleUser['sub'],
+                        'provider' => 'google',
+                        'password' => bcrypt('google_oauth_' . $googleUser['sub']), // Senha temporária
+                    ]);
+                    
+                    // Login automático do novo usuário
+                    Auth::login($user);
+                    
+                    return redirect()->route('dashboard')
+                        ->with('success', 'Conta criada e login realizado com sucesso! Bem-vindo, ' . $user->name . '!');
+                }
             }
             
             return redirect()->route('login')->with('error', 'Provedor não suportado');
