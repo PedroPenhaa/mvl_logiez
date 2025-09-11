@@ -155,30 +155,52 @@ class SocialAuthController extends Controller
                     // Forçar regeneração da sessão
                     session()->regenerate();
                     
-                    return redirect()->route('dashboard')
-                        ->with('success', 'Login realizado com sucesso! Bem-vindo de volta, ' . $user->name . '!');
+                    // Verificar se o login foi bem-sucedido antes de redirecionar
+                    if (Auth::check()) {
+                        \Log::info('Google OAuth - Redirecionando para dashboard com sucesso');
+                        return redirect()->intended(route('dashboard'))
+                            ->with('success', 'Login realizado com sucesso! Bem-vindo de volta, ' . $user->name . '!');
+                    } else {
+                        \Log::error('Google OAuth - Falha na autenticação após login');
+                        return redirect()->route('login')->with('error', 'Erro na autenticação. Tente novamente.');
+                    }
                 } else {
                     // Usuário não existe - criar novo usuário
-                    $user = User::create([
-                        'name' => $googleUser['name'],
-                        'email' => $googleUser['email'],
-                        'provider_id' => $googleUser['sub'],
-                        'provider' => 'google',
-                        'password' => bcrypt('google_oauth_' . $googleUser['sub']), // Senha temporária
-                    ]);
-                    
-                    // Login automático do novo usuário
-                    Auth::login($user, true); // true = remember me
-                    
-                    // Log para debug
-                    \Log::info('Google OAuth - Novo usuário criado e logado: ' . $user->email . ' - ID: ' . $user->id);
-                    \Log::info('Google OAuth - Auth check após login: ' . (Auth::check() ? 'true' : 'false'));
-                    
-                    // Forçar regeneração da sessão
-                    session()->regenerate();
-                    
-                    return redirect()->route('dashboard')
-                        ->with('success', 'Conta criada e login realizado com sucesso! Bem-vindo, ' . $user->name . '!');
+                    try {
+                        $user = User::create([
+                            'name' => $googleUser['name'],
+                            'email' => $googleUser['email'],
+                            'provider_id' => $googleUser['sub'],
+                            'provider' => 'google',
+                            'password' => bcrypt('google_oauth_' . $googleUser['sub']), // Senha temporária
+                            'email_verified_at' => now(), // Marcar email como verificado
+                        ]);
+                        
+                        \Log::info('Google OAuth - Novo usuário criado: ' . $user->email . ' - ID: ' . $user->id);
+                        
+                        // Login automático do novo usuário
+                        Auth::login($user, true); // true = remember me
+                        
+                        // Log para debug
+                        \Log::info('Google OAuth - Novo usuário logado: ' . $user->email . ' - ID: ' . $user->id);
+                        \Log::info('Google OAuth - Auth check após login: ' . (Auth::check() ? 'true' : 'false'));
+                        
+                        // Forçar regeneração da sessão
+                        session()->regenerate();
+                        
+                        // Verificar se o login foi bem-sucedido antes de redirecionar
+                        if (Auth::check()) {
+                            \Log::info('Google OAuth - Redirecionando novo usuário para dashboard com sucesso');
+                            return redirect()->intended(route('dashboard'))
+                                ->with('success', 'Conta criada e login realizado com sucesso! Bem-vindo, ' . $user->name . '!');
+                        } else {
+                            \Log::error('Google OAuth - Falha na autenticação após criação de usuário');
+                            return redirect()->route('login')->with('error', 'Erro na autenticação. Tente novamente.');
+                        }
+                    } catch (\Exception $e) {
+                        \Log::error('Google OAuth - Erro ao criar usuário: ' . $e->getMessage());
+                        return redirect()->route('login')->with('error', 'Erro ao criar conta. Tente novamente.');
+                    }
                 }
             }
             

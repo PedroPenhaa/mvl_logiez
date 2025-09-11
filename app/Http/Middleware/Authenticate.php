@@ -14,13 +14,8 @@ class Authenticate extends Middleware
      */
     protected function redirectTo($request)
     {
-        // Comentando temporariamente a verificação de autenticação
-        // para permitir acesso direto ao dashboard
-        /*
         if (! $request->expectsJson()) {
             return route('login');
         }
-        */
-        return null;
     }
 } 

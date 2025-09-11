@@ -195,12 +195,16 @@ class HomeController extends Controller
         \Log::info('Dashboard - Auth check: ' . (Auth::check() ? 'true' : 'false'));
         \Log::info('Dashboard - User ID: ' . (Auth::check() ? Auth::id() : 'null'));
         \Log::info('Dashboard - User email: ' . (Auth::check() ? Auth::user()->email : 'null'));
+        \Log::info('Dashboard - Session ID: ' . session()->getId());
+        \Log::info('Dashboard - Session data: ' . json_encode(session()->all()));
         
         // Verificar se o usuário está autenticado
         if (!Auth::check()) {
             \Log::info('Dashboard - Usuário não autenticado, redirecionando para login');
-            return redirect()->route('login');
+            return redirect()->route('login')->with('error', 'Você precisa fazer login para acessar esta página.');
         }
+        
+        \Log::info('Dashboard - Usuário autenticado com sucesso, exibindo dashboard');
         
         // Buscar envios do usuário que têm tracking_number (mesma lógica da tela de etiquetas)
         $enviosEmAndamento = Shipment::where('user_id', Auth::id())
