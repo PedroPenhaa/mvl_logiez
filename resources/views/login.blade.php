@@ -513,7 +513,7 @@
 <body>
     <div class="login-container d-flex">
         <div class="login-banner d-none d-md-flex justify-content-center align-items-center">
-            <img src="{{ asset('img/login5.avif') }}" alt="Login Banner" style="max-width: 100%; height: 100vh;">
+            <img src="{{ asset('img/login5.avif') }}" alt="" style="max-width: 100%; height: 100vh;">
         </div>
 
 
