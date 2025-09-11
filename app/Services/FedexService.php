@@ -212,13 +212,6 @@ class FedexService
                 'checkForMismatch' => true
             ];
             
-            Log::info('🔍 Validando código postal na FedEx:', [
-                'postalCode' => $postalCode,
-                'countryCode' => $countryCode,
-                'stateCode' => $stateCode,
-                'url' => $validateUrl,
-                'request' => $validateRequest
-            ]);
             
             $response = Http::withHeaders([
                 'Content-Type' => 'application/json',
@@ -227,12 +220,6 @@ class FedexService
                 'X-locale' => 'en_US',
                 'x-customer-transaction-id' => $transactionId
             ])->post($validateUrl, $validateRequest);
-
-            Log::info('📥 Resposta da validação de código postal:', [
-                'http_code' => $response->status(),
-                'response_body' => $response->body(),
-                'success' => $response->successful()
-            ]);
             
             // Debug: mostrar o corpo da resposta em caso de erro
             if ($response->failed()) {
@@ -310,23 +297,13 @@ class FedexService
             $countryCodeOrigem = is_array($origem) ? ($origem['countryCode'] ?? 'BR') : 'BR';
             $countryCodeDestino = is_array($destino) ? ($destino['countryCode'] ?? 'US') : 'US';
     
-            // Log antes da formatação
-            Log::info('📮 Códigos postais antes da formatação:', [
-                'postalCodeOrigem' => $postalCodeOrigem,
-                'postalCodeDestino' => $postalCodeDestino,
-                'countryCodeOrigem' => $countryCodeOrigem,
-                'countryCodeDestino' => $countryCodeDestino
-            ]);
+
     
             // Validar e formatar códigos postais de acordo com o país
             $postalCodeOrigem = $this->validarEFormatarCodigoPostal($postalCodeOrigem, $countryCodeOrigem);
             $postalCodeDestino = $this->validarEFormatarCodigoPostal($postalCodeDestino, $countryCodeDestino);
             
-            // Log após a formatação
-            Log::info('📮 Códigos postais após formatação:', [
-                'postalCodeOrigem_formatado' => $postalCodeOrigem,
-                'postalCodeDestino_formatado' => $postalCodeDestino
-            ]);
+           
             
             // VALIDAÇÃO DE CÓDIGO POSTAL ANTES DA COTAÇÃO
             $validacaoOrigem = $this->validarCodigoPostalFedEx($postalCodeOrigem, $countryCodeOrigem, 'SP');
