@@ -624,6 +624,59 @@
 
     <!-- Bootstrap JS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <!-- Debug Script -->
+    <script>
+        console.log('🔍 LOGIEZ DEBUG - Página de login carregada');
+        console.log('🔍 URL atual:', window.location.href);
+        console.log('🔍 User Agent:', navigator.userAgent);
+        
+        // Verificar se há mensagens de erro ou sucesso
+        @if(session('error'))
+            console.error('❌ Erro na sessão:', '{{ session('error') }}');
+        @endif
+        
+        @if(session('success'))
+            console.log('✅ Sucesso na sessão:', '{{ session('success') }}');
+        @endif
+        
+        @if($errors->any())
+            console.error('❌ Erros de validação:', @json($errors->all()));
+        @endif
+        
+        // Log quando clicar no botão do Google
+        document.addEventListener('DOMContentLoaded', function() {
+            const googleBtn = document.querySelector('a[href*="social.redirect"]');
+            if (googleBtn) {
+                googleBtn.addEventListener('click', function(e) {
+                    console.log('🔍 LOGIEZ DEBUG - Clicou no botão do Google');
+                    console.log('🔍 URL do Google OAuth:', this.href);
+                    console.log('🔍 Timestamp:', new Date().toISOString());
+                });
+            }
+        });
+        
+        // Log quando a página for redirecionada
+        window.addEventListener('beforeunload', function() {
+            console.log('🔍 LOGIEZ DEBUG - Página sendo redirecionada');
+            console.log('🔍 URL de destino:', window.location.href);
+        });
+        
+        // Log quando a página carregar (para detectar redirecionamentos)
+        window.addEventListener('load', function() {
+            console.log('🔍 LOGIEZ DEBUG - Página carregada completamente');
+            console.log('🔍 URL final:', window.location.href);
+            
+            // Verificar se estamos na página de login ou dashboard
+            if (window.location.pathname === '/login') {
+                console.log('🔍 LOGIEZ DEBUG - Ainda na página de login');
+            } else if (window.location.pathname === '/dashboard') {
+                console.log('✅ LOGIEZ DEBUG - Redirecionado para dashboard com sucesso!');
+            } else {
+                console.log('🔍 LOGIEZ DEBUG - Em outra página:', window.location.pathname);
+            }
+        });
+    </script>
 </body>
 
 </html>
