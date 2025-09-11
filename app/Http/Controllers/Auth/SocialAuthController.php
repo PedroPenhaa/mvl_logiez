@@ -162,9 +162,14 @@ class SocialAuthController extends Controller
                         // Forçar commit da sessão
                         session()->save();
                         
-                        // Redirecionar diretamente para a URL do dashboard
-                        return redirect('https://app.logiez.com.br/dashboard')
-                            ->with('success', 'Login realizado com sucesso! Bem-vindo de volta, ' . $user->name . '!');
+                        // Armazenar dados do usuário na sessão para garantir autenticação
+                        session(['user_id' => $user->id, 'user_email' => $user->email, 'user_name' => $user->name]);
+                        
+                        // Redirecionar com JavaScript para garantir que funcione
+                        return response()->view('auth.redirect', [
+                            'url' => 'https://app.logiez.com.br/dashboard',
+                            'message' => 'Login realizado com sucesso! Bem-vindo de volta, ' . $user->name . '!'
+                        ]);
                     } else {
                         \Log::error('Google OAuth - Falha na autenticação após login');
                         return redirect()->route('login')->with('error', 'Erro na autenticação. Tente novamente.');
@@ -200,9 +205,14 @@ class SocialAuthController extends Controller
                             // Forçar commit da sessão
                             session()->save();
                             
-                            // Redirecionar diretamente para a URL do dashboard
-                            return redirect('https://app.logiez.com.br/dashboard')
-                                ->with('success', 'Conta criada e login realizado com sucesso! Bem-vindo, ' . $user->name . '!');
+                            // Armazenar dados do usuário na sessão para garantir autenticação
+                            session(['user_id' => $user->id, 'user_email' => $user->email, 'user_name' => $user->name]);
+                            
+                            // Redirecionar com JavaScript para garantir que funcione
+                            return response()->view('auth.redirect', [
+                                'url' => 'https://app.logiez.com.br/dashboard',
+                                'message' => 'Conta criada e login realizado com sucesso! Bem-vindo, ' . $user->name . '!'
+                            ]);
                         } else {
                             \Log::error('Google OAuth - Falha na autenticação após criação de usuário');
                             return redirect()->route('login')->with('error', 'Erro na autenticação. Tente novamente.');

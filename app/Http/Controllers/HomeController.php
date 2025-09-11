@@ -200,9 +200,21 @@ class HomeController extends Controller
         
         // Verificar se o usuário está autenticado
         if (!Auth::check()) {
-            \Log::info('Dashboard - Usuário não autenticado, redirecionando para login');
-            \Log::info('Dashboard - Session data quando não autenticado: ' . json_encode(session()->all()));
-            return redirect()->route('login')->with('error', 'Você precisa fazer login para acessar esta página.');
+            // Tentar autenticar via dados da sessão como fallback
+            if (session('user_id') && session('user_email')) {
+                $user = User::find(session('user_id'));
+                if ($user && $user->email === session('user_email')) {
+                    Auth::login($user, true);
+                    \Log::info('Dashboard - Usuário autenticado via sessão fallback: ' . $user->email);
+                }
+            }
+            
+            // Se ainda não estiver autenticado, redirecionar para login
+            if (!Auth::check()) {
+                \Log::info('Dashboard - Usuário não autenticado, redirecionando para login');
+                \Log::info('Dashboard - Session data quando não autenticado: ' . json_encode(session()->all()));
+                return redirect()->route('login')->with('error', 'Você precisa fazer login para acessar esta página.');
+            }
         }
         
         \Log::info('Dashboard - Usuário autenticado com sucesso, exibindo dashboard');
