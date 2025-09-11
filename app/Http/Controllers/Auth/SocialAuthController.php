@@ -158,7 +158,12 @@ class SocialAuthController extends Controller
                     // Verificar se o login foi bem-sucedido antes de redirecionar
                     if (Auth::check()) {
                         \Log::info('Google OAuth - Redirecionando para dashboard com sucesso');
-                        return redirect()->intended(route('dashboard'))
+                        
+                        // Forçar commit da sessão
+                        session()->save();
+                        
+                        // Redirecionar diretamente para a URL do dashboard
+                        return redirect('https://app.logiez.com.br/dashboard')
                             ->with('success', 'Login realizado com sucesso! Bem-vindo de volta, ' . $user->name . '!');
                     } else {
                         \Log::error('Google OAuth - Falha na autenticação após login');
@@ -191,7 +196,12 @@ class SocialAuthController extends Controller
                         // Verificar se o login foi bem-sucedido antes de redirecionar
                         if (Auth::check()) {
                             \Log::info('Google OAuth - Redirecionando novo usuário para dashboard com sucesso');
-                            return redirect()->intended(route('dashboard'))
+                            
+                            // Forçar commit da sessão
+                            session()->save();
+                            
+                            // Redirecionar diretamente para a URL do dashboard
+                            return redirect('https://app.logiez.com.br/dashboard')
                                 ->with('success', 'Conta criada e login realizado com sucesso! Bem-vindo, ' . $user->name . '!');
                         } else {
                             \Log::error('Google OAuth - Falha na autenticação após criação de usuário');
