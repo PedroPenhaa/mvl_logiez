@@ -28,6 +28,9 @@ class SocialAuthController extends Controller
                 $redirectUri = url($redirectUri);
             }
             
+            // Log para debug (remover em produção)
+            \Log::info('Google OAuth Redirect URI: ' . $redirectUri);
+            
             $params = [
                 'client_id' => $clientId,
                 'redirect_uri' => $redirectUri,
