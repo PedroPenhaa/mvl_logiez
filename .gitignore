@@ -26,7 +26,7 @@ public/.htaccess
 /vendor
 yarn.lock
 package-lock.json
-composer.lock
+# composer.lock
 
 # Arquivos de cache e compilados
 /bootstrap/cache/
