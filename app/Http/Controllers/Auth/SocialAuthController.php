@@ -176,13 +176,18 @@ class SocialAuthController extends Controller
                 } else {
                     // Usuário não existe - criar novo usuário
                     try {
+                        \Log::info('Google OAuth - Tentando criar novo usuário: ' . $googleUser['email']);
+                        
                         $user = User::create([
-                            'name' => $googleUser['name'],
+                            'name' => $googleUser['name'] ?? 'Usuário Google',
                             'email' => $googleUser['email'],
-                            'provider_id' => $googleUser['sub'],
+                            'provider_id' => $googleUser['sub'] ?? null,
                             'provider' => 'google',
-                            'password' => bcrypt('google_oauth_' . $googleUser['sub']), // Senha temporária
+                            'password' => bcrypt('google_oauth_' . ($googleUser['sub'] ?? time())), // Senha temporária
                             'email_verified_at' => now(), // Marcar email como verificado
+                            'profile_type' => 'individual', // Valor padrão
+                            'country' => 'BR', // Valor padrão
+                            'is_active' => true, // Usuário ativo
                         ]);
                         
                         \Log::info('Google OAuth - Novo usuário criado: ' . $user->email . ' - ID: ' . $user->id);
@@ -217,7 +222,9 @@ class SocialAuthController extends Controller
                         }
                     } catch (\Exception $e) {
                         \Log::error('Google OAuth - Erro ao criar usuário: ' . $e->getMessage());
-                        return redirect()->route('login')->with('error', 'Erro ao criar conta. Tente novamente.');
+                        \Log::error('Google OAuth - Stack trace: ' . $e->getTraceAsString());
+                        \Log::error('Google OAuth - Dados do Google: ' . json_encode($googleUser));
+                        return redirect()->route('login')->with('error', 'Erro ao criar conta: ' . $e->getMessage());
                     }
                 }
             }
