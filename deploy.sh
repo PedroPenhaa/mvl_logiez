@@ -46,8 +46,23 @@ deploy_production() {
     echo "➡️ Gerando chave da aplicação se necessário"
     php artisan key:generate --force || echo "Não foi possível gerar chave"
     
-    echo "➡️ Rodando migrações"
-    php artisan migrate --force || echo "Migrações falharam, continuando..."
+    echo "➡️ Verificando status das migrações"
+    php artisan migrate:status || echo "Não foi possível verificar status das migrações"
+    
+    echo "➡️ Rodando migrações pendentes"
+    php artisan migrate --force --no-interaction || {
+        echo "❌ Erro nas migrações, tentando novamente..."
+        php artisan migrate:reset --force --no-interaction || true
+        php artisan migrate --force --no-interaction || {
+            echo "❌ Falha crítica nas migrações. Verifique o banco de dados."
+            exit 1
+        }
+    }
+    
+    echo "✅ Migrações executadas com sucesso"
+    
+    echo "➡️ Verificando estrutura da tabela users"
+    php artisan tinker --execute="echo 'Tabela users: ' . \Schema::hasTable('users') ? 'OK' : 'ERRO'; echo PHP_EOL; echo 'Colunas: ' . implode(', ', \Schema::getColumnListing('users')); echo PHP_EOL;" || echo "Não foi possível verificar tabela users"
     
     echo "➡️ Limpando e otimizando caches"
     php artisan config:clear || true
@@ -111,9 +126,22 @@ docker compose exec -T app composer install --no-interaction --prefer-dist --opt
 echo "🔄 Regenerando autoload..."
 docker compose exec -T app composer dump-autoload --no-scripts
 
+# Verifica status das migrações
+echo "🗄️ Verificando status das migrações..."
+docker compose exec -T app php artisan migrate:status || echo "Não foi possível verificar status das migrações"
+
 # Executa migrações
-echo "🗄️ Executando migrações..."
-docker compose exec -T app php artisan migrate --force
+echo "🗄️ Executando migrações pendentes..."
+docker compose exec -T app php artisan migrate --force --no-interaction || {
+    echo "❌ Erro nas migrações, tentando novamente..."
+    docker compose exec -T app php artisan migrate:reset --force --no-interaction || true
+    docker compose exec -T app php artisan migrate --force --no-interaction || {
+        echo "❌ Falha crítica nas migrações. Verifique o banco de dados."
+        exit 1
+    }
+}
+
+echo "✅ Migrações executadas com sucesso"
 
 # Limpa e recria caches
 echo "🧹 Limpando caches..."
