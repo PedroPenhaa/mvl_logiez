@@ -146,7 +146,14 @@ class SocialAuthController extends Controller
                 
                 if ($user) {
                     // Usuário já existe - apenas fazer login
-                    Auth::login($user);
+                    Auth::login($user, true); // true = remember me
+                    
+                    // Log para debug
+                    \Log::info('Google OAuth - Usuário existente logado: ' . $user->email . ' - ID: ' . $user->id);
+                    \Log::info('Google OAuth - Auth check após login: ' . (Auth::check() ? 'true' : 'false'));
+                    
+                    // Forçar regeneração da sessão
+                    session()->regenerate();
                     
                     return redirect()->route('dashboard')
                         ->with('success', 'Login realizado com sucesso! Bem-vindo de volta, ' . $user->name . '!');
@@ -161,7 +168,14 @@ class SocialAuthController extends Controller
                     ]);
                     
                     // Login automático do novo usuário
-                    Auth::login($user);
+                    Auth::login($user, true); // true = remember me
+                    
+                    // Log para debug
+                    \Log::info('Google OAuth - Novo usuário criado e logado: ' . $user->email . ' - ID: ' . $user->id);
+                    \Log::info('Google OAuth - Auth check após login: ' . (Auth::check() ? 'true' : 'false'));
+                    
+                    // Forçar regeneração da sessão
+                    session()->regenerate();
                     
                     return redirect()->route('dashboard')
                         ->with('success', 'Conta criada e login realizado com sucesso! Bem-vindo, ' . $user->name . '!');

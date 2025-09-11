@@ -191,8 +191,14 @@ class HomeController extends Controller
      */
     public function dashboard()
     {
+        // Log para debug
+        \Log::info('Dashboard - Auth check: ' . (Auth::check() ? 'true' : 'false'));
+        \Log::info('Dashboard - User ID: ' . (Auth::check() ? Auth::id() : 'null'));
+        \Log::info('Dashboard - User email: ' . (Auth::check() ? Auth::user()->email : 'null'));
+        
         // Verificar se o usuário está autenticado
         if (!Auth::check()) {
+            \Log::info('Dashboard - Usuário não autenticado, redirecionando para login');
             return redirect()->route('login');
         }
         
