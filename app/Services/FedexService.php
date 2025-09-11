@@ -306,20 +306,26 @@ class FedexService
            
             
             // VALIDAÇÃO DE CÓDIGO POSTAL ANTES DA COTAÇÃO
-            $validacaoOrigem = $this->validarCodigoPostalFedEx($postalCodeOrigem, $countryCodeOrigem, 'SP');
+            // Determinar estado padrão baseado no país
+            $estadoOrigem = $countryCodeOrigem === 'BR' ? 'SP' : ($countryCodeOrigem === 'US' ? 'FL' : null);
+            $estadoDestino = $countryCodeDestino === 'BR' ? 'SP' : ($countryCodeDestino === 'US' ? 'FL' : null);
+            
+            $validacaoOrigem = $this->validarCodigoPostalFedEx($postalCodeOrigem, $countryCodeOrigem, $estadoOrigem);
             if (!$validacaoOrigem['valid']) {
+                $nomePaisOrigem = $countryCodeOrigem === 'BR' ? 'Brasil' : ($countryCodeOrigem === 'US' ? 'Estados Unidos' : $countryCodeOrigem);
                 return [
                     'success' => false,
-                    'mensagem' => 'O CEP de origem informado não é válido para envios internacionais. Por favor, verifique e insira um CEP válido do Brasil.',
+                    'mensagem' => "O código postal de origem informado não é válido para envios internacionais. Por favor, verifique e insira um código postal válido do {$nomePaisOrigem}.",
                     'error_code' => 'invalid_origin_postal_code'
                 ];
             }
             
-            $validacaoDestino = $this->validarCodigoPostalFedEx($postalCodeDestino, $countryCodeDestino, 'FL');
+            $validacaoDestino = $this->validarCodigoPostalFedEx($postalCodeDestino, $countryCodeDestino, $estadoDestino);
             if (!$validacaoDestino['valid']) {
+                $nomePaisDestino = $countryCodeDestino === 'BR' ? 'Brasil' : ($countryCodeDestino === 'US' ? 'Estados Unidos' : $countryCodeDestino);
                 return [
                     'success' => false,
-                    'mensagem' => 'O código postal de destino informado não é válido. Por favor, verifique e insira um código postal válido.',
+                    'mensagem' => "O código postal de destino informado não é válido para envios internacionais. Por favor, verifique e insira um código postal válido do {$nomePaisDestino}.",
                     'error_code' => 'invalid_destination_postal_code'
                 ];
             }
@@ -346,9 +352,9 @@ class FedexService
                 'requestedShipment' => [
                     'shipper' => [
                         'address' => [
-                            'streetLines' => ['Rua Teste, 123'],
-                            'city' => 'São Paulo',
-                            'stateOrProvinceCode' => 'SP',
+                            'streetLines' => [$countryCodeOrigem === 'BR' ? 'Rua Teste, 123' : 'Test Street, 123'],
+                            'city' => $countryCodeOrigem === 'BR' ? 'São Paulo' : 'Miami',
+                            'stateOrProvinceCode' => $estadoOrigem,
                             'postalCode' => substr($postalCodeOrigem, 0, 10),
                             'countryCode' => $countryCodeOrigem,
                             'residential' => false
@@ -356,9 +362,9 @@ class FedexService
                     ],
                     'recipient' => [
                         'address' => [
-                            'streetLines' => ['Test Street, 456'],
-                            'city' => 'Orlando',
-                            'stateOrProvinceCode' => 'FL',
+                            'streetLines' => [$countryCodeDestino === 'BR' ? 'Rua Destino, 456' : 'Destination Street, 456'],
+                            'city' => $countryCodeDestino === 'BR' ? 'Rio de Janeiro' : 'Orlando',
+                            'stateOrProvinceCode' => $estadoDestino,
                             'postalCode' => substr($postalCodeDestino, 0, 10),
                             'countryCode' => $countryCodeDestino,
                             'residential' => false

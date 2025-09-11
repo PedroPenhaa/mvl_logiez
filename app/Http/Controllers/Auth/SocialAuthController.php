@@ -23,6 +23,11 @@ class SocialAuthController extends Controller
             $clientId = config('services.google.client_id');
             $redirectUri = config('services.google.redirect');
             
+            // Se a URL for relativa, construir a URL completa
+            if (strpos($redirectUri, 'http') !== 0) {
+                $redirectUri = url($redirectUri);
+            }
+            
             $params = [
                 'client_id' => $clientId,
                 'redirect_uri' => $redirectUri,
@@ -64,6 +69,11 @@ class SocialAuthController extends Controller
                 $clientId = config('services.google.client_id');
                 $clientSecret = config('services.google.client_secret');
                 $redirectUri = config('services.google.redirect');
+                
+                // Se a URL for relativa, construir a URL completa
+                if (strpos($redirectUri, 'http') !== 0) {
+                    $redirectUri = url($redirectUri);
+                }
                 
                 // Troca o código de autorização por um token de acesso
                 $response = Http::post('https://oauth2.googleapis.com/token', [

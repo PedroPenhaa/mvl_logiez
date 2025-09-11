@@ -226,6 +226,48 @@ class SectionController extends Controller
     }
 
     /**
+     * Detectar país baseado no formato do CEP
+     *
+     * @param string $cep
+     * @return string
+     */
+    private function detectarPais($cep) 
+    {
+        // Remove caracteres não alfanuméricos
+        $cep = preg_replace('/[^A-Za-z0-9]/', '', $cep);
+        
+        // CEP brasileiro: 8 dígitos (formato: 00000-000)
+        if (strlen($cep) === 8 && ctype_digit($cep)) {
+            return 'BR';
+        }
+        
+        // ZIP code americano: 9 dígitos (formato: 00000-0000)
+        if (strlen($cep) === 9 && ctype_digit($cep)) {
+            return 'US';
+        }
+        
+        // Para 5 dígitos, usar heurística baseada no padrão
+        if (strlen($cep) === 5 && ctype_digit($cep)) {
+            // ZIP codes americanos típicos: 10001-99999
+            // CEPs brasileiros típicos: 01000-99999
+            // Vamos assumir que se começa com 0, é mais provável ser Brasil
+            if (substr($cep, 0, 1) === '0') {
+                return 'BR';
+            }
+            // Se começa com 1-9, é mais provável ser EUA
+            return 'US';
+        }
+        
+        // CEP brasileiro com menos de 5 dígitos (assumir Brasil)
+        if (strlen($cep) < 5 && ctype_digit($cep)) {
+            return 'BR';
+        }
+        
+        // Por padrão, assumir Brasil se não conseguir detectar
+        return 'BR';
+    }
+
+    /**
      * Calcula a porcentagem baseada no valor conforme as faixas definidas
      *
      * @param float $valor
@@ -267,6 +309,10 @@ class SectionController extends Controller
                 'peso' => 'required|numeric|min:0',
             ]);
 
+            // Detectar países baseado nos CEPs
+            $paisOrigem = $this->detectarPais($request->origem);
+            $paisDestino = $this->detectarPais($request->destino);
+            
             // Formatar os CEPs de origem e destino
             $request->merge([
                 'origem' => $this->formatarCep($request->origem),
@@ -280,8 +326,14 @@ class SectionController extends Controller
 
             // Obter cotação real da FedEx
             $resultado = $this->fedexService->calcularCotacao(
-                $request->origem,
-                $request->destino,
+                [
+                    'postalCode' => $request->origem,
+                    'countryCode' => $paisOrigem
+                ],
+                [
+                    'postalCode' => $request->destino,
+                    'countryCode' => $paisDestino
+                ],
                 $request->altura,
                 $request->largura,
                 $request->comprimento,
@@ -336,6 +388,8 @@ class SectionController extends Controller
             session([
                 'cotacao_origem' => $request->origem,
                 'cotacao_destino' => $request->destino,
+                'cotacao_pais_origem' => $paisOrigem,
+                'cotacao_pais_destino' => $paisDestino,
                 'cotacao_altura' => $request->altura,
                 'cotacao_largura' => $request->largura,
                 'cotacao_comprimento' => $request->comprimento,
@@ -357,9 +411,9 @@ class SectionController extends Controller
                     \App\Models\Quote::create([
                         'user_id' => $userId,
                         'origin_postal_code' => $request->origem,
-                        'origin_country' => 'BR',
+                        'origin_country' => $paisOrigem,
                         'destination_postal_code' => $request->destino,
-                        'destination_country' => 'US',
+                        'destination_country' => $paisDestino,
                         'package_height' => $request->altura,
                         'package_width' => $request->largura,
                         'package_length' => $request->comprimento,
@@ -449,8 +503,13 @@ class SectionController extends Controller
     private function saveCotacaoToCache(Request $request, array $resultado)
     {
         // Criar identificador baseado nos parâmetros da cotação (determinístico)
+        $paisOrigem = $this->detectarPais($request->origem);
+        $paisDestino = $this->detectarPais($request->destino);
+        
         $paramsKey = $request->origem . 
                     $request->destino . 
+                    $paisOrigem .
+                    $paisDestino .
                     $request->altura . 
                     $request->largura . 
                     $request->comprimento . 
@@ -476,11 +535,14 @@ class SectionController extends Controller
         }
         
         // Armazenar dados da cotação no banco de dados
+        $paisOrigem = $this->detectarPais($request->origem);
+        $paisDestino = $this->detectarPais($request->destino);
+        
         $dados = [
             'origem_cep' => $request->origem,
-            'origem_pais' => 'BR',
+            'origem_pais' => $paisOrigem,
             'destino_cep' => $request->destino,
-            'destino_pais' => 'US',
+            'destino_pais' => $paisDestino,
             'altura' => $request->altura,
             'largura' => $request->largura,
             'comprimento' => $request->comprimento,
