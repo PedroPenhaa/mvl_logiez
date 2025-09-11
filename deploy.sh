@@ -37,6 +37,15 @@ deploy_production() {
     rm -rf storage/framework/sessions/* || true
     rm -rf storage/framework/views/* || true
     
+    echo "➡️ Limpeza agressiva de cache para resolver laravel-exceptions-renderer"
+    rm -f bootstrap/cache/config.php || true
+    rm -f bootstrap/cache/packages.php || true
+    rm -f bootstrap/cache/services.php || true
+    rm -f bootstrap/cache/routes-v7.php || true
+    rm -f bootstrap/cache/routes.php || true
+    rm -rf vendor/composer/autoload_* || true
+    composer clear-cache || true
+    
     echo "➡️ Instalando dependências (sem scripts)"
     composer install --no-interaction --prefer-dist --optimize-autoloader --no-scripts
     
@@ -69,13 +78,20 @@ deploy_production() {
     
     echo "➡️ Limpando e otimizando caches"
     php artisan config:clear || true
-    php artisan config:cache || true
     php artisan route:clear || true
-    php artisan route:cache || true
     php artisan view:clear || true
-    php artisan view:cache || true
     php artisan cache:clear || true
     php artisan optimize:clear || true
+    
+    echo "➡️ Forçando limpeza completa de cache de configuração"
+    rm -f bootstrap/cache/config.php || true
+    rm -f bootstrap/cache/packages.php || true
+    rm -f bootstrap/cache/services.php || true
+    
+    echo "➡️ Recriando caches limpos"
+    php artisan config:cache || true
+    php artisan route:cache || true
+    php artisan view:cache || true
     php artisan optimize || true
     
     echo "➡️ Verificando e corrigindo permissões"
