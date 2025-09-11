@@ -134,10 +134,11 @@ class FedexService
         
         switch ($countryCode) {
             case 'BR':
-                // CEP brasileiro: SEMPRE usar apenas os primeiros 5 dígitos para FedEx
+                // CEP brasileiro: usar apenas os 5 primeiros dígitos para FedEx
                 if (strlen($postalCode) >= 5 && ctype_digit($postalCode)) {
+                    // Sempre usar apenas os 5 primeiros dígitos
                     $cepFormatado = substr($postalCode, 0, 5);
-                    Log::info('✅ CEP brasileiro formatado:', [
+                    Log::info('✅ CEP brasileiro formatado (5 dígitos):', [
                         'cep_original' => $postalCode,
                         'cep_formatado' => $cepFormatado
                     ]);
@@ -148,7 +149,7 @@ class FedexService
                     'cep_original' => $postalCode,
                     'cep_padrao' => '01310'
                 ]);
-                return '01310'; // CEP válido de São Paulo (apenas 5 dígitos)
+                return '01310'; // CEP válido de São Paulo (5 dígitos)
                 
             case 'US':
                 // ZIP code americano: 5 dígitos ou 5+4 dígitos
@@ -196,6 +197,7 @@ class FedexService
      */
     private function validarCodigoPostalFedEx($postalCode, $countryCode, $stateCode = null)
     {
+
         try {
             $accessToken = $this->getAuthToken(true);
             $validateUrl = $this->apiUrl . '/country/v1/postal/validate';
@@ -210,13 +212,13 @@ class FedexService
                 'checkForMismatch' => true
             ];
             
-          /*  Log::info('🔍 Validando código postal na FedEx:', [
+            Log::info('🔍 Validando código postal na FedEx:', [
                 'postalCode' => $postalCode,
                 'countryCode' => $countryCode,
                 'stateCode' => $stateCode,
-                'url' => $validateUrl
+                'url' => $validateUrl,
+                'request' => $validateRequest
             ]);
-            */
             
             $response = Http::withHeaders([
                 'Content-Type' => 'application/json',
@@ -225,12 +227,21 @@ class FedexService
                 'X-locale' => 'en_US',
                 'x-customer-transaction-id' => $transactionId
             ])->post($validateUrl, $validateRequest);
-            
-           /* Log::info('📥 Resposta da validação de código postal:', [
+
+            Log::info('📥 Resposta da validação de código postal:', [
                 'http_code' => $response->status(),
-                'response_body' => $response->body()
+                'response_body' => $response->body(),
+                'success' => $response->successful()
             ]);
-            */
+            
+            // Debug: mostrar o corpo da resposta em caso de erro
+            if ($response->failed()) {
+                Log::error('❌ Erro na validação:', [
+                    'status' => $response->status(),
+                    'body' => $response->body(),
+                    'request' => $validateRequest
+                ]);
+            }
             
             if ($response->successful()) {
                 $data = $response->json();
@@ -300,22 +311,22 @@ class FedexService
             $countryCodeDestino = is_array($destino) ? ($destino['countryCode'] ?? 'US') : 'US';
     
             // Log antes da formatação
-           /* Log::info('📮 Códigos postais antes da formatação:', [
+            Log::info('📮 Códigos postais antes da formatação:', [
                 'postalCodeOrigem' => $postalCodeOrigem,
                 'postalCodeDestino' => $postalCodeDestino,
                 'countryCodeOrigem' => $countryCodeOrigem,
                 'countryCodeDestino' => $countryCodeDestino
-            ]);*/
+            ]);
     
             // Validar e formatar códigos postais de acordo com o país
             $postalCodeOrigem = $this->validarEFormatarCodigoPostal($postalCodeOrigem, $countryCodeOrigem);
             $postalCodeDestino = $this->validarEFormatarCodigoPostal($postalCodeDestino, $countryCodeDestino);
             
             // Log após a formatação
-          /*      Log::info('📮 Códigos postais após formatação:', [
+            Log::info('📮 Códigos postais após formatação:', [
                 'postalCodeOrigem_formatado' => $postalCodeOrigem,
                 'postalCodeDestino_formatado' => $postalCodeDestino
-            ]);*/
+            ]);
             
             // VALIDAÇÃO DE CÓDIGO POSTAL ANTES DA COTAÇÃO
             $validacaoOrigem = $this->validarCodigoPostalFedEx($postalCodeOrigem, $countryCodeOrigem, 'SP');
