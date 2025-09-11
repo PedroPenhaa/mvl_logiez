@@ -21,13 +21,10 @@ return Application::configure(basePath: dirname(__DIR__))
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions) {
-        $exceptions->render(function (Throwable $e, $request) {
-            if ($request->is('api/*')) {
-                return response()->json([
-                    'error' => $e->getMessage(),
-                    'code' => $e->getCode()
-                ], 500);
-            }
-        });
+        // Desabilitar renderizador customizado para evitar erro do laravel-exceptions-renderer
+        if (!config('exceptions.use_custom_renderer', false)) {
+            // Usar apenas o handler padrão do Laravel
+            return;
+        }
     })
     ->create();
