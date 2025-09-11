@@ -64,6 +64,9 @@ deploy_production() {
     echo "➡️ Verificando estrutura da tabela users"
     php artisan tinker --execute="echo 'Tabela users: ' . \Schema::hasTable('users') ? 'OK' : 'ERRO'; echo PHP_EOL; echo 'Colunas: ' . implode(', ', \Schema::getColumnListing('users')); echo PHP_EOL;" || echo "Não foi possível verificar tabela users"
     
+    echo "➡️ Verificando estrutura da tabela users"
+    php artisan migrate:status | grep ensure_users_table_structure || echo "Migration de estrutura da tabela users não encontrada"
+    
     echo "➡️ Limpando e otimizando caches"
     php artisan config:clear || true
     php artisan config:cache || true
@@ -142,6 +145,10 @@ docker compose exec -T app php artisan migrate --force --no-interaction || {
 }
 
 echo "✅ Migrações executadas com sucesso"
+
+# Verifica estrutura da tabela users
+echo "🔍 Verificando estrutura da tabela users..."
+docker compose exec -T app php artisan migrate:status | grep ensure_users_table_structure || echo "Migration de estrutura da tabela users não encontrada"
 
 # Limpa e recria caches
 echo "🧹 Limpando caches..."
