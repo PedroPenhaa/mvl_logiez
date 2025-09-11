@@ -21,10 +21,7 @@ return Application::configure(basePath: dirname(__DIR__))
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions) {
-        // Desabilitar renderizador customizado para evitar erro do laravel-exceptions-renderer
-        if (!config('exceptions.use_custom_renderer', false)) {
-            // Usar apenas o handler padrão do Laravel
-            return;
-        }
+        // Usar o Handler customizado que desabilita o renderizador problemático
+        $exceptions->handler(\App\Exceptions\Handler::class);
     })
     ->create();
