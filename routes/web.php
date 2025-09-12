@@ -487,9 +487,22 @@ Route::get('/exportar-cotacao-pdf', function (Illuminate\Http\Request $request, 
             <div class="box">
                 <strong>Recomendação LOGIEZ:</strong><br>';
                 if (isset($resultado['cotacoesFedEx']) && count($resultado['cotacoesFedEx']) > 0) {
-                    $melhorOpcao = $resultado['cotacoesFedEx'][0];
-                    $html .= ($melhorOpcao['servico'] ?? 'N/A') . ' - ' . ($melhorOpcao['tempoEntrega'] ?? 'N/A') . '<br>
-                             <span class="highlight">R$ ' . ($melhorOpcao['valorTotalBRL'] ?? 'N/A') . '</span>';
+                    // Filtrar apenas cotações que contenham "International Priority"
+                    $cotacoesPriority = array_filter($resultado['cotacoesFedEx'], function($cotacao) {
+                        return strpos($cotacao['servico'] ?? '', 'International Priority') !== false;
+                    });
+                    
+                    if (count($cotacoesPriority) > 0) {
+                        foreach ($cotacoesPriority as $cotacao) {
+                            $html .= ($cotacao['servico'] ?? 'N/A') . ' - ' . ($cotacao['tempoEntrega'] ?? 'N/A') . '<br>
+                                     <span class="highlight">R$ ' . ($cotacao['valorTotalBRL'] ?? 'N/A') . '</span><br><br>';
+                        }
+                    } else {
+                        // Se não houver Priority, mostrar a primeira opção
+                        $melhorOpcao = $resultado['cotacoesFedEx'][0];
+                        $html .= ($melhorOpcao['servico'] ?? 'N/A') . ' - ' . ($melhorOpcao['tempoEntrega'] ?? 'N/A') . '<br>
+                                 <span class="highlight">R$ ' . ($melhorOpcao['valorTotalBRL'] ?? 'N/A') . '</span>';
+                    }
                 }
         $html .= '
             </div>

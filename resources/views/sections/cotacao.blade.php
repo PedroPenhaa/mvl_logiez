@@ -317,13 +317,7 @@ $(document).ready(function() {
                                 </div>
                             </div>
                             
-                            <div class="bg-gradient-primary bg-opacity-10 rounded-3 p-3 mb-3 text-center">
-                                <small class="text-muted d-block mb-1">
-                                    <i class="fas fa-calculator me-1"></i>Volume
-                                </small>
-                                <span class="text-primary fw-bold fs-5">${volume} litros</span>
-                            </div>
-                            
+                                                        
                             <div class="d-flex justify-content-between align-items-center mb-3">
                                 <small class="text-muted fw-medium">Quantidade:</small>
                                 <div class="btn-group" role="group" style="box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
@@ -505,13 +499,19 @@ $(document).ready(function() {
         // Adicionar dados das caixas
         formData += '&caixas=' + encodeURIComponent(JSON.stringify(caixas));
         
-        // Se há caixas, usar os dados da primeira caixa para os campos obrigatórios
+        // Se há caixas, usar os dados da primeira caixa para dimensões e calcular peso total
         if (caixas.length > 0) {
             var primeiraCaixa = caixas[0];
             formData += '&altura=' + primeiraCaixa.altura;
             formData += '&largura=' + primeiraCaixa.largura;
             formData += '&comprimento=' + primeiraCaixa.comprimento;
-            formData += '&peso=' + primeiraCaixa.peso;
+            
+            // Calcular peso total: soma de (peso da caixa × quantidade) para todas as caixas
+            var pesoTotal = 0;
+            caixas.forEach(function(caixa) {
+                pesoTotal += parseFloat(caixa.peso) * (caixa.quantidade || 1);
+            });
+            formData += '&peso=' + pesoTotal;
         }
         
         // Enviar para o endpoint de cotação
@@ -771,21 +771,34 @@ $(document).ready(function() {
             html += '<div class="card bg-light">';
             html += '<div class="card-body text-center">';
             html += '<h5>Peso Cúbico</h5>';
-            html += '<p class="fs-4">' + response.pesoCubico + ' kg</p>';
+            // Calcular peso cúbico: (Comprimento x Altura x Largura) / 5000
+            var pesoCubico = 0;
+            if (caixas.length > 0) {
+                var primeiraCaixa = caixas[0];
+                pesoCubico = (primeiraCaixa.comprimento * primeiraCaixa.altura * primeiraCaixa.largura) / 5000;
+            }
+            html += '<p class="fs-4">' + pesoCubico.toFixed(2) + ' kg</p>';
             html += '</div></div></div>';
             
             html += '<div class="col-md-4">';
             html += '<div class="card bg-light">';
             html += '<div class="card-body text-center">';
             html += '<h5>Peso Real</h5>';
-            html += '<p class="fs-4">' + response.pesoReal + ' kg</p>';
+            // Calcular peso real total: soma de (peso da caixa × quantidade) para todas as caixas
+            var pesoReal = 0;
+            caixas.forEach(function(caixa) {
+                pesoReal += parseFloat(caixa.peso) * (caixa.quantidade || 1);
+            });
+            html += '<p class="fs-4">' + pesoReal.toFixed(2) + ' kg</p>';
             html += '</div></div></div>';
             
             html += '<div class="col-md-4">';
             html += '<div class="card bg-light">';
             html += '<div class="card-body text-center">';
             html += '<h5>Peso Utilizado</h5>';
-            html += '<p class="fs-4 fw-bold">' + response.pesoUtilizado + ' kg</p>';
+            // Peso utilizado é o maior entre peso cúbico e peso real
+            var pesoUtilizado = Math.max(pesoCubico, pesoReal);
+            html += '<p class="fs-4 fw-bold">' + pesoUtilizado.toFixed(2) + ' kg</p>';
             html += '</div></div></div>';
             html += '</div>';
             
