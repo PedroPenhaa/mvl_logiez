@@ -41,6 +41,29 @@
                                            placeholder="00000" required>
                                     <label for="origem">CEP de Origem</label>
                                 </div>
+                                <div class="row g-2 mb-3">
+                                    <div class="col-12">
+                                        <div class="form-floating">
+                                            <input type="text" class="form-control" id="origem_pais" name="origem_pais" 
+                                                   placeholder="País" readonly>
+                                            <label for="origem_pais">País</label>
+                                        </div>
+                                    </div>
+                                    <div class="col-6">
+                                        <div class="form-floating">
+                                            <input type="text" class="form-control" id="origem_estado" name="origem_estado" 
+                                                   placeholder="Estado" readonly>
+                                            <label for="origem_estado">Estado</label>
+                                        </div>
+                                    </div>
+                                    <div class="col-6">
+                                        <div class="form-floating">
+                                            <input type="text" class="form-control" id="origem_cidade" name="origem_cidade" 
+                                                   placeholder="Cidade" readonly>
+                                            <label for="origem_cidade">Cidade</label>
+                                        </div>
+                                    </div>
+                                </div>
                                 <div class="cep-helper">
                                     <small><i class="fas fa-info-circle"></i> Digite o CEP de origem</small>
                                 </div>
@@ -61,6 +84,29 @@
                                     <input type="text" class="form-control" id="destino" name="destino" 
                                            placeholder="00000" required>
                                     <label for="destino">CEP de Destino</label>
+                                </div>
+                                <div class="row g-2 mb-3">
+                                    <div class="col-12">
+                                        <div class="form-floating">
+                                            <input type="text" class="form-control" id="destino_pais" name="destino_pais" 
+                                                   placeholder="País" readonly>
+                                            <label for="destino_pais">País</label>
+                                        </div>
+                                    </div>
+                                    <div class="col-6">
+                                        <div class="form-floating">
+                                            <input type="text" class="form-control" id="destino_estado" name="destino_estado" 
+                                                   placeholder="Estado" readonly>
+                                            <label for="destino_estado">Estado</label>
+                                        </div>
+                                    </div>
+                                    <div class="col-6">
+                                        <div class="form-floating">
+                                            <input type="text" class="form-control" id="destino_cidade" name="destino_cidade" 
+                                                   placeholder="Cidade" readonly>
+                                            <label for="destino_cidade">Cidade</label>
+                                        </div>
+                                    </div>
                                 </div>
                                 <div class="cep-helper">
                                     <small><i class="fas fa-info-circle"></i> Digite o CEP do país de destino</small>
@@ -164,7 +210,81 @@ $(document).ready(function() {
     $('#limpar-form').on('click', function() {
         $('#cotacao-form')[0].reset();
         $('#cotacao-resultado').hide();
+        // Limpar campos de endereço
+        $('#origem_pais, #origem_estado, #origem_cidade').val('');
+        $('#destino_pais, #destino_estado, #destino_cidade').val('');
     });
+    
+    // Variáveis para debounce
+    var timeoutOrigem, timeoutDestino;
+    
+    // Buscar informações do CEP de origem
+    $('#origem').on('input', function() {
+        clearTimeout(timeoutOrigem);
+        var cep = $(this).val().replace(/\D/g, '');
+        // Aceitar CEPs brasileiros (8 dígitos) e americanos (5 dígitos)
+        if (cep.length >= 5) {
+            timeoutOrigem = setTimeout(function() {
+                buscarEnderecoPorCEP(cep, 'origem');
+            }, 500);
+        }
+    });
+    
+    // Buscar informações do CEP de destino
+    $('#destino').on('input', function() {
+        clearTimeout(timeoutDestino);
+        var cep = $(this).val().replace(/\D/g, '');
+        // Aceitar CEPs brasileiros (8 dígitos) e americanos (5 dígitos)
+        if (cep.length >= 5) {
+            timeoutDestino = setTimeout(function() {
+                buscarEnderecoPorCEP(cep, 'destino');
+            }, 500);
+        }
+    });
+    
+    // Função para buscar endereço por CEP via Google Maps API
+    function buscarEnderecoPorCEP(cep, tipo) {
+        console.log('Buscando CEP:', cep, 'para tipo:', tipo);
+        
+        // Mostrar indicador de carregamento
+        $('#' + tipo + '_pais').val('Consultando...');
+        $('#' + tipo + '_estado').val('Consultando...');
+        $('#' + tipo + '_cidade').val('Consultando...');
+        
+        $.ajax({
+            url: 'http://localhost:5000/google-maps-cep-api.php',
+            type: 'POST',
+            data: JSON.stringify({
+                cep: cep
+            }),
+            contentType: 'application/json',
+            timeout: 10000,
+            success: function(response) {
+                console.log('Resposta da API para', tipo, ':', response);
+                if (response.success && response.data) {
+                    var data = response.data;
+                    console.log('Dados extraídos:', data);
+                    $('#' + tipo + '_pais').val(data.pais || '');
+                    $('#' + tipo + '_estado').val(data.estado || '');
+                    $('#' + tipo + '_cidade').val(data.cidade || '');
+                } else {
+                    console.log('Erro na resposta:', response);
+                    // Limpar campos se não encontrou
+                    $('#' + tipo + '_pais').val('');
+                    $('#' + tipo + '_estado').val('');
+                    $('#' + tipo + '_cidade').val('');
+                }
+            },
+            error: function(xhr, status, error) {
+                console.log('Erro na busca do CEP:', error, 'Status:', status);
+                console.log('Response:', xhr.responseText);
+                // Limpar campos em caso de erro
+                $('#' + tipo + '_pais').val('');
+                $('#' + tipo + '_estado').val('');
+                $('#' + tipo + '_cidade').val('');
+            }
+        });
+    }
     
     // Processar envio do formulário via AJAX
     $('#cotacao-form').on('submit', function(e) {
