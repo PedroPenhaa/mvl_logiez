@@ -146,7 +146,7 @@ class EtiquetaController extends Controller
                     ],
                     "labelSpecification" => [
                         "imageType" => "PDF",
-                        "labelStockType" => "STOCK_4X6"
+                        "labelStockType" => "PAPER_LETTER"
                     ],
                     "customsClearanceDetail" => [
                         "dutiesPayment" => ["paymentType" => "RECIPIENT"],
