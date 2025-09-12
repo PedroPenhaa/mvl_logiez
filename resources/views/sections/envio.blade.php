@@ -3803,10 +3803,21 @@
                                     </div>
                                 </div>
                                 
-                              
+                                <div class="d-flex justify-content-between align-items-center mb-3">
+                                    <small class="text-muted fw-medium">Quantidade:</small>
+                                    <div class="btn-group" role="group">
+                                        <button type="button" class="btn btn-outline-secondary btn-sm btn-diminuir-caixa" data-index="${index}" style="width: 10px !important; min-width: 30px !important; padding: 0; font-size: 12px;">
+                                            <i class="fas fa-minus"></i>
+                                        </button>
+                                        <span class="btn btn-secondary disabled fw-bold" style="min-width: 32px; height: 28px; padding: 0; font-size: 12px; line-height: 28px;">${caixa.quantidade || 1}</span>
+                                        <button type="button" class="btn btn-outline-secondary btn-sm btn-aumentar-caixa" data-index="${index}"  style="width: 10px !important; min-width: 30px !important;  padding: 0; font-size: 12px;">
+                                            <i class="fas fa-plus"></i>
+                                        </button>
+                                    </div>
+                                </div>
                                 
-                                <div class="d-flex justify-content-end">
-                                    <button type="button" class="btn btn-outline-danger btn-sm btn-remover-caixa" data-index="${index}">
+                                <div class="d-flex justify-content-center">
+                                    <button type="button" class="btn btn-outline-danger btn-sm btn-remover-caixa" data-index="${index}" style="width: 10px !important; min-width: 170px !important; height: 44px !important;">
                                         <i class="fas fa-trash me-1"></i>Remover
                                     </button>
                                 </div>
@@ -3818,8 +3829,9 @@
                 container.append(card);
             });
 
-            // Atualizar contador de caixas
-            $('#total-caixas').text(caixas.length);
+            // Atualizar contador de caixas (considerando quantidades)
+            const totalCaixas = caixas.reduce((total, caixa) => total + (caixa.quantidade || 1), 0);
+            $('#total-caixas').text(totalCaixas);
 
             // Adicionar eventos após renderizar
             $('.btn-remover-caixa').on('click', function() {
@@ -3833,6 +3845,22 @@
                     $('#sem-caixas-alert').removeClass('d-none');
                     $('#resumo-caixas').addClass('d-none');
                 }
+            });
+            
+            $('.btn-diminuir-caixa').on('click', function() {
+                const index = $(this).data('index');
+                if (caixas[index].quantidade > 1) {
+                    caixas[index].quantidade--;
+                    renderizarCaixas();
+                    atualizarResumo();
+                }
+            });
+            
+            $('.btn-aumentar-caixa').on('click', function() {
+                const index = $(this).data('index');
+                caixas[index].quantidade++;
+                renderizarCaixas();
+                atualizarResumo();
             });
         }
 
@@ -3850,13 +3878,14 @@
                 return;
             }
 
-            // Adicionar a caixa
-            const caixa = {
-                altura: altura,
-                largura: largura,
-                comprimento: comprimento,
-                peso: peso
-            };
+        // Adicionar a caixa
+        const caixa = {
+            altura: altura,
+            largura: largura,
+            comprimento: comprimento,
+            peso: peso,
+            quantidade: 1
+        };
 
             caixas.push(caixa);
 
@@ -5074,7 +5103,14 @@
             resumo += '<div class="d-flex align-items-center mb-1"><i class="fas fa-calculator text-primary me-2"></i><small class="fw-bold text-dark">Resumo Financeiro</small></div>';
             resumo += '<div class="row g-1 text-center">';
             resumo += '<div class="col-6"><div class="bg-white rounded p-1"><small class="text-primary fw-bold">Valor</small><br><span class="fw-bold text-success">R$ ' + valorTotal.toFixed(2) + '</span></div></div>';
-            resumo += '<div class="col-6"><div class="bg-white rounded p-1"><small class="text-primary fw-bold">Peso</small><br><span class="fw-bold text-info">' + pesoTotal.toFixed(2) + ' kg</span></div></div>';
+            
+            // Calcular peso total das caixas (considerando quantidade)
+            let pesoTotalCaixas = 0;
+            caixas.forEach(function(caixa) {
+                pesoTotalCaixas += parseFloat(caixa.peso) * (caixa.quantidade || 1);
+            });
+            
+            resumo += '<div class="col-6"><div class="bg-white rounded p-1"><small class="text-primary fw-bold">Peso</small><br><span class="fw-bold text-info">' + pesoTotalCaixas.toFixed(2) + ' kg</span></div></div>';
             resumo += '</div>';
             resumo += '</div></div>';
             
