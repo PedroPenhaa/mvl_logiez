@@ -184,74 +184,30 @@ Route::get('/exportar-cotacao-pdf', function (Illuminate\Http\Request $request, 
         $cotacaoData = $sectionController->getCotacaoFromCache($hash);
 
         if (!$cotacaoData) {
-            // Se não encontrar no cache, tentar buscar dados da sessão ou usar dados da URL
+            // Buscar dados da sessão ou da URL
             $dados = [
-                'origem_cep' => $request->origem_cep ?? session('cotacao_origem') ?? '00000-000',
-                'destino_cep' => $request->destino_cep ?? session('cotacao_destino') ?? '00000',
+                'origem_cep' => $request->origem ?? session('cotacao_origem') ?? '00000-000',
+                'destino_cep' => $request->destino ?? session('cotacao_destino') ?? '00000',
                 'altura' => $request->altura ?? session('cotacao_altura') ?? 10,
                 'largura' => $request->largura ?? session('cotacao_largura') ?? 10,
                 'comprimento' => $request->comprimento ?? session('cotacao_comprimento') ?? 10,
                 'peso' => $request->peso ?? session('cotacao_peso') ?? 1
             ];
 
-            $cotacaoDolar = 5.42; // Valor padrão do dólar
-            $pesoUtilizado = max(
-                ($dados['altura'] * $dados['largura'] * $dados['comprimento']) / 6000,
-                $dados['peso']
-            );
-
-            // Gerar cotações simuladas baseadas na imagem fornecida
-            $cotacoes = [
-                [
-                    'servico' => 'FedEx International First®',
-                    'servicoTipo' => 'FIRST',
-                    'valorTotal' => '387.44',
-                    'moeda' => 'USD',
-                    'tempoEntrega' => 'Chega dia 03/09/2025 às 10:00 AM SE NÃO HOUVER ATRASO NA ALFÂNDEGA',
-                    'valorTotalBRL' => '2.497,91'
-                ],
-                [
-                    'servico' => 'FedEx International Economy®',
-                    'servicoTipo' => 'ECONOMY',
-                    'valorTotal' => '26.47',
-                    'moeda' => 'USD',
-                    'tempoEntrega' => 'Chega dia 03/09/2025 às 5:00 PM SE NÃO HOUVER ATRASO NA ALFÂNDEGA',
-                    'valorTotalBRL' => '186,45'
-                ],
-                [
-                    'servico' => 'FedEx International Priority® Express',
-                    'servicoTipo' => 'PRIORITY_EXPRESS',
-                    'valorTotal' => '32.35',
-                    'moeda' => 'USD',
-                    'tempoEntrega' => 'Chega dia 03/09/2025 BY NOON IF NO CUSTOMS DELAY',
-                    'valorTotalBRL' => '227,84'
-                ],
-                [
-                    'servico' => 'FedEx International Priority®',
-                    'servicoTipo' => 'PRIORITY',
-                    'valorTotal' => '31.44',
-                    'moeda' => 'USD',
-                    'tempoEntrega' => 'Chega dia 03/09/2025 às 5:00 PM SE NÃO HOUVER ATRASO NA ALFÂNDEGA',
-                    'valorTotalBRL' => '221,47'
-                ],
-                [
-                    'servico' => 'FedEx International Connect Plus',
-                    'servicoTipo' => 'CONNECT_PLUS',
-                    'valorTotal' => '42.34',
-                    'moeda' => 'USD',
-                    'tempoEntrega' => 'Chega dia 03/09/2025 às 10:00 PM SE NÃO HOUVER ATRASO NA ALFÂNDEGA',
-                    'valorTotalBRL' => '298,23'
-                ]
-            ];
+            // Buscar cotações da sessão
+            $cotacoesFedEx = session('cotacoes_fedex', []);
+            $pesoCubico = session('peso_cubico', 0);
+            $pesoReal = session('peso_real', $dados['peso']);
+            $pesoUtilizado = session('peso_utilizado', max($pesoCubico, $pesoReal));
+            $cotacaoDolar = session('cotacao_dolar', 5.00);
+            $dataConsulta = session('data_consulta', date('Y-m-d H:i:s'));
 
             $resultado = [
-                'pesoCubico' => ($dados['altura'] * $dados['largura'] * $dados['comprimento']) / 6000,
-                'pesoReal' => $dados['peso'],
+                'pesoCubico' => $pesoCubico,
+                'pesoReal' => $pesoReal,
                 'pesoUtilizado' => $pesoUtilizado,
-                'cotacoesFedEx' => $cotacoes,
-                'dataConsulta' => '2025-08-29 11:56:09',
-                'simulado' => true,
-                'mensagem' => 'Cotação simulada. Os valores são aproximados e podem variar.',
+                'cotacoesFedEx' => $cotacoesFedEx,
+                'dataConsulta' => $dataConsulta,
                 'cotacaoDolar' => $cotacaoDolar
             ];
 
@@ -276,22 +232,19 @@ Route::get('/exportar-cotacao-pdf', function (Illuminate\Http\Request $request, 
             $logoBase64 = 'data:image/png;base64,' . base64_encode(file_get_contents($logoPath));
         }
 
-        // Criar HTML para o PDF com layout ULTRA MODERNO e PROFISSIONAL
+        // Criar HTML para o PDF
         $html = '<!DOCTYPE html>
         <html>
         <head>
             <meta charset="utf-8"/>
             <title>Cotação - Logiez</title>
             <style>
-                @page { margin: 0cm 0cm; }
+                @page { margin: 1cm; }
                 body {
-                    margin: 0cm 0cm 1cm 0cm;
-                    font-family: "Helvetica", Arial, sans-serif;
-                    font-size: 11px;
+                    font-family: Arial, sans-serif;
+                    font-size: 12px;
                     color: #333;
-                    height: 100vh;
-                    min-height: 26cm;
-                    line-height: 1.2;
+                    line-height: 1.4;
                 }
         
                 /* ===== HEADER ===== */
@@ -571,15 +524,20 @@ Route::get('/exportar-cotacao-pdf', function (Illuminate\Http\Request $request, 
         
 
         // Configurar e gerar o PDF
-        $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadHTML($html);
-        $pdf->setPaper('A4');
-        $pdf->setOptions([
-            'isHtml5ParserEnabled' => true,
-            'isRemoteEnabled' => true,
-            'defaultFont' => 'Arial'
-        ]);
+        try {
+            $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadHTML($html);
+            $pdf->setPaper('A4', 'portrait');
+            $pdf->setOptions([
+                'isHtml5ParserEnabled' => false,
+                'isRemoteEnabled' => false,
+                'defaultFont' => 'Arial'
+            ]);
 
-        return $pdf->download('COTACAO_LOGIEZ_' . date('Y-m-d_His') . '.pdf');
+            return $pdf->download('COTACAO_LOGIEZ_' . date('Y-m-d_His') . '.pdf');
+        } catch (\Exception $pdfError) {
+            \Log::error('Erro ao gerar PDF: ' . $pdfError->getMessage());
+            return redirect('/cotacao')->with('error', 'Erro ao gerar PDF: ' . $pdfError->getMessage());
+        }
     } catch (\Exception $e) {
         return redirect('/cotacao')->with('error', 'Erro ao gerar o PDF da cotação. Por favor, tente novamente.');
     }

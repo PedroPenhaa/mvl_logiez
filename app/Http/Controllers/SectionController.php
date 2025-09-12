@@ -393,7 +393,13 @@ class SectionController extends Controller
                 'cotacao_altura' => $request->altura,
                 'cotacao_largura' => $request->largura,
                 'cotacao_comprimento' => $request->comprimento,
-                'cotacao_peso' => $request->peso
+                'cotacao_peso' => $request->peso,
+                'cotacoes_fedex' => $cotacoesProcessadas,
+                'peso_cubico' => $resultado['pesoCubico'] ?? 0,
+                'peso_real' => $request->peso,
+                'peso_utilizado' => $resultado['pesoUtilizado'] ?? $request->peso,
+                'cotacao_dolar' => $valorDolar,
+                'data_consulta' => date('Y-m-d H:i:s')
             ]);
             
             // Gerar hash para o PDF
