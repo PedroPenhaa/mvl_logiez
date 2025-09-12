@@ -3769,10 +3769,10 @@
                         <div class="card h-100 border-0 shadow-sm hover-shadow">
                             <div class="card-header bg-secondary bg-opacity-10 border-0 py-3">
                                 <div class="d-flex justify-content-between align-items-center">
-                                    <h6 class="mb-0 fw-bold text-secondary">
+                                    <h6 class="mb-0 fw-bold text-secondary" style="color:white !important">
                                         <i class="fas fa-cube me-2"></i>Caixa #${index + 1}
                                     </h6>
-                                    <span class="badge bg-secondary">${index + 1}</span>
+                                    <span class="badge bg-secondary"  style="color:white !important">${index + 1}</span>
                                 </div>
                             </div>
                             <div class="card-body p-3">
@@ -3803,14 +3803,7 @@
                                     </div>
                                 </div>
                                 
-                                <div class="bg-light rounded p-2 mb-3">
-                                    <div class="text-center">
-                                        <small class="text-muted d-block">
-                                            <i class="fas fa-calculator me-1"></i>Volume
-                                        </small>
-                                        <strong class="text-info fs-6">${volume} litros</strong>
-                                    </div>
-                                </div>
+                              
                                 
                                 <div class="d-flex justify-content-end">
                                     <button type="button" class="btn btn-outline-danger btn-sm btn-remover-caixa" data-index="${index}">

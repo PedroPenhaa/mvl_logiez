@@ -292,27 +292,27 @@ $(document).ready(function() {
                             
                             <div class="row g-2 mb-3">
                                 <div class="col-6">
-                                    <div class="bg-light rounded-3 p-2 text-center">
-                                        <small class="text-muted d-block mb-1">Altura</small>
-                                        <span class="fw-semibold text-dark">${caixa.altura} cm</span>
+                                    <div class="bg-primary rounded-3 p-2 text-center">
+                                        <small class="text-white-50 d-block mb-1">Altura</small>
+                                        <span class="fw-bold text-white">${caixa.altura} cm</span>
                                     </div>
                                 </div>
                                 <div class="col-6">
-                                    <div class="bg-light rounded-3 p-2 text-center">
-                                        <small class="text-muted d-block mb-1">Largura</small>
-                                        <span class="fw-semibold text-dark">${caixa.largura} cm</span>
+                                    <div class="bg-primary rounded-3 p-2 text-center">
+                                        <small class="text-white-50 d-block mb-1">Largura</small>
+                                        <span class="fw-bold text-white">${caixa.largura} cm</span>
                                     </div>
                                 </div>
                                 <div class="col-6">
-                                    <div class="bg-light rounded-3 p-2 text-center">
-                                        <small class="text-muted d-block mb-1">Comprimento</small>
-                                        <span class="fw-semibold text-dark">${caixa.comprimento} cm</span>
+                                    <div class="bg-primary rounded-3 p-2 text-center">
+                                        <small class="text-white-50 d-block mb-1">Comprimento</small>
+                                        <span class="fw-bold text-white">${caixa.comprimento} cm</span>
                                     </div>
                                 </div>
                                 <div class="col-6">
-                                    <div class="bg-light rounded-3 p-2 text-center">
-                                        <small class="text-muted d-block mb-1">Peso</small>
-                                        <span class="fw-semibold text-dark">${caixa.peso} kg</span>
+                                    <div class="bg-primary rounded-3 p-2 text-center">
+                                        <small class="text-white-50 d-block mb-1">Peso</small>
+                                        <span class="fw-bold text-white">${caixa.peso} kg</span>
                                     </div>
                                 </div>
                             </div>
