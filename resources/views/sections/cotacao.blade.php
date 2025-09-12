@@ -125,7 +125,7 @@
                                     <div>
                                         <h5 class="mb-0 fw-bold">Caixas e Embalagem</h5>
                                         <small class="opacity-75">Defina as dimensões e peso das caixas</small>
-                                    </div>
+                    </div>
                                 </div>
                             </div>
                             <div class="card-body p-4">
@@ -152,16 +152,16 @@
                                     <div class="col-lg-2 col-md-3 col-sm-6">
                                         <label for="comprimento" class="form-label fw-semibold">
                                             <i class="fas fa-arrows-alt-h me-1 text-secondary"></i>Comprimento
-                                        </label>
+                                    </label>
                                         <div class="input-group">
                                             <input type="number" class="form-control" id="comprimento" min="0" value="0">
                                             <span class="input-group-text bg-light">cm</span>
-                                        </div>
-                                    </div>
+                                </div>
+                            </div>
                                     <div class="col-lg-2 col-md-3 col-sm-6">
                                         <label for="peso" class="form-label fw-semibold">
                                             <i class="fas fa-weight-hanging me-1 text-secondary"></i>Peso
-                                        </label>
+                                    </label>
                                         <div class="input-group">
                                             <input type="number" class="form-control" id="peso" min="0" step="0.01" value="0.0">
                                             <span class="input-group-text bg-light">kg</span>
@@ -190,16 +190,16 @@
                                             <i class="fas fa-cube me-1"></i>
                                             <span id="total-caixas">0</span> caixa(s)
                                         </span>
-                                    </div>
+                            </div>
                                     <div class="row g-3" id="caixas-cards"></div>
-                                </div>
-                                
-                                <div class="alert alert-info mt-4" role="alert">
-                                    <div class="d-flex align-items-center">
-                                        <i class="fas fa-info-circle fa-2x me-3"></i>
-                                        <div>
-                                            <h6 class="alert-heading mb-1">Dica Importante</h6>
-                                            <p class="mb-0">Para cotação internacional, é importante fornecer as dimensões e peso corretos para obter um valor preciso.</p>
+                        </div>
+                        
+                        <div class="alert alert-info mt-4" role="alert">
+                            <div class="d-flex align-items-center">
+                                <i class="fas fa-info-circle fa-2x me-3"></i>
+                                <div>
+                                    <h6 class="alert-heading mb-1">Dica Importante</h6>
+                                    <p class="mb-0">Para cotação internacional, é importante fornecer as dimensões e peso corretos para obter um valor preciso.</p>
                                         </div>
                                     </div>
                                 </div>
@@ -292,26 +292,26 @@ $(document).ready(function() {
                             
                             <div class="row g-2 mb-3">
                                 <div class="col-6">
-                                    <div class="bg-primary rounded-3 p-2 text-center">
-                                        <small class="text-white-50 d-block mb-1">Altura</small>
+                                    <div class="bg-purple rounded-3 p-2 text-center" style="background-color: #6f42c1 !important;">
+                                        <small class="text-white d-block mb-1">Altura</small>
                                         <span class="fw-bold text-white">${caixa.altura} cm</span>
                                     </div>
                                 </div>
                                 <div class="col-6">
-                                    <div class="bg-primary rounded-3 p-2 text-center">
-                                        <small class="text-white-50 d-block mb-1">Largura</small>
+                                    <div class="bg-purple rounded-3 p-2 text-center" style="background-color: #6f42c1 !important;">
+                                        <small class="text-white d-block mb-1">Largura</small>
                                         <span class="fw-bold text-white">${caixa.largura} cm</span>
                                     </div>
                                 </div>
                                 <div class="col-6">
-                                    <div class="bg-primary rounded-3 p-2 text-center">
-                                        <small class="text-white-50 d-block mb-1">Comprimento</small>
+                                    <div class="bg-purple rounded-3 p-2 text-center" style="background-color: #6f42c1 !important;">
+                                        <small class="text-white d-block mb-1">Comprimento</small>
                                         <span class="fw-bold text-white">${caixa.comprimento} cm</span>
                                     </div>
                                 </div>
                                 <div class="col-6">
-                                    <div class="bg-primary rounded-3 p-2 text-center">
-                                        <small class="text-white-50 d-block mb-1">Peso</small>
+                                    <div class="bg-purple rounded-3 p-2 text-center" style="background-color: #6f42c1 !important;">
+                                        <small class="text-white d-block mb-1">Peso</small>
                                         <span class="fw-bold text-white">${caixa.peso} kg</span>
                                     </div>
                                 </div>
