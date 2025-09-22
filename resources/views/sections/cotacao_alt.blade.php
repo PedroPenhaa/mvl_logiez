@@ -82,9 +82,14 @@ $(document).ready(function() {
                     html += '<p><strong>Peso Utilizado:</strong> ' + response.pesoUtilizado + ' kg</p>';
                     
                     if (response.cotacoesFedEx && response.cotacoesFedEx.length > 0) {
+                        // Filtrar cotações - remover FedEx International First®
+                        var cotacoesFiltradas = response.cotacoesFedEx.filter(function(cotacao) {
+                            return cotacao.servico !== 'FedEx International First®';
+                        });
+                        
                         html += '<h5>Opções de Envio:</h5>';
                         html += '<ul>';
-                        response.cotacoesFedEx.forEach(function(cotacao) {
+                        cotacoesFiltradas.forEach(function(cotacao) {
                             html += '<li>';
                             html += '<strong>' + cotacao.servico + ':</strong> ';
                             html += cotacao.valorTotal + ' ' + cotacao.moeda;

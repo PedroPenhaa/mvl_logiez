@@ -4332,6 +4332,11 @@
                 return;
             }
 
+            // Filtrar cotações - remover FedEx International First®
+            const servicosFiltrados = servicos.filter(function(servico) {
+                return servico.servico !== 'FedEx International First®';
+            });
+
             // Montar o HTML para mostrar os serviços disponíveis
             let html = '<h4 class="mb-3">Opções de Serviço</h4>';
             html += '<div class="table-responsive">';
@@ -4344,7 +4349,7 @@
             html += '<th>Selecionar</th>';
             html += '</tr></thead><tbody>';
 
-            servicos.forEach(function(servico) {
+            servicosFiltrados.forEach(function(servico) {
                 // Processar o valor em BRL
                 const valorBRL = servico.valorTotalBRL || 'N/A';
 
@@ -5375,6 +5380,11 @@
     function preencherOpcoesServico(cotacoes) {
         const container = $('#step-5 .card-body');
         
+        // Filtrar cotações - remover FedEx International First®
+        const cotacoesFiltradas = cotacoes.filter(function(cotacao) {
+            return cotacao.servico !== 'FedEx International First®';
+        });
+        
         // Limpar conteúdo anterior
         container.empty();
         
@@ -5545,7 +5555,7 @@
         }
 
         // Criar cards para cada cotação
-        cotacoes.forEach(function(cotacao, index) {
+        cotacoesFiltradas.forEach(function(cotacao, index) {
             const cardHtml = `
                 <div class="servico-option card mb-3" data-servico="${cotacao.servicoTipo}" data-index="${index}">
                     <div class="card-body d-flex justify-content-between align-items-center">

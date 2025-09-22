@@ -804,6 +804,11 @@ $(document).ready(function() {
             
             // Opções de Envio
             if (response.cotacoesFedEx && response.cotacoesFedEx.length > 0) {
+                // Filtrar cotações - remover FedEx International First®
+                var cotacoesFiltradas = response.cotacoesFedEx.filter(function(cotacao) {
+                    return cotacao.servico !== 'FedEx International First®';
+                });
+                
                 html += '<h4 class="mb-3">Opções de Envio</h4>';
                 html += '<div class="table-responsive">';
                 html += '<table class="table table-striped table-hover">';
@@ -814,7 +819,7 @@ $(document).ready(function() {
                 html += '<th>Valor (BRL)</th>';
                 html += '</tr></thead><tbody>';
                 
-                response.cotacoesFedEx.forEach(function(cotacao) {
+                cotacoesFiltradas.forEach(function(cotacao) {
                     html += '<tr>';
                     html += '<td>' + cotacao.servico + '</td>';
                     html += '<td>';
