@@ -494,13 +494,82 @@ Route::get('/exportar-cotacao-pdf', function (Illuminate\Http\Request $request, 
                     
                     if (count($cotacoesPriority) > 0) {
                         foreach ($cotacoesPriority as $cotacao) {
-                            $html .= ($cotacao['servico'] ?? 'N/A') . ' - ' . ($cotacao['tempoEntrega'] ?? 'N/A') . '<br>
+                            // Aplicar tradução do tempo de entrega
+                            $tempoEntrega = $cotacao['tempoEntrega'] ?? 'N/A';
+                            $dataEntrega = $cotacao['dataEntrega'] ?? null;
+                            
+                            // Traduzir tempo de entrega para português
+                            if ($tempoEntrega !== 'N/A') {
+                                $tempoEntrega = str_replace([
+                                    'ENTREGUE ATÉ', 'DELIVERED BY', 'A.M.', 'P.M.',
+                                    'IF NO CUSTOMS DELAY', 'business days', 'business day',
+                                    'days', 'day', 'hours', 'hour'
+                                ], [
+                                    'Entregue até', 'Entregue até', 'AM', 'PM',
+                                    'SE NÃO HOUVER ATRASO NA ALFÂNDEGA', 'dias úteis', 'dia útil',
+                                    'dias', 'dia', 'horas', 'hora'
+                                ], $tempoEntrega);
+                                
+                                // Se houver data de entrega, formatar
+                                if ($dataEntrega) {
+                                    try {
+                                        $data = new \DateTime($dataEntrega);
+                                        $tempoEntrega = 'Chega dia ' . $data->format('d/m/Y');
+                                        
+                                        // Adicionar horário se disponível
+                                        if (isset($cotacao['horarioEntrega'])) {
+                                            $tempoEntrega .= ' às ' . $cotacao['horarioEntrega'];
+                                        }
+                                        
+                                        $tempoEntrega .= ' SE NÃO HOUVER ATRASO NA ALFÂNDEGA';
+                                    } catch (\Exception $e) {
+                                        // Se não conseguir formatar a data, usar o tempo traduzido
+                                    }
+                                }
+                            }
+                            
+                            $html .= ($cotacao['servico'] ?? 'N/A') . ' - ' . $tempoEntrega . '<br>
                                      <span class="highlight">R$ ' . ($cotacao['valorTotalBRL'] ?? 'N/A') . '</span><br><br>';
                         }
                     } else {
                         // Se não houver Priority, mostrar a primeira opção
                         $melhorOpcao = $resultado['cotacoesFedEx'][0];
-                        $html .= ($melhorOpcao['servico'] ?? 'N/A') . ' - ' . ($melhorOpcao['tempoEntrega'] ?? 'N/A') . '<br>
+                        
+                        // Aplicar tradução do tempo de entrega
+                        $tempoEntrega = $melhorOpcao['tempoEntrega'] ?? 'N/A';
+                        $dataEntrega = $melhorOpcao['dataEntrega'] ?? null;
+                        
+                        // Traduzir tempo de entrega para português
+                        if ($tempoEntrega !== 'N/A') {
+                            $tempoEntrega = str_replace([
+                                'ENTREGUE ATÉ', 'DELIVERED BY', 'A.M.', 'P.M.',
+                                'IF NO CUSTOMS DELAY', 'business days', 'business day',
+                                'days', 'day', 'hours', 'hour'
+                            ], [
+                                'Entregue até', 'Entregue até', 'AM', 'PM',
+                                'SE NÃO HOUVER ATRASO NA ALFÂNDEGA', 'dias úteis', 'dia útil',
+                                'dias', 'dia', 'horas', 'hora'
+                            ], $tempoEntrega);
+                            
+                            // Se houver data de entrega, formatar
+                            if ($dataEntrega) {
+                                try {
+                                    $data = new \DateTime($dataEntrega);
+                                    $tempoEntrega = 'Chega dia ' . $data->format('d/m/Y');
+                                    
+                                    // Adicionar horário se disponível
+                                    if (isset($melhorOpcao['horarioEntrega'])) {
+                                        $tempoEntrega .= ' às ' . $melhorOpcao['horarioEntrega'];
+                                    }
+                                    
+                                    $tempoEntrega .= ' SE NÃO HOUVER ATRASO NA ALFÂNDEGA';
+                                } catch (\Exception $e) {
+                                    // Se não conseguir formatar a data, usar o tempo traduzido
+                                }
+                            }
+                        }
+                        
+                        $html .= ($melhorOpcao['servico'] ?? 'N/A') . ' - ' . $tempoEntrega . '<br>
                                  <span class="highlight">R$ ' . ($melhorOpcao['valorTotalBRL'] ?? 'N/A') . '</span>';
                     }
                 }
@@ -512,7 +581,7 @@ Route::get('/exportar-cotacao-pdf', function (Illuminate\Http\Request $request, 
             <div class="info-grid">
                 <div class="info-item">
                     <div class="info-label">Data da Consulta</div>
-                    <div class="info-value">' . ($resultado['dataConsulta'] ?? date('Y-m-d H:i:s')) . '</div>
+                    <div class="info-value">' . date('d/m/Y', strtotime($resultado['dataConsulta'] ?? date('Y-m-d H:i:s'))) . '</div>
                 </div>
                 <div class="info-item">
                     <div class="info-label">Cotação do Dólar</div>
