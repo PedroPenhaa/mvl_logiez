@@ -1761,7 +1761,11 @@ function initializeRastreamentoScript() {
             try {
                 const partes = dataString.split('-');
                 if (partes.length === 3) {
-                    return `${partes[2]}/${partes[1]}/${partes[0]}`;
+                    // Garantir que dia e mês tenham 2 dígitos
+                    const dia = partes[2].padStart(2, '0');
+                    const mes = partes[1].padStart(2, '0');
+                    const ano = partes[0];
+                    return `${dia}/${mes}/${ano}`;
                 }
                 return dataString;
             } catch (e) {
@@ -1772,6 +1776,21 @@ function initializeRastreamentoScript() {
         // Função para formatar data e hora
         function formatarDataHora(data, hora) {
             if (!data) return '';
+            
+            // Se data contém timestamp ISO completo (ex: 2025-09-05T12:48:48-05:00)
+            if (data.includes('T')) {
+                try {
+                    const dateObj = new Date(data);
+                    const dia = dateObj.getDate().toString().padStart(2, '0');
+                    const mes = (dateObj.getMonth() + 1).toString().padStart(2, '0');
+                    const ano = dateObj.getFullYear();
+                    const horas = dateObj.getHours().toString().padStart(2, '0');
+                    const minutos = dateObj.getMinutes().toString().padStart(2, '0');
+                    return `${dia}/${mes}/${ano} ${horas}:${minutos}`;
+                } catch (e) {
+                    return data;
+                }
+            }
             
             let dataFormatada = formatarData(data);
             
@@ -1969,8 +1988,18 @@ function initializeRastreamentoScript() {
                     ultimaData = dataEvento;
                     
                     // Adicionar separador de dia
-                    const dataParts = dataEvento.split('-');
-                    const dataFormatada = `${dataParts[2]}/${dataParts[1]}/${dataParts[0]}`;
+                    let dataFormatada;
+                    if (dataEvento.includes('T')) {
+                        // Se é timestamp ISO, usar a função formatarDataHora
+                        dataFormatada = formatarDataHora(dataEvento).split(' ')[0]; // Pega só a data, sem hora
+                    } else {
+                        // Se é formato simples YYYY-MM-DD
+                        const dataParts = dataEvento.split('-');
+                        const dia = dataParts[2].padStart(2, '0');
+                        const mes = dataParts[1].padStart(2, '0');
+                        const ano = dataParts[0];
+                        dataFormatada = `${dia}/${mes}/${ano}`;
+                    }
                     
                     timeline.append(`
                         <li class="timeline-date text-center my-3">
