@@ -29,7 +29,7 @@ class Handler extends ExceptionHandler
     }
 
     /**
-     * Sobrescrever o método render para garantir compatibilidade
+     * Sobrescrever o método render para desabilitar o renderizador problemático
      */
     public function render($request, Throwable $e)
     {
@@ -41,7 +41,19 @@ class Handler extends ExceptionHandler
             ], 500);
         }
 
-        // Para outras requisições, usar o render padrão do Laravel
-        return parent::render($request, $e);
+        // Para outras requisições, usar renderização simples sem o renderizador customizado
+        if ($this->shouldReturnJson($request, $e)) {
+            return $this->prepareJsonResponse($request, $e);
+        }
+
+        return $this->prepareResponse($request, $e);
+    }
+
+    /**
+     * Desabilitar o renderizador customizado de exceções
+     */
+    protected function renderExceptionWithCustomRenderer($e)
+    {
+        return null;
     }
 }
