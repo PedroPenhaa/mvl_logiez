@@ -23,5 +23,5 @@ return [
     |
     */
 
-    'handler' => \App\Exceptions\Handler::class,
+    'handler' => \Illuminate\Foundation\Exceptions\Handler::class,
 ];
