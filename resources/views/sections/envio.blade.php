@@ -1411,10 +1411,10 @@
                                     </div>
                                     <div class="row g-2 mb-3">
                                         <div class="col-md-4">
-                                            <label for="origem_cep" class="form-label">CEP</label>
+                                            <label for="origem_cep" class="form-label">Zip Code</label>
                                             <div class="input-group">
                                                 <input type="text" class="form-control" id="origem_cep" name="origem_cep" maxlength="9" required>
-                                                <button type="button" class="btn btn-outline-secondary" id="origem_buscar_cep">Buscar CEP</button>
+                                                <button type="button" class="btn btn-outline-secondary" id="origem_buscar_cep">Buscar Zip Code</button>
                                             </div>
                                         </div>
                                         <div class="col-md-4">
@@ -1465,10 +1465,10 @@
                                     </div>
                                     <div class="row g-2 mb-3">
                                         <div class="col-md-4">
-                                            <label for="destino_cep" class="form-label">CEP</label>
+                                            <label for="destino_cep" class="form-label">Zip Code</label>
                                             <div class="input-group">
                                                 <input type="text" class="form-control" id="destino_cep" name="destino_cep" maxlength="9" required>
-                                                <button type="button" class="btn btn-outline-secondary" id="destino_buscar_cep">Buscar CEP</button>
+                                                <button type="button" class="btn btn-outline-secondary" id="destino_buscar_cep">Buscar Zip Code</button>
                                             </div>
                                         </div>
                                         <div class="col-md-4">

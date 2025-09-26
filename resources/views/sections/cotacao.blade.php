@@ -39,7 +39,7 @@
                                 <div class="form-floating mb-3">
                                     <input type="text" class="form-control" id="origem" name="origem" 
                                            placeholder="00000" required>
-                                    <label for="origem">CEP de Origem</label>
+                                    <label for="origem">Zip Code Origem</label>
                                 </div>
                                 <div class="row g-2 mb-3">
                                     <div class="col-12">
@@ -65,7 +65,7 @@
                                     </div>
                                 </div>
                                 <div class="cep-helper">
-                                    <small><i class="fas fa-info-circle"></i> Digite o CEP de origem</small>
+                                    <small><i class="fas fa-info-circle"></i> Digite o Zip Code origem</small>
                                 </div>
                             </div>
                         </div>
@@ -83,7 +83,7 @@
                                 <div class="form-floating mb-3">
                                     <input type="text" class="form-control" id="destino" name="destino" 
                                            placeholder="00000" required>
-                                    <label for="destino">CEP de Destino</label>
+                                    <label for="destino">Zip Code Destino</label>
                                 </div>
                                 <div class="row g-2 mb-3">
                                     <div class="col-12">
@@ -109,7 +109,7 @@
                                     </div>
                                 </div>
                                 <div class="cep-helper">
-                                    <small><i class="fas fa-info-circle"></i> Digite o CEP do país de destino</small>
+                                    <small><i class="fas fa-info-circle"></i> Digite o Zip Code do país de destino</small>
                                 </div>
                             </div>
                         </div>
