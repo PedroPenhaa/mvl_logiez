@@ -29,8 +29,7 @@ class Handler extends ExceptionHandler
     }
 
     /**
-     * Sobrescrever o método render para desabilitar o renderizador customizado
-     * que está causando o erro do laravel-exceptions-renderer
+     * Sobrescrever o método render para garantir compatibilidade
      */
     public function render($request, Throwable $e)
     {
@@ -43,16 +42,6 @@ class Handler extends ExceptionHandler
         }
 
         // Para outras requisições, usar o render padrão do Laravel
-        // mas sem o renderizador customizado problemático
         return parent::render($request, $e);
-    }
-
-    /**
-     * Desabilitar o renderizador de exceções customizado
-     */
-    protected function renderExceptionWithCustomRenderer($e)
-    {
-        // Retornar null para forçar o uso do renderizador padrão
-        return null;
     }
 }

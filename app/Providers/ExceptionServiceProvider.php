@@ -11,9 +11,18 @@ class ExceptionServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
+        // Registrar o handler customizado
         $this->app->singleton(
             \Illuminate\Contracts\Debug\ExceptionHandler::class,
             \App\Exceptions\Handler::class
+        );
+        
+        // Desabilitar o renderizador customizado problemático
+        $this->app->bind(
+            \Illuminate\Foundation\Exceptions\Renderer\Renderer::class,
+            function () {
+                return null;
+            }
         );
     }
 
