@@ -131,9 +131,19 @@ if (function_exists('opcache_reset')) {
 
 // Limpar cache do Laravel
 if (file_exists('artisan')) {
-    exec('php artisan config:clear 2>/dev/null');
-    exec('php artisan cache:clear 2>/dev/null');
-    exec('php artisan view:clear 2>/dev/null');
+    $output = [];
+    $return = 0;
+    exec('php artisan config:clear 2>&1', $output, $return);
+    echo "Config clear: " . implode("\n", $output) . "\n";
+    
+    $output = [];
+    exec('php artisan cache:clear 2>&1', $output, $return);
+    echo "Cache clear: " . implode("\n", $output) . "\n";
+    
+    $output = [];
+    exec('php artisan view:clear 2>&1', $output, $return);
+    echo "View clear: " . implode("\n", $output) . "\n";
+    
     echo "Cache do Laravel limpo!\n";
 }
 ?>
