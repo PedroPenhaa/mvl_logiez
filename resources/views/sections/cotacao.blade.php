@@ -837,9 +837,10 @@ $(document).ready(function() {
             
             // Opções de Envio
             if (response.cotacoesFedEx && response.cotacoesFedEx.length > 0) {
-                // Filtrar cotações - remover FedEx International First®
+                // Filtrar cotações - remover FedEx International First® e FedEx International Connect Plus
                 var cotacoesFiltradas = response.cotacoesFedEx.filter(function(cotacao) {
-                    return cotacao.servico !== 'FedEx International First®';
+                    return cotacao.servico !== 'FedEx International First®' && 
+                           cotacao.servico !== 'FedEx International Connect Plus';
                 });
                 
                 html += '<h4 class="mb-3">Opções de Envio</h4>';
