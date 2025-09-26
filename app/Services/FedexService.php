@@ -305,8 +305,8 @@ class FedexService
             
             // VALIDAÇÃO DE CÓDIGO POSTAL ANTES DA COTAÇÃO
             // Determinar estado padrão baseado no país
-            $estadoOrigem = $countryCodeOrigem === 'BR' ? 'SP' : ($countryCodeOrigem === 'US' ? 'FL' : null);
-            $estadoDestino = $countryCodeDestino === 'BR' ? 'SP' : ($countryCodeDestino === 'US' ? 'FL' : null);
+            $estadoOrigem = $countryCodeOrigem === 'BR' ? 'SP' : ($countryCodeOrigem === 'US' ? null : null);
+            $estadoDestino = $countryCodeDestino === 'BR' ? 'SP' : ($countryCodeDestino === 'US' ? null : null);
             
             $validacaoOrigem = $this->validarCodigoPostalFedEx($postalCodeOrigem, $countryCodeOrigem, $estadoOrigem);
             if (!$validacaoOrigem['valid']) {
