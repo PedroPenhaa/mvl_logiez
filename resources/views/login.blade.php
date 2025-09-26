@@ -18,7 +18,8 @@
 
     <!-- Google Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-
+ 
+    
     
     <style>
         :root {
@@ -31,7 +32,7 @@
             --border-radius: 8px;
             --box-shadow: 0 8px 24px rgba(99, 73, 158, 0.15);
             --transition: all 0.3s ease;
-            
+
         }
 
         body {
