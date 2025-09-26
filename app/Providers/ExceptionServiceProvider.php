@@ -20,8 +20,13 @@ class ExceptionServiceProvider extends ServiceProvider
         // Desabilitar o renderizador customizado problemático
         $this->app->bind(
             \Illuminate\Foundation\Exceptions\Renderer\Renderer::class,
-            function () {
-                return null;
+            function ($app) {
+                // Retornar uma instância válida que não cause problemas
+                return new class {
+                    public function render($exception, $request) {
+                        return null;
+                    }
+                };
             }
         );
     }
