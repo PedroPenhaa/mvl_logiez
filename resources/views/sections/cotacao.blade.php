@@ -452,7 +452,7 @@ $(document).ready(function() {
         console.log('Dados enviados na requisição:', JSON.stringify(requestData, null, 2));
         
         $.ajax({
-            url: 'https://app.logiez.com.br/google-maps-cep-api.php',
+            url: '{{ env("APP_ENV") === "local" ? "http://localhost:5000/google-maps-cep-api.php" : "https://app.logiez.com.br/google-maps-cep-api.php" }}',
             type: 'POST',
             data: JSON.stringify(requestData),
             contentType: 'application/json',
