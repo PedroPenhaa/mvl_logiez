@@ -112,6 +112,39 @@ deploy_production() {
     echo "➡️ Verificando status do PHP"
     php -v || echo "PHP não está funcionando corretamente"
     
+    echo "➡️ Executando limpeza de imagick e caches"
+    # 1. Criar um arquivo PHP que desabilita o imagick
+    cat > /web/clear_imagick.php << 'EOF'
+<?php
+// Desabilitar imagick temporariamente
+if (extension_loaded('imagick')) {
+    echo "Imagick está carregado\n";
+} else {
+    echo "Imagick não está carregado\n";
+}
+
+// Limpar OPcache
+if (function_exists('opcache_reset')) {
+    opcache_reset();
+    echo "OPcache limpo!\n";
+}
+
+// Limpar cache do Laravel
+if (file_exists('artisan')) {
+    exec('php artisan config:clear 2>/dev/null');
+    exec('php artisan cache:clear 2>/dev/null');
+    exec('php artisan view:clear 2>/dev/null');
+    echo "Cache do Laravel limpo!\n";
+}
+?>
+EOF
+
+    # 2. Executar o script
+    php /web/clear_imagick.php
+
+    # 3. Remover o arquivo
+    rm /web/clear_imagick.php
+    
     echo "✅ Deploy de produção concluído com sucesso!"
     exit 0
 }
