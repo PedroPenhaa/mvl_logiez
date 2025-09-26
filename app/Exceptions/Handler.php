@@ -3,6 +3,8 @@
 namespace App\Exceptions;
 
 use Illuminate\Foundation\Exceptions\Handler as ExceptionHandler;
+use Illuminate\Http\Request;
+use Illuminate\Http\Response;
 use Throwable;
 
 class Handler extends ExceptionHandler
@@ -29,7 +31,7 @@ class Handler extends ExceptionHandler
     }
 
     /**
-     * Sobrescrever o método render para desabilitar o renderizador problemático
+     * Render an exception into an HTTP response.
      */
     public function render($request, Throwable $e)
     {
@@ -41,16 +43,14 @@ class Handler extends ExceptionHandler
             ], 500);
         }
 
-        // Para outras requisições, usar renderização simples sem o renderizador customizado
-        if ($this->shouldReturnJson($request, $e)) {
-            return $this->prepareJsonResponse($request, $e);
-        }
-
-        return $this->prepareResponse($request, $e);
+        // Para outras requisições, retornar uma página de erro simples
+        return response()->view('errors.500', [
+            'exception' => $e
+        ], 500);
     }
 
     /**
-     * Desabilitar o renderizador customizado de exceções
+     * Desabilitar completamente o renderizador customizado
      */
     protected function renderExceptionWithCustomRenderer($e)
     {
