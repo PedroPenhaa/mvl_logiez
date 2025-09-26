@@ -4332,9 +4332,10 @@
                 return;
             }
 
-            // Filtrar cotações - remover FedEx International First®
+            // Filtrar cotações - remover FedEx International First® e FedEx International Connect Plus
             const servicosFiltrados = servicos.filter(function(servico) {
-                return servico.servico !== 'FedEx International First®';
+                return servico.servico !== 'FedEx International First®' && 
+                       servico.servico !== 'FedEx International Connect Plus';
             });
 
             // Montar o HTML para mostrar os serviços disponíveis
@@ -4932,16 +4933,36 @@
             const modal = bootstrap.Modal.getInstance(document.getElementById('modal-revisao-final'));
             modal.hide();
             
+            // Calcular peso total se não estiver definido
+            if (typeof pesoTotal === 'undefined' || pesoTotal === null || pesoTotal === 0) {
+                pesoTotal = 0;
+                produtos.forEach(function(produto) {
+                    pesoTotal += produto.peso * produto.quantidade;
+                });
+                caixas.forEach(function(caixa) {
+                    pesoTotal += parseFloat(caixa.peso);
+                });
+            }
+            
             // Coletar dados para cotação
             const dadosCotacao = {
                 origem: $('#origem_cep').val(),
                 destino: $('#destino_cep').val(),
-                altura: parseFloat($('#altura-hidden').val()),
-                largura: parseFloat($('#largura-hidden').val()),
-                comprimento: parseFloat($('#comprimento-hidden').val()),
-                peso: pesoTotal, // Usar o peso total (produtos + caixas)
+                altura: parseFloat($('#altura-hidden').val()) || 0,
+                largura: parseFloat($('#largura-hidden').val()) || 0,
+                comprimento: parseFloat($('#comprimento-hidden').val()) || 0,
+                peso: pesoTotal || 0, // Usar o peso total (produtos + caixas)
                 _token: $('meta[name="csrf-token"]').attr('content')
             };
+            
+            // Validar dados antes de enviar
+            if (!dadosCotacao.origem || !dadosCotacao.destino || 
+                dadosCotacao.altura <= 0 || dadosCotacao.largura <= 0 || 
+                dadosCotacao.comprimento <= 0 || dadosCotacao.peso <= 0) {
+                $('#loading-overlay').addClass('d-none');
+                showAlert('Erro: Dados de cotação inválidos. Verifique se todos os campos estão preenchidos corretamente.', 'danger');
+                return;
+            }
             
             // Fazer requisição de cotação
             $.ajax({
@@ -4974,6 +4995,10 @@
                     let errorMessage = 'Erro ao calcular cotação';
                     if (xhr.responseJSON && xhr.responseJSON.message) {
                         errorMessage = xhr.responseJSON.message;
+                    } else if (xhr.status === 422) {
+                        errorMessage = 'Dados inválidos. Verifique se todos os campos estão preenchidos corretamente.';
+                    } else if (xhr.status === 500) {
+                        errorMessage = 'Erro interno do servidor. Tente novamente em alguns instantes.';
                     }
                     showAlert(errorMessage, 'danger');
                 }
@@ -5380,9 +5405,10 @@
     function preencherOpcoesServico(cotacoes) {
         const container = $('#step-5 .card-body');
         
-        // Filtrar cotações - remover FedEx International First®
+        // Filtrar cotações - remover FedEx International First® e FedEx International Connect Plus
         const cotacoesFiltradas = cotacoes.filter(function(cotacao) {
-            return cotacao.servico !== 'FedEx International First®';
+            return cotacao.servico !== 'FedEx International First®' && 
+                   cotacao.servico !== 'FedEx International Connect Plus';
         });
         
         // Limpar conteúdo anterior

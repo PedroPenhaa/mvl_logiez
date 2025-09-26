@@ -21,7 +21,7 @@ return Application::configure(basePath: dirname(__DIR__))
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions) {
-        // Usar o Handler customizado que desabilita o renderizador problemático
-        $exceptions->handler(\App\Exceptions\Handler::class);
+        // Configurações de exceção podem ser adicionadas aqui se necessário
+        // O Handler customizado já está registrado automaticamente
     })
     ->create();

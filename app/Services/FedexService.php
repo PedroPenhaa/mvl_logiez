@@ -279,6 +279,7 @@ class FedexService
                 'peso' => $peso
             ]);
 */
+
             // Obter token de autenticação
             $accessToken = $this->getAuthToken(true); // Forçar novo token
     
@@ -297,12 +298,9 @@ class FedexService
             $countryCodeOrigem = is_array($origem) ? ($origem['countryCode'] ?? 'BR') : 'BR';
             $countryCodeDestino = is_array($destino) ? ($destino['countryCode'] ?? 'US') : 'US';
     
-
-    
             // Validar e formatar códigos postais de acordo com o país
             $postalCodeOrigem = $this->validarEFormatarCodigoPostal($postalCodeOrigem, $countryCodeOrigem);
             $postalCodeDestino = $this->validarEFormatarCodigoPostal($postalCodeDestino, $countryCodeDestino);
-            
            
             
             // VALIDAÇÃO DE CÓDIGO POSTAL ANTES DA COTAÇÃO
@@ -338,7 +336,7 @@ class FedexService
                 'postalCodeOrigem_validado' => $postalCodeOrigem,
                 'postalCodeDestino_validado' => $postalCodeDestino
             ]);*/
-    
+
             $rateRequest = [
                 'accountNumber' => [
                     'value' => $this->shipperAccount
@@ -454,6 +452,7 @@ class FedexService
                 'X-locale' => 'en_US',
                 'x-customer-transaction-id' => $transactionId
             ])->post($rateUrl, $rateRequest);
+
 
             // Log da resposta
            /* Log::info('📥 Resposta da FedEx API:', [
@@ -639,17 +638,7 @@ class FedexService
             ]
         ];
         
-        // Adicionar FedEx International First para destinos que não sejam América Latina
-        if (!in_array($countryCodeDestino, ['MX', 'AR', 'CL', 'CO', 'PE', 'BR'])) {
-            $cotacoes[] = [
-                'servico' => 'FedEx International First',
-                'servicoTipo' => 'INTERNATIONAL_FIRST',
-                'valorTotal' => number_format((180 + ($pesoUtilizado * 22)) * $fatorPais, 2, '.', ''),
-                'moeda' => 'USD',
-                'tempoEntrega' => (1 + $prazoExtra) . '-' . (3 + $prazoExtra) . ' dias úteis',
-                'dataEntrega' => date('Y-m-d', strtotime('+' . (2 + $prazoExtra) . ' days'))
-            ];
-        }
+        // FedEx International First removido conforme solicitado
         
         // Adicionar valor promocional se o peso for baixo (menos de 5kg)
         if ($pesoUtilizado < 5) {

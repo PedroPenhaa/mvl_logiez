@@ -299,6 +299,17 @@ class SectionController extends Controller
     public function calcularCotacao(Request $request)
     {
         try {
+            // Log dos dados recebidos para debug
+            Log::info('Dados recebidos em calcularCotacao:', [
+                'origem' => $request->origem,
+                'destino' => $request->destino,
+                'altura' => $request->altura,
+                'largura' => $request->largura,
+                'comprimento' => $request->comprimento,
+                'peso' => $request->peso,
+                'all_data' => $request->all()
+            ]);
+            
             // Validar os dados de entrada
             $request->validate([
                 'origem' => 'required|string',
@@ -351,6 +362,10 @@ class SectionController extends Controller
             $cotacoesProcessadas = [];
 
             foreach ($resultado['cotacoesFedEx'] as $cotacao) {
+                // Filtrar serviços não desejados
+                if (in_array($cotacao['servico'] ?? '', ['FedEx International First', 'FedEx International Connect Plus'])) {
+                    continue;
+                }
 
                 $cotacaoProcessada = $cotacao;
                 
@@ -450,11 +465,28 @@ class SectionController extends Controller
                 'data' => $resultado
             ]);
 
-        } catch (\Exception $e) {
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            Log::error('Erro de validação em calcularCotacao:', [
+                'errors' => $e->errors(),
+                'data' => $request->all()
+            ]);
             
             return response()->json([
                 'status' => 'error',
-                'message' => 'Erro ao calcular cotação: ' . $e->getMessage()
+                'message' => 'Dados inválidos: ' . implode(', ', collect($e->errors())->flatten()->toArray()),
+                'errors' => $e->errors()
+            ], 422);
+        } catch (\Exception $e) {
+            Log::error('Erro em calcularCotacao:', [
+                'message' => $e->getMessage(),
+                'file' => $e->getFile(),
+                'line' => $e->getLine(),
+                'data' => $request->all()
+            ]);
+            
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Não foi possível calcular a cotação no momento. Verifique se os dados informados estão corretos e tente novamente.'
             ], 500);
         }
     }
