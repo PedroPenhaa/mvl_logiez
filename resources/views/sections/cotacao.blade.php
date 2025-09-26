@@ -435,44 +435,77 @@ $(document).ready(function() {
     
     // Função para buscar endereço por CEP via Google Maps API
     function buscarEnderecoPorCEP(cep, tipo) {
-        console.log('Buscando CEP:', cep, 'para tipo:', tipo);
+        console.log('=== LOG CEP - INÍCIO ===');
+        console.log('CEP inserido:', cep);
+        console.log('Tipo (origem/destino):', tipo);
+        console.log('Timestamp:', new Date().toISOString());
         
         // Mostrar indicador de carregamento
         $('#' + tipo + '_pais').val('Consultando...');
         $('#' + tipo + '_estado').val('Consultando...');
         $('#' + tipo + '_cidade').val('Consultando...');
         
+        var requestData = {
+            cep: cep
+        };
+        
+        console.log('Dados enviados na requisição:', JSON.stringify(requestData, null, 2));
+        
         $.ajax({
-            url: 'http://localhost:5000/google-maps-cep-api.php',
+            url: 'https://app.logiez.com.br/google-maps-cep-api.php',
             type: 'POST',
-            data: JSON.stringify({
-                cep: cep
-            }),
+            data: JSON.stringify(requestData),
             contentType: 'application/json',
             timeout: 10000,
             success: function(response) {
-                console.log('Resposta da API para', tipo, ':', response);
+                console.log('=== LOG CEP - SUCESSO ===');
+                console.log('Resposta completa da API:', JSON.stringify(response, null, 2));
+                console.log('Status da resposta:', response.success);
+                console.log('Dados recebidos:', response.data);
+                
                 if (response.success && response.data) {
                     var data = response.data;
-                    console.log('Dados extraídos:', data);
+                    console.log('Dados extraídos para preenchimento:');
+                    console.log('- País:', data.pais);
+                    console.log('- Estado:', data.estado);
+                    console.log('- Cidade:', data.cidade);
+                    
                     $('#' + tipo + '_pais').val(data.pais || '');
                     $('#' + tipo + '_estado').val(data.estado || '');
                     $('#' + tipo + '_cidade').val(data.cidade || '');
+                    
+                    console.log('Campos preenchidos com sucesso');
                 } else {
-                    console.log('Erro na resposta:', response);
+                    console.log('=== LOG CEP - ERRO NA RESPOSTA ===');
+                    console.log('Resposta não contém dados válidos:', response);
                     // Limpar campos se não encontrou
                     $('#' + tipo + '_pais').val('');
                     $('#' + tipo + '_estado').val('');
                     $('#' + tipo + '_cidade').val('');
                 }
+                console.log('=== LOG CEP - FIM ===');
             },
             error: function(xhr, status, error) {
-                console.log('Erro na busca do CEP:', error, 'Status:', status);
-                console.log('Response:', xhr.responseText);
+                console.log('=== LOG CEP - ERRO HTTP ===');
+                console.log('Status HTTP:', status);
+                console.log('Erro:', error);
+                console.log('Response Text:', xhr.responseText);
+                console.log('Response Status:', xhr.status);
+                console.log('Response Headers:', xhr.getAllResponseHeaders());
+                
+                // Tentar parsear JSON da resposta de erro
+                try {
+                    var errorResponse = JSON.parse(xhr.responseText);
+                    console.log('Resposta de erro parseada:', JSON.stringify(errorResponse, null, 2));
+                } catch (e) {
+                    console.log('Não foi possível parsear a resposta de erro como JSON');
+                }
+                
                 // Limpar campos em caso de erro
                 $('#' + tipo + '_pais').val('');
                 $('#' + tipo + '_estado').val('');
                 $('#' + tipo + '_cidade').val('');
+                console.log('=== LOG CEP - FIM ===');
             }
         });
     }
