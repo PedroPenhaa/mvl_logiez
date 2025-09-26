@@ -43,17 +43,7 @@ class Handler extends ExceptionHandler
             ], 500);
         }
 
-        // Para outras requisições, retornar uma página de erro simples
-        return response()->view('errors.500', [
-            'exception' => $e
-        ], 500);
-    }
-
-    /**
-     * Desabilitar completamente o renderizador customizado
-     */
-    protected function renderExceptionWithCustomRenderer($e)
-    {
-        return null;
+        // Para outras requisições, usar o renderizador padrão do Laravel
+        return parent::render($request, $e);
     }
 }

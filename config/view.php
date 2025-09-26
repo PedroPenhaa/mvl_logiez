@@ -56,7 +56,7 @@ return [
     */
 
     'namespaces' => [
-        //
+        'laravel-exceptions-renderer' => resource_path('views/errors'),
     ],
 
 ];
